@@ -1,0 +1,89 @@
+{
+  "$schema": "https://qooxdoo.org/schema/compile-1-0-0.json",
+  "targets": [
+    {
+      "type": "source",
+      "outputPath": "output/source",
+      "bundle": {
+        "include": "qx.*"
+      },
+      "addCreatedAt": true,
+      "environment": {
+        "bcp.target": "source",
+        "bcpClientPath": "/../../../"
+      }
+    },
+    {
+      "type": "build",
+      "outputPath": "output/build",
+      "addCreatedAt": true,
+      "environment": {
+        "bcp.target": "build",
+        "bcpClientPath": "/../"
+      }
+    }
+  ],
+  "defaultTarget": "source",
+  "locales": [
+    "en"
+  ],
+  "applications": [
+    {
+      "class": "bcp.client.Client",
+      "theme": "bcp.client.theme.Theme",
+      "name": "bcp.client"
+    },
+    {
+      "class": "bcp.server.Server",
+      "theme": "",
+      "name": "bcp.server",
+      "type": "node",
+      "include": [
+        "qx.core.BaseInit"
+      ],
+      "exclude": [
+        "qx.bom.Selector",
+        "qx.bom.client.Html",
+        "qx.event.handler.Pointer",
+        "qx.event.handler.Gesture",
+        "qx.event.handler.PointerCore"
+      ]
+    },
+    {
+      "class": "qxl.apiviewer.Application",
+      "theme": "qxl.apiviewer.Theme",
+      "name": "apiviewer",
+      "title": "Qooxdoo API Viewer",
+      "environment": {
+        "qx.icontheme": "Tango",
+        "qxl.apiviewer.applicationName": "",
+        "qxl.apiviewer.exclude": [
+          "qxl.apiviewer.*"
+        ],
+        "qxl.apiviewer.include": []
+      },
+      "include": [
+        "qx.*"
+      ],
+      "exclude": [
+        "qx.test.*",
+        "qx.module.Blocker",
+        "qx.module.Placement"
+      ]
+    },
+    {
+      "class": "qxl.testtapper.Application",
+      "name": "testtapper",
+      "theme": "qx.theme.Simple",
+      "title": "Qooxdoo TestTAPper",
+      "environment": {
+        "qx.icontheme": "Tango",
+        "testtapper.testNameSpace": "qx.test"
+      },
+      "include": [
+        "qx.test.*"
+      ],
+      "exclude": []
+    }
+  ]
+}
