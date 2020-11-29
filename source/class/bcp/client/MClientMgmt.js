@@ -132,6 +132,64 @@ qx.Mixin.define("bcp.client.MClientMgmt",
       behavior.setWidth(tm.getColumnIndexById("appt_day_default"), 60);
       behavior.setWidth(tm.getColumnIndexById("appt_time_default"), 60);
 
+      // Allow sorting for appointment viewing
+      tm.setSortMethods(
+        tm.getColumnIndexById("appt_day_default"),
+        (a, b) =>
+        {
+          let             index;
+
+          // Start with appointment day
+          index = tm.getColumnIndexById("appt_day_default");
+
+          if (a[index] !== null && b[index] === null)
+          {
+            return -1;
+          }
+
+          if (a[index] === null && b[index] !== null)
+          {
+            return 1;
+          }
+
+          if (a[index] < b[index])
+          {
+            return -1;
+          }
+
+          if (a[index] > b[index])
+          {
+            return 1;
+          }
+
+          // Appointment days were the same. Try appointment time
+          index = tm.getColumnIndexById("appt_time_default");
+
+          if (a[index] !== null && b[index] === null)
+          {
+            return -1;
+          }
+
+          if (a[index] === null && b[index] !== null)
+          {
+            return 1;
+          }
+
+          if (a[index] < b[index])
+          {
+            return -1;
+          }
+
+          if (a[index] > b[index])
+          {
+            return 1;
+          }
+
+          // Both were the same. They sort equally. Sort by family name
+          index = tm.getColumnIndexById("family_name");
+          return (a[index] < b[index] ? -1 : (a[index] > b[index] ? 1 : 0));
+        });
+
 //      tcm.setDataCellRenderer(4, new qx.ui.table.cellrenderer.Boolean());
 
       // Create an hbox for the buttons at the bottom. Force some
