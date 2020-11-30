@@ -21,7 +21,8 @@ qx.Class.define("bcp.server.Rpc",
 
     server = jayson.server(
       {
-        getClientList : this._getClientList.bind(this)
+        getClientList          : this._getClientList.bind(this),
+        getAppointmentDefaults : this._getAppointmentDefaults.bind(this)
       });
 
     // Open the database
@@ -88,6 +89,37 @@ qx.Class.define("bcp.server.Rpc",
             "appt_time_default"
           ].join(", "),
           "FROM Client;"
+        ].join(" "))
+    .then(
+      (stmt) =>
+      {
+        return stmt.all({});
+      })
+    .then(
+      (result) =>
+      {
+        callback(null, result);
+      });
+    },
+
+    /**
+     * Retrieve the appointment default times
+     *
+     * @param args {Array}
+     *   There are no arguments to this method. The array is unused.
+     *
+     * @param callback {Function}
+     *   @signature(err, result)
+     */
+    _getAppointmentDefaults(args, callback)
+    {
+      // TODO: move prepared statements to constructor
+      return this._db.prepare(
+        [
+          "SELECT family_name, appt_day_default, appt_time_default",
+          "  FROM Client",
+          "  WHERE appt_time_default IS NOT NULL",
+          "  ORDER BY appt_day_default, appt_time_default, family_name;"
         ].join(" "))
     .then(
       (stmt) =>
