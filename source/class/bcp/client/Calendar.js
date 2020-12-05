@@ -135,7 +135,7 @@ qx.Class.define("bcp.client.Calendar",
                 }
                 catch(e)
                 {
-                  dialog.Alert(
+                  qxl.dialog.Alert(
                     "Invalid data in database: " +
                       "appointment day '" + entry.appt_day_default + "'" +
                       ", appointment time '" + entry.appt_time_default + "'");

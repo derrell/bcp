@@ -2,6 +2,9 @@ qx.Mixin.define("bcp.client.MClientMgmt",
 {
   members :
   {
+    /** The client table model */
+    _tm : null,
+
     /**
      * Create the client list page
      *
@@ -25,7 +28,7 @@ qx.Mixin.define("bcp.client.MClientMgmt",
       page.setLayout(new qx.ui.layout.VBox());
       tabView.add(page);
 
-      tm = new qx.ui.table.model.Simple();
+      this._tm = tm = new qx.ui.table.model.Simple();
       tm.setColumns(
         [
           "Family",
@@ -33,7 +36,6 @@ qx.Mixin.define("bcp.client.MClientMgmt",
           "Email",
           "Ethnicity",
           "Verified",
-          "# in family",
           "# seniors",
           "# adults",
           "# children",
@@ -54,7 +56,6 @@ qx.Mixin.define("bcp.client.MClientMgmt",
           "email",
           "ethnicity",
           "verified",
-          "count_in_family",
           "count_senior",
           "count_adult",
           "count_child",
@@ -84,6 +85,7 @@ qx.Mixin.define("bcp.client.MClientMgmt",
             (result) =>
             {
               tm.setDataAsMapArray(result);
+              this._clientList = result;
             })
           .catch(
             (e) =>
@@ -117,7 +119,6 @@ qx.Mixin.define("bcp.client.MClientMgmt",
       behavior.setWidth(tm.getColumnIndexById("email"), 100);
       behavior.setWidth(tm.getColumnIndexById("ethnicity"), 80);
       behavior.setWidth(tm.getColumnIndexById("verified"), 60);
-      behavior.setWidth(tm.getColumnIndexById("count_in_family"), 80);
       behavior.setWidth(tm.getColumnIndexById("count_senior"), 80);
       behavior.setWidth(tm.getColumnIndexById("count_adult"), 80);
       behavior.setWidth(tm.getColumnIndexById("count_child"), 80);
@@ -225,22 +226,51 @@ qx.Mixin.define("bcp.client.MClientMgmt",
      * @return {Promise}
      *   The returned promise resolves with the data from the forms submission
      */
-    _buildClientForm()
+    _buildClientForm(clientInfo)
     {
       let             form;
       let             formData;
-      const           caption = "Client Information";
+      let             message;
+      const           caption = "Client Detail";
       
+      message =
+        clientInfo
+        ? ""
+        : "<span style='font-weight: bold;'>New Client</span>";
+
       formData =
         {
           family_name:
           {
-            type       : "TextField",
+            type       : clientInfo ? "TextField" : "SelectBox",
             label      : "Family Name",
             value      : "",
+            options    : (
+              clientInfo
+                ? undefined
+                : this._tm.getDataAsMapArray().map(
+                    (entry) =>
+                    {
+                      return (
+                        {
+                          label : entry.family_name,
+                          value : entry.family_name
+                        });
+                    })),
             validation :
             {
               required   : true
+            }
+          },
+          address_default :
+          {
+            type       : "TextArea",
+            label      : "Default delivery address",
+            lines      : 3,
+            value      : "",
+            userdata   :
+            {
+              rowspan    : 2
             }
           },
           phone :
@@ -257,17 +287,42 @@ qx.Mixin.define("bcp.client.MClientMgmt",
           },
           ethnicity :
           {
+            type       : "SelectBox",
+            label      : "Ethnicity",
+            value      : "Undeclared",
+            options :
+            [
+              { label : "Undeclared",       value : "Undeclared" },
+              { label : "African American", value : "African American" },
+              { label : "Amer. Indian",     value : "Amer. Indian" },
+              { label : "Asian",            value : "Asian" },
+              { label : "Hispanic",         value : "Hispanic" },
+              { label : "White",            value : "White" }
+            ]
+          },
+          income_source :
+          {
             type       : "TextField",
-            label      : "Email",
+            label      : "Income source",
             value      : ""
           },
-          count_in_family :
+          income_amount :
           {
-            type      : "spinner",
-            label     : "# of family members",
-            value     : 1,
-            min       : 1,
-            step      : 1
+            type       : "TextField",
+            label      : "Income amount",
+            value      : ""
+          },
+          pet_types :
+          {
+            type       : "TextField",
+            label      : "Pet types",
+            value      : ""
+          },
+          verified :
+          {
+            type       : "Checkbox",
+            label      : "Verified",
+            value      : true
           },
           count_senior :
           {
@@ -275,7 +330,12 @@ qx.Mixin.define("bcp.client.MClientMgmt",
             label     : "# of seniors (age 65+)",
             value     : 0,
             min       : 0,
-            step      : 1
+            step      : 1,
+            userdata  :
+            {
+              row       : 0,
+              column    : 2
+            }
           },
           count_adult :
           {
@@ -299,7 +359,11 @@ qx.Mixin.define("bcp.client.MClientMgmt",
             label     : "# of males",
             value     : 0,
             min       : 0,
-            step      : 1
+            step      : 1,
+            userdata  :
+            {
+              row       : 4
+            }
           },
           count_sex_female :
           {
@@ -323,32 +387,11 @@ qx.Mixin.define("bcp.client.MClientMgmt",
             label     : "# of veterans",
             value     : 0,
             min       : 0,
-            step      : 1
-          },
-          income_source :
-          {
-            type       : "TextField",
-            label      : "Income source",
-            value      : ""
-          },
-          income_amount :
-          {
-            type       : "TextField",
-            label      : "Income amount",
-            value      : ""
-          },
-          pet_types :
-          {
-            type       : "TextField",
-            label      : "Pet types",
-            value      : ""
-          },
-          address_default :
-          {
-            type       : "TextArea",
-            label      : "Default delivery address",
-            lines      : 3,
-            value      : ""
+            step      : 1,
+            userdata  :
+            {
+              row       : 8
+            }
           },
           appt_day_default :
           {
@@ -357,35 +400,63 @@ qx.Mixin.define("bcp.client.MClientMgmt",
             min       : 1,
             max       : 7,
             step      : 1,
-            value     : 1
+            value     : 1,
+            userdata  :
+            {
+              row       : 0,
+              column    : 4
+            }
           },
           appt_time_default :
           {
             type       : "TextField",
             label      : "Default appointment time",
             value      : ""
-          },
-          verified :
-          {
-            type       : "Checkbox",
-            label      : "Verified",
-            value      : true
           }
         };
 
-      form = qxl.dialog.Dialog.form("", formData)
-        .set(
-          {
-            width            : 600,
-            labelColumnWidth : 300,
-            caption          : caption
-          });
+      form = new qxl.dialog.Form({
+        caption                   : caption,
+        message                   : message,
+        setupFormRendererFunction : function(form) {
+          var renderer = new qxl.dialog.MultiColumnFormRenderer(form);
+          var layout = new qx.ui.layout.Grid();
+          const col = renderer.column;
 
-      // KLUDGES...
-      form._formContainer.getChildren()[0]
-        .getLayout()
-        .setColumnWidth(0, form.getLabelColumnWidth());
-      // ...KLUDGES
+          layout.setSpacing(6);
+
+          layout.setColumnMaxWidth(col(0), this.getLabelColumnWidth());
+          layout.setColumnWidth(col(0), this.getLabelColumnWidth());
+          layout.setColumnAlign(col(0), "right", "top");
+
+          layout.setColumnFlex(col(1), 1);
+          layout.setColumnAlign(col(1), "left", "top");
+
+          layout.setColumnMaxWidth(col(2), this.getLabelColumnWidth());
+          layout.setColumnWidth(col(2), this.getLabelColumnWidth());
+          layout.setColumnAlign(col(2), "right", "top");
+
+          layout.setColumnFlex(col(3), 1);
+          layout.setColumnAlign(col(3), "left", "top");
+
+          layout.setColumnMaxWidth(col(4), this.getLabelColumnWidth());
+          layout.setColumnWidth(col(4), this.getLabelColumnWidth());
+          layout.setColumnAlign(col(4), "right", "top");
+
+          layout.setColumnFlex(col(5), 1);
+          layout.setColumnAlign(col(5), "left", "top");
+
+          renderer._setLayout(layout);
+          return renderer;
+        }
+      });
+
+      form.set(
+        {
+          labelColumnWidth : 150,
+          formData         : formData,
+        });
+      form.show();
 
       return form.promise();
     }
