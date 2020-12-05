@@ -1,14 +1,6 @@
 {
   "libraries": [
     {
-      "library_name": "qxl.dialog",
-      "library_version": "3.0.4",
-      "path": "qx_packages/qooxdoo_qxl_dialog_v3_0_4",
-      "uri": "qooxdoo/qxl.dialog",
-      "repo_name": "qooxdoo/qxl.dialog",
-      "repo_tag": "v3.0.4"
-    },
-    {
       "library_name": "incubator.qx.io.jsonrpc",
       "library_version": "2.0.0",
       "path": "qx_packages/qooxdoo_incubator_qx_io_jsonrpc_v2_0_0",
@@ -34,11 +26,11 @@
     },
     {
       "library_name": "Commandline Testrunner for Qooxdoo Apps",
-      "library_version": "0.5.2",
-      "path": "qx_packages/qooxdoo_qxl_testtapper_v0_5_2",
+      "library_version": "0.5.3",
+      "path": "qx_packages/qooxdoo_qxl_testtapper_v0_5_3",
       "uri": "qooxdoo/qxl.testtapper",
       "repo_name": "qooxdoo/qxl.testtapper",
-      "repo_tag": "v0.5.2"
+      "repo_tag": "v0.5.3"
     },
     {
       "library_name": "logpane",
