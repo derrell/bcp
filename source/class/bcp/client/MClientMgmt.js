@@ -23,6 +23,7 @@ qx.Mixin.define("bcp.client.MClientMgmt",
       let             custom;
       let             behavior;
       let             client;
+      let             cellRenderer;
 
       page = new qx.ui.tabview.Page("Clients");
       page.setLayout(new qx.ui.layout.VBox());
@@ -84,8 +85,21 @@ qx.Mixin.define("bcp.client.MClientMgmt",
           .then(
             (result) =>
             {
+              result = result.map(
+                (entry) =>
+                {
+                  if (entry.verified === 1)
+                  {
+                    entry.verified = true;
+                  }
+                  else if (entry.verified === 0)
+                  {
+                    entry.verified = null;
+                  }
+
+                  return entry;
+                });
               tm.setDataAsMapArray(result);
-              this._clientList = result;
             })
           .catch(
             (e) =>
@@ -102,9 +116,10 @@ qx.Mixin.define("bcp.client.MClientMgmt",
 
       table = new qx.ui.table.Table(tm, custom).set(
         {
-          statusBarVisible : false,
-          minHeight        : 100,
-          height           : 100
+          statusBarVisible       : false,
+          showCellFocusIndicator : false,
+          minHeight              : 100,
+          height                 : 100
         });
       page.add(table, { flex : 1 });
 
@@ -112,9 +127,7 @@ qx.Mixin.define("bcp.client.MClientMgmt",
 
       // Specify column widths
       behavior = tcm.getBehavior();
-      behavior.setMinWidth(tm.getColumnIndexById("family_name"), 150);
-      behavior.setMaxWidth(tm.getColumnIndexById("family_name"), 300);
-      behavior.setWidth(tm.getColumnIndexById("family_name"), "1*");
+      behavior.setWidth(tm.getColumnIndexById("family_name"), 180);
       behavior.setWidth(tm.getColumnIndexById("phone"), 100);
       behavior.setWidth(tm.getColumnIndexById("email"), 100);
       behavior.setWidth(tm.getColumnIndexById("ethnicity"), 80);
@@ -191,7 +204,13 @@ qx.Mixin.define("bcp.client.MClientMgmt",
           return (a[index] < b[index] ? -1 : (a[index] > b[index] ? 1 : 0));
         });
 
-//      tcm.setDataCellRenderer(4, new qx.ui.table.cellrenderer.Boolean());
+      // The 'verified' column shows a checkmark when client is verified
+      cellRenderer = new qx.ui.table.cellrenderer.Boolean();
+      cellRenderer.set(
+        {
+          iconTrue  : "qxl.dialog.icon.ok"
+        });
+      tcm.setDataCellRenderer(tm.getColumnIndexById("verified"), cellRenderer);
 
       // Create an hbox for the buttons at the bottom. Force some
       // space above it
@@ -202,6 +221,16 @@ qx.Mixin.define("bcp.client.MClientMgmt",
         });
       page.add(hBox);
 
+      // Handle tap to edit an existing client
+      table.addListener(
+        "cellTap",
+        (e) =>
+        {
+          this._buildClientForm(tm.getDataAsMapArray()[e.getRow()]);
+          table.getSelectionModel().resetSelection();
+        });
+
+      // Prepare to create a new client
       butNewClient = new qx.ui.form.Button("New Client");
       hBox.add(butNewClient);
 
@@ -216,8 +245,7 @@ qx.Mixin.define("bcp.client.MClientMgmt",
                 qxl.dialog.Dialog
                   .alert(qx.util.Serializer.toJson(result));
               });
-        },
-        this);
+        });
     },
 
     /**
@@ -231,32 +259,25 @@ qx.Mixin.define("bcp.client.MClientMgmt",
       let             form;
       let             formData;
       let             message;
+      const           bNew = ! clientInfo;
       const           caption = "Client Detail";
       
+      // Ensure there's a map we can dereference for default values
+      clientInfo = clientInfo || {};
+
       message =
-        clientInfo
-        ? ""
-        : "<span style='font-weight: bold;'>New Client</span>";
+        bNew
+        ? "<span style='font-weight: bold;'>New Client</span>"
+        : "";
 
       formData =
         {
           family_name:
           {
-            type       : clientInfo ? "TextField" : "SelectBox",
+            type       : "TextField",
             label      : "Family Name",
-            value      : "",
-            options    : (
-              clientInfo
-                ? undefined
-                : this._tm.getDataAsMapArray().map(
-                    (entry) =>
-                    {
-                      return (
-                        {
-                          label : entry.family_name,
-                          value : entry.family_name
-                        });
-                    })),
+            enabled    : bNew,
+            value      : clientInfo.family_name || "",
             validation :
             {
               required   : true
@@ -267,7 +288,7 @@ qx.Mixin.define("bcp.client.MClientMgmt",
             type       : "TextArea",
             label      : "Default delivery address",
             lines      : 3,
-            value      : "",
+            value      : clientInfo.address_default || "",
             userdata   :
             {
               rowspan    : 2
@@ -277,19 +298,19 @@ qx.Mixin.define("bcp.client.MClientMgmt",
           {
             type       : "TextField",
             label      : "Phone",
-            value      : ""
+            value      : clientInfo.phone || ""
           },
           email :
           {
             type       : "TextField",
             label      : "Email",
-            value      : ""
+            value      : clientInfo.email || ""
           },
           ethnicity :
           {
             type       : "SelectBox",
             label      : "Ethnicity",
-            value      : "Undeclared",
+            value      : clientInfo.ethnicity || "Undeclared",
             options :
             [
               { label : "Undeclared",       value : "Undeclared" },
@@ -304,31 +325,31 @@ qx.Mixin.define("bcp.client.MClientMgmt",
           {
             type       : "TextField",
             label      : "Income source",
-            value      : ""
+            value      : clientInfo.income_source || ""
           },
           income_amount :
           {
             type       : "TextField",
             label      : "Income amount",
-            value      : ""
+            value      : clientInfo.income_amount || ""
           },
           pet_types :
           {
             type       : "TextField",
             label      : "Pet types",
-            value      : ""
+            value      : clientInfo.pet_types || ""
           },
           verified :
           {
             type       : "Checkbox",
             label      : "Verified",
-            value      : true
+            value      : clientInfo.verified || false
           },
           count_senior :
           {
             type      : "spinner",
             label     : "# of seniors (age 65+)",
-            value     : 0,
+            value     : clientInfo.count_senior || 0,
             min       : 0,
             step      : 1,
             userdata  :
@@ -341,7 +362,7 @@ qx.Mixin.define("bcp.client.MClientMgmt",
           {
             type      : "spinner",
             label     : "# of adults (age 18-64)",
-            value     : 0,
+            value     : clientInfo.count_adult || 0,
             min       : 0,
             step      : 1
           },
@@ -349,7 +370,7 @@ qx.Mixin.define("bcp.client.MClientMgmt",
           {
             type      : "spinner",
             label     : "# of children (age 0-17)",
-            value     : 0,
+            value     : clientInfo.count_child || 0,
             min       : 0,
             step      : 1
           },
@@ -357,7 +378,7 @@ qx.Mixin.define("bcp.client.MClientMgmt",
           {
             type      : "spinner",
             label     : "# of males",
-            value     : 0,
+            value     : clientInfo.count_sex_male || 0,
             min       : 0,
             step      : 1,
             userdata  :
@@ -369,7 +390,7 @@ qx.Mixin.define("bcp.client.MClientMgmt",
           {
             type      : "spinner",
             label     : "# of females",
-            value     : 0,
+            value     : clientInfo.count_sex_female || 0,
             min       : 0,
             step      : 1
           },
@@ -377,7 +398,7 @@ qx.Mixin.define("bcp.client.MClientMgmt",
           {
             type      : "spinner",
             label     : "# of other genders",
-            value     : 0,
+            value     : clientInfo.count_sex_other || 0,
             min       : 0,
             step      : 1
           },
@@ -385,7 +406,7 @@ qx.Mixin.define("bcp.client.MClientMgmt",
           {
             type      : "spinner",
             label     : "# of veterans",
-            value     : 0,
+            value     : clientInfo.count_veteran || 0,
             min       : 0,
             step      : 1,
             userdata  :
@@ -400,7 +421,7 @@ qx.Mixin.define("bcp.client.MClientMgmt",
             min       : 1,
             max       : 7,
             step      : 1,
-            value     : 1,
+            value     : clientInfo.appt_day_default || 1,
             userdata  :
             {
               row       : 0,
@@ -411,7 +432,7 @@ qx.Mixin.define("bcp.client.MClientMgmt",
           {
             type       : "TextField",
             label      : "Default appointment time",
-            value      : ""
+            value      : clientInfo.appt_time_default || ""
           }
         };
 

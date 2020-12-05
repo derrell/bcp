@@ -88,7 +88,8 @@ qx.Class.define("bcp.server.Rpc",
             "appt_day_default",
             "appt_time_default"
           ].join(", "),
-          "FROM Client;"
+          "FROM Client",
+          "ORDER BY family_name"
         ].join(" "))
     .then(
       (stmt) =>
