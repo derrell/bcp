@@ -7,7 +7,8 @@ qx.Class.define("bcp.client.Client",
   include :
   [
     bcp.client.MClientMgmt,
-    bcp.client.MAppointments,
+    bcp.client.MFulfillment,
+    bcp.client.MDistribution,
     bcp.client.MReports
   ],
 
@@ -93,7 +94,8 @@ qx.Class.define("bcp.client.Client",
 
       // Create each of the tabview pages
       this._createClientListTab(tabView);
-      this._createAppointmentsTab(tabView);
+      this._createFulfillmentTab(tabView);
+      this._createDistributionTab(tabView);
       this._createReportsTab(tabView);
     }
   }
