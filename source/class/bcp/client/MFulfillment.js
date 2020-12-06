@@ -56,7 +56,7 @@ qx.Mixin.define("bcp.client.MFulfillment",
       this._clients = new qx.ui.form.List();
       this._clients.set(
         {
-          width : 300
+          width : 240
         });
       page.add(this._clients);
 
@@ -67,6 +67,32 @@ qx.Mixin.define("bcp.client.MFulfillment",
 
       this._fulfillmentForm = new qxl.dialog.FormEmbed(
         {
+          callback         : function(result)
+          {
+
+          },
+          beforeFormFunction : function(container)
+          {
+            var             hbox;
+            var             useDefaultAppointment;
+
+            // Create a context-sensitive help button
+            useDefaultAppointment = new qx.ui.form.Button(
+              "Set to default appointment" );
+
+            useDefaultAppointment.addListener(
+              "execute",
+              function(e)
+              {
+                console.log("use default appointment");
+              },
+              this);
+
+            // Get the hbox in which the message label is placed
+            hbox = container.getUserData("messageHBox");
+
+            hbox.add(useDefaultAppointment);
+          },
           setupFormRendererFunction : function(form)
           {
             var renderer = new qxl.dialog.MultiColumnFormRenderer(form);
@@ -78,6 +104,8 @@ qx.Mixin.define("bcp.client.MFulfillment",
             layout.setColumnMaxWidth(col(0), this.getLabelColumnWidth());
             layout.setColumnWidth(col(0), this.getLabelColumnWidth());
             layout.setColumnAlign(col(0), "right", "top");
+
+            layout.setColumnFlex(col(1), 1);
 
             renderer._setLayout(layout);
             return renderer;
@@ -121,6 +149,8 @@ qx.Mixin.define("bcp.client.MFulfillment",
     _onListChangeSelection : function(e)
     {
       let             formData;
+      let             client;
+      let             familyName = e.getData()[0].getLabel();
 
       function bold(s)
       {
@@ -131,6 +161,14 @@ qx.Mixin.define("bcp.client.MFulfillment",
             "</span>"
           ].join(""));
       }
+
+      // Get the client record for the selected list item
+      client = this._tm.getDataAsMapArray().filter(
+        (entry) =>
+        {
+          return entry.family_name == familyName;
+        })[0];
+console.log("client=", client);
 
       formData =
         {
@@ -156,7 +194,7 @@ qx.Mixin.define("bcp.client.MFulfillment",
           {
             type       : "TextField",
             label      : "Day",
-            value      : "<tbd>",
+            value      : "" + client.appt_day_default,
             enabled    : false
           },
 
@@ -164,7 +202,7 @@ qx.Mixin.define("bcp.client.MFulfillment",
           {
             type       : "TextField",
             label      : "Time",
-            value      : "<tbd>",
+            value      : "" + (client.appt_time_default || ""),
             enabled    : false
           },
 
@@ -173,7 +211,7 @@ qx.Mixin.define("bcp.client.MFulfillment",
             type       : "TextArea",
             label      : "Delivery address",
             lines      : 3,
-            value      : "<tbd>",
+            value      : client.address_default || "",
             userdata   :
             {
               rowspan    : 3

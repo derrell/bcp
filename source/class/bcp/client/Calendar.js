@@ -27,7 +27,7 @@ qx.Class.define("bcp.client.Calendar",
     {
       init     : null,
       nullable : true,
-      check    : "String",
+      check    : "Map",
       event    : "changeValue"
     },
 
@@ -52,6 +52,11 @@ qx.Class.define("bcp.client.Calendar",
     _applyShowScheduled(value, old)
     {
       this._buildAppointmentTree(value);
+    },
+
+    _applyValue(value, old)
+    {
+
     },
 
     _buildAppointmentTree(bShowScheduledToo = false)
@@ -101,7 +106,7 @@ qx.Class.define("bcp.client.Calendar",
       resizeBehavior = tree.getTableColumnModel().getBehavior();
 
       // Ensure that the tree column remains sufficiently wide
-      resizeBehavior.set(0, { width: 140  });
+      resizeBehavior.set(0, { width: "1*"  });
 
       // The other one or two columns can have a set width too
       for (let i = 1; i < fields.length; i++)
@@ -120,15 +125,8 @@ qx.Class.define("bcp.client.Calendar",
                              "font-weight: bold;");
 */      
 
-      // Handle tap to edit an existing client
-      tree.addListener(
-        "cellTap",
-        (e) =>
-        {
-console.log(`Tap on node ${e.getRow()}: ${JSON.stringify(tree.nodeGet(e.getRow()))}`);
-          tree.getSelectionModel().resetSelection();
-        });
-
+      // Handle selection of an appointment time
+      tree.addListener("changeSelection", this._onChangeSelection, this);
     },
 
     _formatTime(timestamp)
@@ -154,6 +152,7 @@ console.log(`Tap on node ${e.getRow()}: ${JSON.stringify(tree.nodeGet(e.getRow()
             let         day;
             let         dayNode;
             let         time;
+            let         node;
             let         timeNode;
             let         numNodes;
             let         nodes = {};
@@ -195,6 +194,10 @@ console.log(`Tap on node ${e.getRow()}: ${JSON.stringify(tree.nodeGet(e.getRow()
 
                 // Save it for adding entries from returned data
                 nodes[dayNum][formatted] = timeNode;
+
+                // Flag this node as one that is allowed to get selected
+                node = tree.nodeGet(timeNode);
+                node._bTimeNode = true;
               }
             }
 
@@ -285,6 +288,35 @@ console.log(`Tap on node ${e.getRow()}: ${JSON.stringify(tree.nodeGet(e.getRow()
           {
             console.error("getAppointmentDefaults:", e);
           });
+    },
+
+    _onChangeSelection(e)
+    {
+      let             day;
+      let             parentNodeInfo;
+      const           nodeInfo = e.getData()[0];
+
+      // Ignore reset selection
+      if (e.getData().length < 1)
+      {
+        this.setValue(null);
+      }
+
+      console.log(`change selection on node`, nodeInfo);
+      if (nodeInfo._bTimeNode)
+      {
+        parentNodeInfo = this._tree.nodeGet(nodeInfo.parentNodeId);
+        day = parentNodeInfo.label.split(" ")[1];
+        console.log(`Day ${day}, time ${nodeInfo.label}`);
+        this.set(
+          {
+            value :
+            {
+              day  : day,
+              time : nodeInfo.label
+            }
+          });
+      }
     }
   }
 });
