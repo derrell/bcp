@@ -28,7 +28,8 @@ qx.Class.define("bcp.client.Calendar",
       init     : null,
       nullable : true,
       check    : "Map",
-      event    : "changeValue"
+      event    : "changeValue",
+      apply    : "_applyValue"
     },
 
     showScheduled :
@@ -43,10 +44,13 @@ qx.Class.define("bcp.client.Calendar",
   members :
   {
     // The treevirtual object
-    _tree : null,
+    _tree          : null,
 
     // Tree's data model
-    _dm : null,
+    _dm            : null,
+
+    // Node IDs by day, time
+    _dayTimeNodes : null,
 
     // property apply
     _applyShowScheduled(value, old)
@@ -56,7 +60,42 @@ qx.Class.define("bcp.client.Calendar",
 
     _applyValue(value, old)
     {
+      console.log("Calendar applyValue: value=", value, " old=", old);
 
+      // If the tree has yet to be created...
+      if (! this._dm)
+      {
+        // ... then the value will be handled when buildi
+        return;
+      }
+
+      if (this.__bInternalChange)
+      {
+        return;
+      }
+
+      this.__bInternalChange = true;
+
+      if (old)
+      {
+        this._tree.nodeSetSelected(
+          this._dayTimeNodes[old.day][old.time], false);
+      }
+
+      if (value)
+      {
+        this._tree.nodeSetSelected(
+          this._dayTimeNodes[value.day][value.time], true);
+      }
+
+      this._dm.setData();
+
+      if (value === null)
+      {
+        this._tree.getSelectionModel().resetSelection();
+      }
+
+      this.__bInternalChange = false;
     },
 
     _buildAppointmentTree(bShowScheduledToo = false)
@@ -155,11 +194,12 @@ qx.Class.define("bcp.client.Calendar",
             let         node;
             let         timeNode;
             let         numNodes;
-            let         nodes = {};
+            let         nodes;
             let         dayNum;
             let         numDefaults;
             let         timestamp;
             let         formatted;
+            let         value = this.getValue();
             const       fifteenMin = (1000 * 60 * 15);
             const       appointmentDefaults = result.appointmentDefaults;
             const       distributionStarts = result.distributionStarts;
@@ -167,6 +207,15 @@ qx.Class.define("bcp.client.Calendar",
 
             // Clear out any prior tree data
             dm.prune(0);
+
+            if (value)
+            {
+              day = value.day;
+              time = value.time;
+            }
+
+            // Get ready to track nodes by day, time
+            nodes = this._dayTimeNodes = {};
 
             for (dayNum = 1; dayNum <= 7; dayNum++)
             {
@@ -198,6 +247,13 @@ qx.Class.define("bcp.client.Calendar",
                 // Flag this node as one that is allowed to get selected
                 node = tree.nodeGet(timeNode);
                 node._bTimeNode = true;
+
+                // If this node has the time of the Calendar's value...
+                if (value && day == dayNum && time == formatted)
+                {
+                  // ... then mark this node as selected
+                  tree.nodeSetSelected(timeNode, true);
+                }
               }
             }
 
@@ -299,23 +355,29 @@ qx.Class.define("bcp.client.Calendar",
       // Ignore reset selection
       if (e.getData().length < 1)
       {
-        this.setValue(null);
+        return;
       }
 
-      console.log(`change selection on node`, nodeInfo);
       if (nodeInfo._bTimeNode)
       {
         parentNodeInfo = this._tree.nodeGet(nodeInfo.parentNodeId);
         day = parentNodeInfo.label.split(" ")[1];
-        console.log(`Day ${day}, time ${nodeInfo.label}`);
-        this.set(
-          {
-            value :
+        console.log(`Setting value to: Day ${day}, time ${nodeInfo.label}`);
+
+        // Scroll the selection ito view
+        this._tree.scrollCellVisible(0, nodeInfo.nodeId);
+
+        if (! this.__bInternalChange)
+        {
+          this.set(
             {
-              day  : day,
-              time : nodeInfo.label
-            }
-          });
+              value :
+              {
+                day  : day,
+                time : nodeInfo.label
+              }
+            });
+        }
       }
     }
   }

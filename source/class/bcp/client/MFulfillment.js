@@ -32,6 +32,7 @@ qx.Mixin.define("bcp.client.MFulfillment",
     {
       let             page;
       let             formData;
+      const           _this = this;
 
       // If we haven't yet registered our appointment calendar to be a
       // form element...
@@ -74,24 +75,63 @@ qx.Mixin.define("bcp.client.MFulfillment",
           beforeFormFunction : function(container)
           {
             var             hbox;
+            var             clearAppointment;
             var             useDefaultAppointment;
 
-            // Create a context-sensitive help button
+            // Get the hbox in which the message label is placed
+            hbox = container.getUserData("messageHBox");
+
+            // Create a button to pull in the default appointment
             useDefaultAppointment = new qx.ui.form.Button(
-              "Set to default appointment" );
+              "Set to default appointment");
+            useDefaultAppointment.hide();
+            hbox.add(useDefaultAppointment);
 
             useDefaultAppointment.addListener(
               "execute",
               function(e)
               {
-                console.log("use default appointment");
+                let             day;
+                let             time;
+                const           form = _this._fulfillmentForm;
+                const           formElements = form._formElements;
+
+                day = formElements.appt_day_default.getValue();
+                time = formElements.appt_time_default.getValue();
+                if (time && time.length > 0)
+                {
+                  formElements.appointments.set(
+                    {
+                      value : { day, time }
+                    });
+                }
+                else
+                {
+                  formElements.appointments.set(
+                    {
+                      value : null
+                    });
+                }
               },
               this);
 
-            // Get the hbox in which the message label is placed
-            hbox = container.getUserData("messageHBox");
+            // Create a button to clear any existing appointment
+            clearAppointment = new qx.ui.form.Button(
+              "Cancel appointment");
+            clearAppointment.hide();
+            hbox.add(clearAppointment);
 
-            hbox.add(useDefaultAppointment);
+            clearAppointment.addListener(
+              "execute",
+              function(e)
+              {
+                const           form = _this._fulfillmentForm;
+                const           formElements = form._formElements;
+                formElements.appointments.set(
+                  {
+                    value : null
+                  });
+              });
           },
           setupFormRendererFunction : function(form)
           {
