@@ -165,7 +165,7 @@ qx.Mixin.define("bcp.client.MFulfillment",
      */
     _onOkOrCancel : function()
     {
-      this._fullfillmentClients.setSelection([]);
+      this._fullfillmentClients.resetSelection();
     },
 
     _onListAppear : function()
@@ -316,6 +316,8 @@ console.log("client=", client);
           labelColumnWidth : 150,
           formData         : formData
         });
+
+      this._fulfillmentForm._okButton.setLabel("Save");
 
       this._fulfillmentForm.promise()
         .then(

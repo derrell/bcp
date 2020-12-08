@@ -439,7 +439,8 @@ qx.Mixin.define("bcp.client.MClientMgmt",
           }
         };
 
-      form = new qxl.dialog.Form({
+      form = new qxl.dialog.Form(
+      {
         caption                   : caption,
         message                   : message,
           beforeFormFunction : function(container)
@@ -507,6 +508,7 @@ qx.Mixin.define("bcp.client.MClientMgmt",
           labelColumnWidth : 150,
           formData         : formData,
         });
+      form._okButton.setLabel("Save");
       form.show();
 
       return form.promise();
