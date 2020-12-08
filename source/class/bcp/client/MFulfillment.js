@@ -19,8 +19,8 @@ qx.Mixin.define("bcp.client.MFulfillment",
 
   members :
   {
-    _clients        : null,
-    _labelToListMap : null,
+    _fullfillmentClients : null,
+    _labelToListMap      : null,
 
     /**
      * Create the fulfillment page
@@ -54,16 +54,16 @@ qx.Mixin.define("bcp.client.MFulfillment",
       this._labelToListMap = {};
 
       // Add the list of client family-names
-      this._clients = new qx.ui.form.List();
-      this._clients.set(
+      this._fullfillmentClients = new qx.ui.form.List();
+      this._fullfillmentClients.set(
         {
           width : 240
         });
-      page.add(this._clients);
+      page.add(this._fullfillmentClients);
 
-      this._clients.addListener(
+      this._fullfillmentClients.addListener(
         "appear", this._onListAppear, this);
-      this._clients.addListener(
+      this._fullfillmentClients.addListener(
         "changeSelection", this._onListChangeSelection, this);
 
       this._fulfillmentForm = new qxl.dialog.FormEmbed(
@@ -74,9 +74,9 @@ qx.Mixin.define("bcp.client.MFulfillment",
           },
           beforeFormFunction : function(container)
           {
-            var             hbox;
-            var             clearAppointment;
-            var             useDefaultAppointment;
+            let             hbox;
+            let             clearAppointment;
+            let             useDefaultAppointment;
 
             // Get the hbox in which the message label is placed
             hbox = container.getUserData("messageHBox");
@@ -84,9 +84,7 @@ qx.Mixin.define("bcp.client.MFulfillment",
             // Create a button to pull in the default appointment
             useDefaultAppointment = new qx.ui.form.Button(
               "Set to default appointment");
-            useDefaultAppointment.hide();
             hbox.add(useDefaultAppointment);
-
             useDefaultAppointment.addListener(
               "execute",
               function(e)
@@ -118,9 +116,7 @@ qx.Mixin.define("bcp.client.MFulfillment",
             // Create a button to clear any existing appointment
             clearAppointment = new qx.ui.form.Button(
               "Cancel appointment");
-            clearAppointment.hide();
             hbox.add(clearAppointment);
-
             clearAppointment.addListener(
               "execute",
               function(e)
@@ -152,16 +148,24 @@ qx.Mixin.define("bcp.client.MFulfillment",
           }
         });
 
-      page.add(this._fulfillmentForm, { flex : 1 });
-      this._fulfillmentForm.promise()
-        .then(
-          result =>
-          {
-            this.debug(
-              "fulfillment result: ", qx.util.Serializer.toJson(result));
-            return Promise.resolve();
-          });
-      this._fulfillmentForm.show();
+      // Initially hide form so the top (before-form) buttons get hidden
+      this._fulfillmentForm.hide();
+
+      // When the form is OK'ed or Canceled, remove list-box selection
+      this._fulfillmentForm.addListener("ok", this._onOkOrCancel, this);
+      this._fulfillmentForm.addListener("cancel", this._onOkOrCancel, this);
+
+      page.add(this._fulfillmentForm);
+      page.add(new qx.ui.core.Spacer(), { flex : 1 });
+    },
+
+    /**
+     * Remove the selection in the client list when Ok or Cancel is
+     * selected in the detail form
+     */
+    _onOkOrCancel : function()
+    {
+      this._fullfillmentClients.setSelection([]);
     },
 
     _onListAppear : function()
@@ -182,7 +186,7 @@ qx.Mixin.define("bcp.client.MFulfillment",
 
             listItem = new qx.ui.form.ListItem(entry.family_name);
             this._labelToListMap[entry.family_name] = listItem;
-            this._clients.add(listItem);
+            this._fullfillmentClients.add(listItem);
           });
     },
 
@@ -190,7 +194,13 @@ qx.Mixin.define("bcp.client.MFulfillment",
     {
       let             formData;
       let             client;
-      let             familyName = e.getData()[0].getLabel();
+      let             familyName;
+
+      // If the selection is being cleared, we have nothing to do.
+      if (e.getData().length === 0)
+      {
+        return;
+      }
 
       function bold(s)
       {
@@ -201,6 +211,9 @@ qx.Mixin.define("bcp.client.MFulfillment",
             "</span>"
           ].join(""));
       }
+
+      // Retrieve the family name selected in the client list
+      familyName = e.getData()[0].getLabel();
 
       // Get the client record for the selected list item
       client = this._tm.getDataAsMapArray().filter(
@@ -303,6 +316,17 @@ console.log("client=", client);
           labelColumnWidth : 150,
           formData         : formData
         });
+
+      this._fulfillmentForm.promise()
+        .then(
+          result =>
+          {
+            this.debug(
+              "fulfillment result: ", qx.util.Serializer.toJson(result));
+            return Promise.resolve();
+          });
+
+      this._fulfillmentForm.show();
     }
   }
 });
