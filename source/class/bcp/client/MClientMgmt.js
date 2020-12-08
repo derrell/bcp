@@ -261,6 +261,7 @@ qx.Mixin.define("bcp.client.MClientMgmt",
       let             message;
       const           bNew = ! clientInfo;
       const           caption = "Client Detail";
+      const           _this = this;
       
       // Ensure there's a map we can dereference for default values
       clientInfo = clientInfo || {};
@@ -414,31 +415,60 @@ qx.Mixin.define("bcp.client.MClientMgmt",
               row       : 8
             }
           },
-          appt_day_default :
+          default_appointment :
           {
-            type      : "spinner",
-            label     : "Default day of distribution",
-            min       : 1,
-            max       : 7,
-            step      : 1,
-            value     : clientInfo.appt_day_default || 1,
-            userdata  :
-            {
-              row       : 0,
-              column    : 4
-            }
-          },
-          appt_time_default :
-          {
-            type       : "TextField",
+            type       : "appointments",
             label      : "Default appointment time",
-            value      : clientInfo.appt_time_default || ""
+            value      : (
+              clientInfo.appt_time_default
+              ? {
+                  day  : clientInfo.appt_day_default,
+                  time : clientInfo.appt_time_default
+                }
+              : null),
+            properties :
+            {
+              showScheduled : false
+            },
+            userdata   :
+            {
+              row      : 0,
+              column   : 4,
+              rowspan  : 20
+            }
           }
         };
 
       form = new qxl.dialog.Form({
         caption                   : caption,
         message                   : message,
+          beforeFormFunction : function(container)
+          {
+            let             hbox;
+            let             clearAppointment;
+            let             useDefaultAppointment;
+
+            // Get the hbox in which the message label is placed
+            hbox = container.getUserData("messageHBox");
+
+            // Right-justify the button
+            hbox.add(new qx.ui.core.Spacer(), { flex : 1 });
+
+            // Create a button to clear any existing appointment
+            clearAppointment = new qx.ui.form.Button(
+              "Remove default appointment");
+            hbox.add(clearAppointment);
+            clearAppointment.addListener(
+              "execute",
+              function(e)
+              {
+                const           formElements = form._formElements;
+                formElements.default_appointment.set(
+                  {
+                    value : null
+                  });
+              });
+          },
         setupFormRendererFunction : function(form) {
           var renderer = new qxl.dialog.MultiColumnFormRenderer(form);
           var layout = new qx.ui.layout.Grid();

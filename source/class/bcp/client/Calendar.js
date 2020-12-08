@@ -25,11 +25,12 @@ qx.Class.define("bcp.client.Calendar",
   {
     value :
     {
-      init     : null,
-      nullable : true,
-      check    : "Map",
-      event    : "changeValue",
-      apply    : "_applyValue"
+      init      : null,
+      nullable  : true,
+      check     : "Map",
+      event     : "changeValue",
+      transform : "_transformValue",
+      apply     : "_applyValue"
     },
 
     showScheduled :
@@ -58,9 +59,29 @@ qx.Class.define("bcp.client.Calendar",
       this._buildAppointmentTree(value);
     },
 
+    // property transform
+    _transformValue(value)
+    {
+      // If set via a property of the form, the maps will have been
+      // converted to objects with getters. If so, pull the day and
+      // time out and create a native object value.
+      if (value instanceof qx.core.Object)
+      {
+        value =
+          {
+            day  : value.getDay(),
+            time : value.getTime()
+          };
+      }
+
+      return value;
+    },
+
+    // property apply
     _applyValue(value, old)
     {
-      console.log("Calendar applyValue: value=", value, " old=", old);
+      let             day;
+      let             time;
 
       // If the tree has yet to be created...
       if (! this._dm)
@@ -74,18 +95,28 @@ qx.Class.define("bcp.client.Calendar",
         return;
       }
 
+      // If we haven't built the assignment tree yet, we're done here.
+      if (! this._dayTimeNodes)
+      {
+        return;
+      }
+
       this.__bInternalChange = true;
 
       if (old)
       {
-        this._tree.nodeSetSelected(
-          this._dayTimeNodes[old.day][old.time], false);
+        day = old.day;
+        time = old.time;
+
+        this._tree.nodeSetSelected(this._dayTimeNodes[day][time], false);
       }
 
       if (value)
       {
-        this._tree.nodeSetSelected(
-          this._dayTimeNodes[value.day][value.time], true);
+        day = value.day;
+        time = value.time;
+
+        this._tree.nodeSetSelected(this._dayTimeNodes[day][time], true);
       }
 
       this._dm.setData();
@@ -118,7 +149,7 @@ qx.Class.define("bcp.client.Calendar",
       // present
       fields =
         [
-          bShowScheduledToo ? "Appointment Time" : "Default Time",
+          "Appointment Time",
           "# default"
         ];
 
@@ -136,7 +167,7 @@ qx.Class.define("bcp.client.Calendar",
           statusBarVisible           : false,
           useTreeLines               : false
         });
-      this.add(tree);
+      this.add(tree, { flex : 1 });
 
       // No need to show open/close symbols on empty branches
       tree.setAlwaysShowOpenCloseSymbol(false);
@@ -168,6 +199,15 @@ qx.Class.define("bcp.client.Calendar",
       tree.addListener("changeSelection", this._onChangeSelection, this);
     },
 
+    /**
+     * Provide a consistently formatted time
+     *
+     * @param timestamp {Date}
+     *  The timestamp to be formatted
+     *
+     * @return {String}
+     *  The time, formatted as HH:MM
+     */
     _formatTime(timestamp)
     {
       return (
@@ -176,6 +216,9 @@ qx.Class.define("bcp.client.Calendar",
           ("0" + timestamp.getMinutes()).substr(-2));
     },
 
+    /**
+     * Handler for when this calendar appears. Request the appointment list.
+     */
     _onAppear()
     {
       let             client;
@@ -338,6 +381,12 @@ qx.Class.define("bcp.client.Calendar",
 
             // Use the just-provided data
             dm.setData();
+
+            // Reset the value so the selected entry gets selected
+            if (value)
+            {
+              this.setValue( { day, time } );
+            }
           })
         .catch(
           (e) =>
@@ -346,6 +395,13 @@ qx.Class.define("bcp.client.Calendar",
           });
     },
 
+    /**
+     * Handler for "changeSelection" in the calendar tree
+     *
+     * @param e {qx.event.Data}
+     *   The data contains an array of selected items (always one,
+     *   here, but still in an array).
+     */
     _onChangeSelection(e)
     {
       let             day;
@@ -358,26 +414,30 @@ qx.Class.define("bcp.client.Calendar",
         return;
       }
 
-      if (nodeInfo._bTimeNode)
+      // If they're trying to select an entry that isn't a time, ignore it.
+      if (! nodeInfo._bTimeNode)
       {
-        parentNodeInfo = this._tree.nodeGet(nodeInfo.parentNodeId);
-        day = parentNodeInfo.label.split(" ")[1];
-        console.log(`Setting value to: Day ${day}, time ${nodeInfo.label}`);
+        return;
+      }
 
-        // Scroll the selection ito view
-        this._tree.scrollCellVisible(0, nodeInfo.nodeId);
+      // Get the parent, which has text like "Day n". Extract the day number.
+      parentNodeInfo = this._tree.nodeGet(nodeInfo.parentNodeId);
+      day = parentNodeInfo.label.split(" ")[1];
 
-        if (! this.__bInternalChange)
-        {
-          this.set(
+      // Scroll the selection ito view
+      this._tree.scrollCellVisible(0, nodeInfo.nodeId);
+
+      // If we're not already here as a result of a value change, set value.
+      if (! this.__bInternalChange)
+      {
+        this.set(
+          {
+            value :
             {
-              value :
-              {
-                day  : day,
-                time : nodeInfo.label
-              }
-            });
-        }
+              day  : day,
+              time : nodeInfo.label
+            }
+          });
       }
     }
   }
