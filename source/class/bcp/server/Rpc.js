@@ -37,7 +37,6 @@ qx.Class.define("bcp.server.Rpc",
           this._db = db;
         });
 
-
     app.use(
       "/rpc",
       (req, res, next) =>
@@ -103,13 +102,21 @@ qx.Class.define("bcp.server.Rpc",
     },
 
     /**
-     * Retrieve the appointment default times
+     * Retrieve the appointment default times, the list of
+     * distribution start times, and if so specified, also the
+     * scheduled appointment times for a specific distribution.
      *
      * @param args {Array}
-     *   args[0] {String?}
+     *   args[0] {String|Boolean?}
      *     The distribution start date, if scheduled appointments are
      *     requested in addition to default appointments; elided for
-     *     default appoinments only
+     *     default appoinments only.
+     *
+     *     For when the distribution start date isn't known, but the most
+     *     recent distribution is desired, this argument may also be `true` to
+     *     so specify.
+     *
+     *     When falsy, scheduled appointments are not retrieved.
      *
      * @param callback {Function}
      *   @signature(err, result)
@@ -118,7 +125,7 @@ qx.Class.define("bcp.server.Rpc",
     {
       let             p;
       let             results = {};
-      const           distribution = args.length > 0 ? args[0] : null;
+      let             distribution = args.length > 0 ? args[0] : null;
 
       // TODO: move prepared statements to constructor
       p = Promise.resolve()
@@ -139,26 +146,6 @@ qx.Class.define("bcp.server.Rpc",
         .then(
           () =>
           {
-            if (! distribution)
-            {
-              return null;
-            }
-
-            return this._db.prepare(
-              [
-                "SELECT family_name, appt_day, appt_time",
-                "  FROM Fulfillment",
-                "  WHERE distribution = :distribution",
-                "    AND appt_time IS NOT NULL",
-                "  ORDER BY appt_day, appt_time, family_name;"
-              ].join(" "));
-          })
-        .then(stmt => stmt ? stmt.all({ distribution }) : null)
-        .then(result => (results.appointmentsScheduled = result))
-
-        .then(
-          () =>
-          {
             return this._db.prepare(
               [
                 "SELECT start_date",
@@ -172,8 +159,35 @@ qx.Class.define("bcp.server.Rpc",
         .then(
           () =>
           {
-            callback(null, results);
-          });
+            // If distribution isn't requested, skip this query
+            if (! distribution)
+            {
+              return null;
+            }
+
+            // If we're given `true`, select the most recent distribution
+            if (typeof distribution == "boolean")
+            {
+              distribution =
+                (results.distributionStarts.length > 0
+                 ? results.distributionStarts[0].start_date
+                 : distribution);
+            }
+
+            return this._db.prepare(
+              [
+                "SELECT family_name, appt_day, appt_time",
+                "  FROM Fulfillment",
+                "  WHERE distribution = $distribution",
+                "    AND appt_time IS NOT NULL",
+                "  ORDER BY appt_day, appt_time, family_name;"
+              ].join(" "));
+          })
+        .then(stmt => stmt ? stmt.all({ $distribution : distribution }) : null)
+        .then(result => (results.appointmentsScheduled = result))
+
+        // Give 'em what they came for!
+        .then(() => callback(null, results));
 
       return p;
     }
