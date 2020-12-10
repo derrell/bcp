@@ -100,6 +100,9 @@ qx.Mixin.define("bcp.client.MClientMgmt",
                   return entry;
                 });
               tm.setDataAsMapArray(result);
+
+              // Sort initially by the Family column
+              tm.sortByColumn(tm.getColumnIndexById("family_name"), true);
             })
           .catch(
             (e) =>
@@ -226,7 +229,8 @@ qx.Mixin.define("bcp.client.MClientMgmt",
         "cellTap",
         (e) =>
         {
-          this._buildClientForm(tm.getDataAsMapArray()[e.getRow()]);
+          let             row = e.getRow();
+          this._buildClientForm(tm.getDataAsMapArray()[row], row);
           table.getSelectionModel().resetSelection();
         });
 
@@ -236,16 +240,11 @@ qx.Mixin.define("bcp.client.MClientMgmt",
 
       butNewClient.addListener(
         "execute",
-        () =>
+        function()
         {
-          this._buildClientForm()
-            .then(
-              (result) =>
-              {
-                qxl.dialog.Dialog
-                  .alert(qx.util.Serializer.toJson(result));
-              });
-        });
+          this._buildClientForm();
+        },
+        this);
     },
 
     /**
@@ -254,8 +253,9 @@ qx.Mixin.define("bcp.client.MClientMgmt",
      * @return {Promise}
      *   The returned promise resolves with the data from the forms submission
      */
-    _buildClientForm(clientInfo)
+    _buildClientForm(clientInfo, row)
     {
+      let             p;
       let             form;
       let             formData;
       let             message;
@@ -443,33 +443,33 @@ qx.Mixin.define("bcp.client.MClientMgmt",
       {
         caption                   : caption,
         message                   : message,
-          beforeFormFunction : function(container)
-          {
-            let             hbox;
-            let             clearAppointment;
-            let             useDefaultAppointment;
+        beforeFormFunction : function(container)
+        {
+          let             hbox;
+          let             clearAppointment;
+          let             useDefaultAppointment;
 
-            // Get the hbox in which the message label is placed
-            hbox = container.getUserData("messageHBox");
+          // Get the hbox in which the message label is placed
+          hbox = container.getUserData("messageHBox");
 
-            // Right-justify the button
-            hbox.add(new qx.ui.core.Spacer(), { flex : 1 });
+          // Right-justify the button
+          hbox.add(new qx.ui.core.Spacer(), { flex : 1 });
 
-            // Create a button to clear any existing appointment
-            clearAppointment = new qx.ui.form.Button(
-              "Remove default appointment");
-            hbox.add(clearAppointment);
-            clearAppointment.addListener(
-              "execute",
-              function(e)
-              {
-                const           formElements = form._formElements;
-                formElements.default_appointment.set(
-                  {
-                    value : null
-                  });
-              });
-          },
+          // Create a button to clear any existing appointment
+          clearAppointment = new qx.ui.form.Button(
+            "Remove default appointment");
+          hbox.add(clearAppointment);
+          clearAppointment.addListener(
+            "execute",
+            function(e)
+            {
+              const           formElements = form._formElements;
+              formElements.default_appointment.set(
+                {
+                  value : null
+                });
+            });
+        },
         setupFormRendererFunction : function(form) {
           var renderer = new qxl.dialog.MultiColumnFormRenderer(form);
           var layout = new qx.ui.layout.Grid();
@@ -511,7 +511,71 @@ qx.Mixin.define("bcp.client.MClientMgmt",
       form._okButton.setLabel("Save");
       form.show();
 
-      return form.promise();
+      p = form.promise();
+
+      p.then(
+        (formValues) =>
+        {
+          let             client;
+
+          // Cancelled?
+          if (! formValues)
+          {
+            // Yup. Nothing to do
+            return;
+          }
+
+          // Convert the appointment value (a map) to its constituent values
+          if (formValues.default_appointment)
+          {
+            formValues.appt_day_default = formValues.default_appointment.day;
+            formValues.appt_time_default = formValues.default_appointment.time;
+          }
+          else
+          {
+            formValues.appt_day_default = 1;
+            formValues.appt_time_default = "";
+          }
+          delete formValues.default_appointment;
+
+          console.log("formValues=", formValues);
+
+          client = new qx.io.jsonrpc.Client(new qx.io.transport.Xhr("/rpc"));
+          client.sendRequest("saveClient", [ formValues ])
+            .then(
+              (result) =>
+              {
+                console.log(`saveClient result: ${result}`);
+
+                // We want nothing displayed for verified==false.
+                // Change to null.
+                if (! formValues.verified)
+                {
+                  formValues.verified = null;
+                }
+
+                // Were we editing a row?
+                if (clientInfo)
+                {
+                  // Yup. Replace the data for that row
+                  this._tm.setRowsAsMapArray([formValues], row, false, true);
+                }
+                else
+                {
+                  // It's new. Add it.
+                  this._tm.addRowsAsMapArray([formValues], null, false, true);
+                }
+
+                // Resort  by the Family column
+                this._tm.sortByColumn(
+                  this._tm.getColumnIndexById("family_name"), true);
+              })
+            .catch(
+              (e) =>
+              {
+                qxl.dialog.Dialog.error(`Error saving client data: ${e}`);
+              });
+        });
     }
   }
 });

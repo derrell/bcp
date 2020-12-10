@@ -22,6 +22,7 @@ qx.Class.define("bcp.server.Rpc",
     server = jayson.server(
       {
         getClientList   : this._getClientList.bind(this),
+        saveClient      : this._saveClient.bind(this),
         getAppointments : this._getAppointments.bind(this)
       });
 
@@ -99,6 +100,101 @@ qx.Class.define("bcp.server.Rpc",
       {
         callback(null, result);
       });
+    },
+
+    /**
+     * Save a new or updated client. When updating the record is replaced in
+     * its entirety.
+     *
+     * @param args {Array}
+     *   args[0] {Map}
+     *     The map containing complete data for a client record
+     *
+     * @param callback {Function}
+     *   @signature(err, result)
+     */
+    _saveClient(args, callback)
+    {
+      let             p;
+      const           clientInfo = args[0];
+
+      // TODO: move prepared statements to constructor
+      p = Promise.resolve()
+        .then(
+          () =>
+          {
+            return this._db.prepare(
+              [
+                "INSERT OR REPLACE INTO Client",
+                "  (",
+                "    family_name,",
+                "    phone,",
+                "    email,",
+                "    ethnicity,",
+                "    count_senior,",
+                "    count_adult,",
+                "    count_child,",
+                "    count_sex_male,",
+                "    count_sex_female,",
+                "    count_sex_other,",
+                "    count_veteran,",
+                "    income_source,",
+                "    income_amount,",
+                "    pet_types,",
+                "    address_default,",
+                "    appt_day_default,",
+                "    appt_time_default,",
+                "    verified",
+                "  )",
+                "  VALUES",
+                "  (",
+                "    $family_name,",
+                "    $phone,",
+                "    $email,",
+                "    $ethnicity,",
+                "    $count_senior,",
+                "    $count_adult,",
+                "    $count_child,",
+                "    $count_sex_male,",
+                "    $count_sex_female,",
+                "    $count_sex_other,",
+                "    $count_veteran,",
+                "    $income_source,",
+                "    $income_amount,",
+                "    $pet_types,",
+                "    $address_default,",
+                "    $appt_day_default,",
+                "    $appt_time_default,",
+                "    $verified",
+                "  );"
+              ].join(" "));
+          })
+        .then(stmt => stmt.all(
+          {
+            $family_name       : clientInfo.family_name,
+            $phone             : clientInfo.phone,
+            $email             : clientInfo.email,
+            $ethnicity         : clientInfo.ethnicity,
+            $count_senior      : clientInfo.count_senior,
+            $count_adult       : clientInfo.count_adult,
+            $count_child       : clientInfo.count_child,
+            $count_sex_male    : clientInfo.count_sex_male,
+            $count_sex_female  : clientInfo.count_sex_female,
+            $count_sex_other   : clientInfo.count_sex_other,
+            $count_veteran     : clientInfo.count_veteran,
+            $income_source     : clientInfo.income_source,
+            $income_amount     : clientInfo.income_amount,
+            $pet_types         : clientInfo.pet_types,
+            $address_default   : clientInfo.address_default,
+            $appt_day_default  : clientInfo.appt_day_default,
+            $appt_time_default : clientInfo.appt_time_default,
+            $verified          : clientInfo.verified
+          }))
+
+        // Give 'em what they came for!
+        .then((result) => callback(null, result));
+
+      return p;
     },
 
     /**

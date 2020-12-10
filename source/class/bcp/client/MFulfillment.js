@@ -70,7 +70,7 @@ qx.Mixin.define("bcp.client.MFulfillment",
         {
           callback         : function(result)
           {
-
+            console.log("result=", result);
           },
           beforeFormFunction : function(container)
           {
