@@ -232,23 +232,6 @@ console.warn("Throwing error: time is outside of allowed range. day=", day, ", t
     },
 
     /**
-     * Provide a consistently formatted time
-     *
-     * @param timestamp {Date}
-     *  The timestamp to be formatted
-     *
-     * @return {String}
-     *  The time, formatted as HH:MM
-     */
-    _formatTime(timestamp)
-    {
-      return (
-        ("0" + timestamp.getHours()).substr(-2) +
-          ":" +
-          ("0" + timestamp.getMinutes()).substr(-2));
-    },
-
-    /**
      * Handler for when this calendar appears. Request the appointment list.
      */
     _onAppear()
@@ -313,7 +296,7 @@ console.warn("Throwing error: time is outside of allowed range. day=", day, ", t
                      numNodes++)
               {
                 // Get the formatted time for this timestamp
-                formatted = this._formatTime(timestamp);
+                formatted = this.constructor.formatTime(timestamp);
 
                 // If there is a start time specified for this day, elide
                 // any times that preceed the start time
@@ -414,7 +397,7 @@ console.warn("Throwing error: time is outside of allowed range. day=", day, ", t
                 }
 
                 // Get the formatted time for this timestamp
-                formatted = this._formatTime(timestamp);
+                formatted = this.constructor.formatTime(timestamp);
 
                 // Show the number of default appointments for each timeslot
                 dm.setColumnData(
@@ -494,6 +477,26 @@ console.warn("Throwing error: time is outside of allowed range. day=", day, ", t
             }
           });
       }
+    }
+  },
+
+  statics :
+  {
+    /**
+     * Provide a consistently formatted time
+     *
+     * @param timestamp {Date}
+     *  The timestamp to be formatted
+     *
+     * @return {String}
+     *  The time, formatted as HH:MM
+     */
+    formatTime(timestamp)
+    {
+      return (
+        ("0" + timestamp.getHours()).substr(-2) +
+          ":" +
+          ("0" + timestamp.getMinutes()).substr(-2));
     }
   }
 });

@@ -20,6 +20,7 @@ qx.Mixin.define("bcp.client.MFulfillment",
   members :
   {
     _fulfillmentClients  : null,
+    _fulfillmentForm     : null,
     _labelToListMap      : null,
     _butNewClient        : null,
 
@@ -206,8 +207,10 @@ qx.Mixin.define("bcp.client.MFulfillment",
       this._fulfillmentForm.hide();
 
       // When the form is OK'ed or Canceled, remove list-box selection
-      this._fulfillmentForm.addListener("ok", this._onOkOrCancel, this);
-      this._fulfillmentForm.addListener("cancel", this._onOkOrCancel, this);
+      this._fulfillmentForm.addListener(
+        "ok", this._onFulfillmentOkOrCancel, this);
+      this._fulfillmentForm.addListener(
+        "cancel", this._onFulfillmentOkOrCancel, this);
 
       page.add(this._fulfillmentForm);
       page.add(new qx.ui.core.Spacer(), { flex : 1 });
@@ -242,7 +245,7 @@ qx.Mixin.define("bcp.client.MFulfillment",
      * Remove the selection in the client list when Ok or Cancel is
      * selected in the detail form
      */
-    _onOkOrCancel : function()
+    _onFulfillmentOkOrCancel : function()
     {
       // Re-enable access to the rest of the gui
       this._disableAllForFulfillment(false);
@@ -287,16 +290,6 @@ qx.Mixin.define("bcp.client.MFulfillment",
       if (eData.length === 0)
       {
         return;
-      }
-
-      function bold(s)
-      {
-        return (
-          [
-            "<span style='font-weight: bold;'>",
-            s,
-            "</span>"
-          ].join(""));
       }
 
       rpc = new qx.io.jsonrpc.Client(new qx.io.transport.Xhr("/rpc"));
@@ -348,7 +341,7 @@ qx.Mixin.define("bcp.client.MFulfillment",
                 default_apointment_label :
                 {
                   type       : "Label",
-                  label      : bold("Default Appointment"),
+                  label      : this.bold("Default Appointment"),
                   userdata   :
                   {
                     row        : 2    // leave a blank row above
@@ -445,7 +438,7 @@ qx.Mixin.define("bcp.client.MFulfillment",
 
             this._fulfillmentForm.set(
               {
-                message          : bold(familyName || ""),
+                message          : this.bold(familyName || ""),
                 labelColumnWidth : 150,
                 formData         : formData
               });
@@ -466,7 +459,7 @@ qx.Mixin.define("bcp.client.MFulfillment",
         .catch(
           (e) =>
           {
-            console.error("getClientList:", e);
+            console.error("getDistributionList:", e);
           });
     }
   }

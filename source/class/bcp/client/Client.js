@@ -103,6 +103,22 @@ qx.Class.define("bcp.client.Client",
       this._createFulfillmentTab(this._tabView);
       this._createDistributionTab(this._tabView);
       this._createReportsTab(this._tabView);
+    },
+
+    /**
+     * Convert the given text to an HTML span with font-weight: bold
+     *
+     * @param s {String}
+     *   The string to be bolded
+     */
+    bold : function bold(s)
+    {
+      return (
+        [
+          "<span style='font-weight: bold;'>",
+          s,
+          "</span>"
+        ].join(""));
     }
   }
 });
