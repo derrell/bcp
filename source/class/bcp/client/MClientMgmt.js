@@ -2,8 +2,11 @@ qx.Mixin.define("bcp.client.MClientMgmt",
 {
   members :
   {
+    /** The client table */
+    _clientTable : null,
+
     /** The client table model */
-    _tm : null,
+    _tm          : null,
 
     /**
      * Create the client list page
@@ -117,7 +120,7 @@ qx.Mixin.define("bcp.client.MClientMgmt",
           tableColumnModel : (obj) => new qx.ui.table.columnmodel.Resize(obj)
         };
 
-      table = new qx.ui.table.Table(tm, custom).set(
+      table = this._clientTable = new qx.ui.table.Table(tm, custom).set(
         {
           statusBarVisible       : false,
           showCellFocusIndicator : false,
@@ -148,6 +151,22 @@ qx.Mixin.define("bcp.client.MClientMgmt",
       behavior.setWidth(tm.getColumnIndexById("address_default"), 100);
       behavior.setWidth(tm.getColumnIndexById("appt_day_default"), 60);
       behavior.setWidth(tm.getColumnIndexById("appt_time_default"), 60);
+
+      // Sort family name case insensitive
+      tm.setSortMethods(
+        tm.getColumnIndexById("family_name"),
+        (a, b) =>
+        {
+          let             index;
+
+          // Get the index of the family_name column
+          index = tm.getColumnIndexById("family_name");
+
+          a = a[index].toLowerCase();
+          b = b[index].toLowerCase();
+
+          return a < b ? -1 : a > b ? 1 : 0;
+        });
 
       // Allow sorting for appointment viewing
       tm.setSortMethods(
@@ -443,6 +462,7 @@ qx.Mixin.define("bcp.client.MClientMgmt",
       {
         caption                   : caption,
         message                   : message,
+        context                   : this,
         beforeFormFunction : function(container)
         {
           let             hbox;
@@ -541,11 +561,18 @@ qx.Mixin.define("bcp.client.MClientMgmt",
           console.log("formValues=", formValues);
 
           client = new qx.io.jsonrpc.Client(new qx.io.transport.Xhr("/rpc"));
-          client.sendRequest("saveClient", [ formValues ])
+          client.sendRequest("saveClient", [ formValues, bNew ])
             .then(
               (result) =>
               {
                 console.log(`saveClient result: ${result}`);
+
+                // A result means something failed.
+                if (result)
+                {
+                  qxl.dialog.Dialog.error(result);
+                  return;
+                }
 
                 // We want nothing displayed for verified==false.
                 // Change to null.
@@ -554,26 +581,42 @@ qx.Mixin.define("bcp.client.MClientMgmt",
                   formValues.verified = null;
                 }
 
-                // Were we editing a row?
-                if (clientInfo)
+                // Find this family name in the table
+                row =
+                  this._tm
+                  .getDataAsMapArray()
+                  .map(rowData => rowData.family_name)
+                  .indexOf(formValues.family_name);
+
+                // Does it already exist?
+                if (row >= 0)
                 {
                   // Yup. Replace the data for that row
-                  this._tm.setRowsAsMapArray([formValues], row, false, true);
+                  this._tm.setRowsAsMapArray([formValues], row, false, false);
                 }
                 else
                 {
                   // It's new. Add it.
-                  this._tm.addRowsAsMapArray([formValues], null, false, true);
+                  this._tm.addRowsAsMapArray([formValues], null, false, false);
                 }
 
                 // Resort  by the Family column
                 this._tm.sortByColumn(
-                  this._tm.getColumnIndexById("family_name"), true);
+                  this._tm.getSortColumnIndex(), true);
               })
             .catch(
               (e) =>
               {
-                qxl.dialog.Dialog.error(`Error saving client data: ${e}`);
+                console.warn("Error saving changes:", e);
+                if (e.code == this.constructor.RpcError.ClientAlreadyExists)
+                {
+                  qxl.dialog.Dialog.error(
+                    `Family name "${formValues.family_name}" already exists`);
+                }
+                else
+                {
+                  qxl.dialog.Dialog.error(`Error saving changes: ${e}`);
+                }
               });
         });
     }

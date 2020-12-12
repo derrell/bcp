@@ -47,6 +47,22 @@ qx.Class.define("bcp.server.Rpc",
       });
   },
 
+  statics :
+  {
+    Error :
+    {
+      // Standard errors handled by Jayson itself
+      ParseError       : -32700,
+      InvalidRequest   : -32600,
+      MethodNotFound   : -32601,
+      InvalidParams    : -32602,
+      InternalError    : -32603,
+
+      // Application-specific errors (-32000.. -32099)
+      ClientAlreadyExists : -32000
+    }
+  },
+
   members :
   {
     /** The database handle */
@@ -99,6 +115,11 @@ qx.Class.define("bcp.server.Rpc",
       (result) =>
       {
         callback(null, result);
+      })
+    .catch((e) =>
+      {
+        console.warn("Error in getClientList", e);
+        callback( { message : e.toString() } );
       });
     },
 
@@ -110,66 +131,98 @@ qx.Class.define("bcp.server.Rpc",
      *   args[0] {Map}
      *     The map containing complete data for a client record
      *
+     *   args[1] {Boolean}
+     *     true if this is an edit; false to insert a new family
+     *
      * @param callback {Function}
      *   @signature(err, result)
      */
     _saveClient(args, callback)
     {
       let             p;
+      let             prepare;
       const           clientInfo = args[0];
+      const           bNew = args[1];
+
+      if (! bNew)
+      {
+        prepare = this._db.prepare(
+          [
+            "UPDATE Client",
+            "  SET ",
+            "    phone = $phone,",
+            "    email = $email,",
+            "    ethnicity = $ethnicity,",
+            "    count_senior = $count_senior,",
+            "    count_adult = $count_adult,",
+            "    count_child = $count_child,",
+            "    count_sex_male = $count_sex_male,",
+            "    count_sex_female = $count_sex_female,",
+            "    count_sex_other = $count_sex_other,",
+            "    count_veteran = $count_veteran,",
+            "    income_source = $income_source,",
+            "    income_amount = $income_amount,",
+            "    pet_types = $pet_types,",
+            "    address_default = $address_default,",
+            "    appt_day_default = $appt_day_default,",
+            "    appt_time_default = $appt_time_default,",
+            "    verified = $verified",
+            "  WHERE family_name = $family_name;",
+          ].join(" "));
+      }
+      else
+      {
+        // This is a new entry
+        prepare = this._db.prepare(
+          [
+            "INSERT INTO Client",
+            "  (",
+            "    family_name,",
+            "    phone,",
+            "    email,",
+            "    ethnicity,",
+            "    count_senior,",
+            "    count_adult,",
+            "    count_child,",
+            "    count_sex_male,",
+            "    count_sex_female,",
+            "    count_sex_other,",
+            "    count_veteran,",
+            "    income_source,",
+            "    income_amount,",
+            "    pet_types,",
+            "    address_default,",
+            "    appt_day_default,",
+            "    appt_time_default,",
+            "    verified",
+            "  )",
+            "  VALUES",
+            "  (",
+            "    $family_name,",
+            "    $phone,",
+            "    $email,",
+            "    $ethnicity,",
+            "    $count_senior,",
+            "    $count_adult,",
+            "    $count_child,",
+            "    $count_sex_male,",
+            "    $count_sex_female,",
+            "    $count_sex_other,",
+            "    $count_veteran,",
+            "    $income_source,",
+            "    $income_amount,",
+            "    $pet_types,",
+            "    $address_default,",
+            "    $appt_day_default,",
+            "    $appt_time_default,",
+            "    $verified",
+            "  );"
+          ].join(" "));
+      }
 
       // TODO: move prepared statements to constructor
-      p = Promise.resolve()
-        .then(
-          () =>
-          {
-            return this._db.prepare(
-              [
-                "INSERT OR REPLACE INTO Client",
-                "  (",
-                "    family_name,",
-                "    phone,",
-                "    email,",
-                "    ethnicity,",
-                "    count_senior,",
-                "    count_adult,",
-                "    count_child,",
-                "    count_sex_male,",
-                "    count_sex_female,",
-                "    count_sex_other,",
-                "    count_veteran,",
-                "    income_source,",
-                "    income_amount,",
-                "    pet_types,",
-                "    address_default,",
-                "    appt_day_default,",
-                "    appt_time_default,",
-                "    verified",
-                "  )",
-                "  VALUES",
-                "  (",
-                "    $family_name,",
-                "    $phone,",
-                "    $email,",
-                "    $ethnicity,",
-                "    $count_senior,",
-                "    $count_adult,",
-                "    $count_child,",
-                "    $count_sex_male,",
-                "    $count_sex_female,",
-                "    $count_sex_other,",
-                "    $count_veteran,",
-                "    $income_source,",
-                "    $income_amount,",
-                "    $pet_types,",
-                "    $address_default,",
-                "    $appt_day_default,",
-                "    $appt_time_default,",
-                "    $verified",
-                "  );"
-              ].join(" "));
-          })
-        .then(stmt => stmt.all(
+      p = prepare
+        .then(stmt => stmt.run(
           {
             $family_name       : clientInfo.family_name,
             $phone             : clientInfo.phone,
@@ -191,8 +244,38 @@ qx.Class.define("bcp.server.Rpc",
             $verified          : clientInfo.verified
           }))
 
+        .then(
+          function (result)
+          {
+            // Ensure that a request to edit actually edited something
+            if (! bNew && result.changes != 1)
+            {
+              throw new Error("Edit did not find a row to modify");
+            }
+
+            return result;
+          })
+
         // Give 'em what they came for!
-        .then((result) => callback(null, result));
+        .then((result) => callback(null, null))
+        .catch((e) =>
+          {
+            let             error = { message : e.toString() };
+
+            console.warn(`Error in saveClient`, e);
+
+            // Is the error one we expect? If so, specify an error code.
+            // Otherwise, it will default to InternalError
+            switch(e.code)
+            {
+            case "SQLITE_CONSTRAINT" :
+              error.code = this.constructor.Error.ClientAlreadyExists;
+              break;
+            }
+
+            // Return error as result, not as error
+            callback(error);
+          });
 
       return p;
     },
@@ -283,7 +366,12 @@ qx.Class.define("bcp.server.Rpc",
         .then(result => (results.appointmentsScheduled = result))
 
         // Give 'em what they came for!
-        .then(() => callback(null, results));
+        .then(() => callback(null, results))
+        .catch((e) =>
+          {
+            console.warn("Error in getAppointments", e);
+            callback( { message : e.toString() } );
+          });
 
       return p;
     }

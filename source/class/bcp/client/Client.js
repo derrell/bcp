@@ -12,6 +12,11 @@ qx.Class.define("bcp.client.Client",
     bcp.client.MReports
   ],
 
+  statics :
+  {
+    RpcError : bcp.server.Rpc.Error
+  },
+
   members :
   {
     main()
