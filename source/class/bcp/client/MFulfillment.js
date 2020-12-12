@@ -141,13 +141,24 @@ qx.Mixin.define("bcp.client.MFulfillment",
                 time = formElements.appt_time_default.getValue();
                 if (time && time.length > 0)
                 {
-                  formElements.appointments.set(
-                    {
-                      value : { day, time }
-                    });
+                  try
+                  {
+                    formElements.appointments.set(
+                      {
+                        value : { day, time }
+                      });
+                  }
+                  catch(e)
+                  {
+                    qxl.dialog.Dialog.warning(
+                      "Default appointment is outside Distribution times");
+                    return;
+                  }
                 }
                 else
                 {
+                  qxl.dialog.Dialog.alert(
+                    "There is no default appointment time specified");
                   formElements.appointments.set(
                     {
                       value : null
@@ -266,12 +277,14 @@ qx.Mixin.define("bcp.client.MFulfillment",
 
     _onListChangeSelection : function(e)
     {
+      let             rpc;
       let             formData;
       let             client;
       let             familyName;
+      let             eData = e.getData();
 
       // If the selection is being cleared, we have nothing to do.
-      if (e.getData().length === 0)
+      if (eData.length === 0)
       {
         return;
       }
@@ -286,125 +299,175 @@ qx.Mixin.define("bcp.client.MFulfillment",
           ].join(""));
       }
 
-      // Disable access to the rest of the gui while working with the form
-      this._disableAllForFulfillment(true);
-
-      // Retrieve the family name selected in the client list
-      familyName = e.getData()[0].getLabel();
-
-      // Get the client record for the selected list item
-      client = this._tm.getDataAsMapArray().filter(
-        (entry) =>
-        {
-          return entry.family_name == familyName;
-        })[0];
-
-      formData =
-        {
-          distribution_start_date :
-          {
-            type       : "TextField",
-            label      : "Distribution start date",
-            value      : "2020-12-21",
-            enabled    : false
-          },
-
-          default_apointment_label :
-          {
-            type       : "Label",
-            label      : bold("Default Appointment"),
-            userdata   :
-            {
-              row        : 2    // leave a blank row above
-            }
-          },
-
-          appt_day_default :
-          {
-            type       : "TextField",
-            label      : "Day",
-            value      : "" + client.appt_day_default,
-            enabled    : false
-          },
-
-          appt_time_default :
-          {
-            type       : "TextField",
-            label      : "Time",
-            value      : "" + (client.appt_time_default || ""),
-            enabled    : false
-          },
-
-          address_default :
-          {
-            type       : "TextArea",
-            label      : "Delivery address",
-            lines      : 3,
-            value      : client.address_default || "",
-            userdata   :
-            {
-              rowspan    : 3
-            }
-          },
-
-          appointments :
-          {
-            type       : "appointments",
-            label      : "",
-            properties :
-            {
-              showScheduled : true
-            },
-            userdata   :
-            {
-              row      : 0,
-              column   : 4,
-              rowspan  : 20
-            }
-          },
-
-          deliver :
-          {
-            type      : "SelectBox",
-            label     : "Fulfilment method",
-            value     : "Pick-up",
-            options   :
-            [
-              { label : "Pick-up",  value : "Pick-up" },
-              { label : "Delivery", value : "Delivery" },
-            ],
-            userdata  :
-            {
-              row       : 22
-            }
-          },
-
-          fulfilled :
-          {
-            type      : "CheckBox",
-            label     : "Fulfilled",
-            value     : false
-          }
-        };
-
-      this._fulfillmentForm.set(
-        {
-          labelColumnWidth : 150,
-          formData         : formData
-        });
-
-      this._fulfillmentForm._okButton.setLabel("Save");
-
-      this._fulfillmentForm.promise()
+      rpc = new qx.io.jsonrpc.Client(new qx.io.transport.Xhr("/rpc"));
+      rpc.sendRequest("getDistributionList", [])
         .then(
-          result =>
+          (distributions) =>
           {
-            this.debug(
-              "fulfillment result: ", qx.util.Serializer.toJson(result));
-            return Promise.resolve();
-          });
+            // If there are no distributions, we can't do anything
+            if (! distributions || distributions.length < 1)
+            {
+              qxl.dialog.Dialog.alert(
+                "There are no distributions yet scheduled");
+              return;
+            }
 
-      this._fulfillmentForm.show();
+            // Disable access to the rest of the gui while working
+            // with the form
+            this._disableAllForFulfillment(true);
+
+            // Retrieve the family name selected in the client list
+            familyName = eData[0].getLabel();
+
+            // Get the client record for the selected list item
+            client = this._tm.getDataAsMapArray().filter(
+              (entry) =>
+              {
+                return entry.family_name == familyName;
+              })[0];
+
+            formData =
+              {
+                distribution_start_date :
+                {
+                  type       : "SelectBox",
+                  label      : "Distribution start date",
+                  value      : distributions[0].start_date,
+                  options    : distributions.map(
+                    (distribution) =>
+                    {
+                      return (
+                        {
+                          label : distribution.start_date,
+                          value : distribution.start_date
+                        });
+                    }),
+                  enabled    : false
+                },
+
+                default_apointment_label :
+                {
+                  type       : "Label",
+                  label      : bold("Default Appointment"),
+                  userdata   :
+                  {
+                    row        : 2    // leave a blank row above
+                  }
+                },
+
+                appt_day_default :
+                {
+                  type       : "TextField",
+                  label      : "Day",
+                  value      : "" + client.appt_day_default,
+                  enabled    : false
+                },
+
+                appt_time_default :
+                {
+                  type       : "TextField",
+                  label      : "Time",
+                  value      : "" + (client.appt_time_default || ""),
+                  enabled    : false
+                },
+
+                address_default :
+                {
+                  type       : "TextArea",
+                  label      : "Delivery address",
+                  lines      : 3,
+                  value      : client.address_default || "",
+                  userdata   :
+                  {
+                    rowspan    : 3
+                  }
+                },
+
+                appointments :
+                {
+                  type       : "appointments",
+                  label      : "",
+                  properties :
+                  {
+                    showScheduled : true,
+                    startTimes    :
+                    [
+                      distributions[0].day_1_first_appt,
+                      distributions[0].day_2_first_appt,
+                      distributions[0].day_3_first_appt,
+                      distributions[0].day_4_first_appt,
+                      distributions[0].day_5_first_appt,
+                      distributions[0].day_6_first_appt,
+                      distributions[0].day_7_first_appt
+                    ],
+                    endTimes    :
+                    [
+                      distributions[0].day_1_last_appt,
+                      distributions[0].day_2_last_appt,
+                      distributions[0].day_3_last_appt,
+                      distributions[0].day_4_last_appt,
+                      distributions[0].day_5_last_appt,
+                      distributions[0].day_6_last_appt,
+                      distributions[0].day_7_last_appt
+                    ]
+                  },
+                  userdata   :
+                  {
+                    row      : 0,
+                    column   : 4,
+                    rowspan  : 20
+                  }
+                },
+
+                deliver :
+                {
+                  type      : "SelectBox",
+                  label     : "Fulfilment method",
+                  value     : "Pick-up",
+                  options   :
+                  [
+                    { label : "Pick-up",  value : "Pick-up" },
+                    { label : "Delivery", value : "Delivery" },
+                  ],
+                  userdata  :
+                  {
+                    row       : 22
+                  }
+                },
+
+                fulfilled :
+                {
+                  type      : "CheckBox",
+                  label     : "Fulfilled",
+                  value     : false
+                }
+              };
+
+            this._fulfillmentForm.set(
+              {
+                message          : bold(familyName || ""),
+                labelColumnWidth : 150,
+                formData         : formData
+              });
+
+            this._fulfillmentForm._okButton.setLabel("Save");
+
+            this._fulfillmentForm.promise()
+              .then(
+                result =>
+                {
+                  this.debug(
+                    "fulfillment result: ", qx.util.Serializer.toJson(result));
+                  return Promise.resolve();
+                });
+
+            this._fulfillmentForm.show();
+          })
+        .catch(
+          (e) =>
+          {
+            console.error("getClientList:", e);
+          });
     }
   }
 });

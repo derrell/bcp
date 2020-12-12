@@ -39,6 +39,22 @@ qx.Class.define("bcp.client.Calendar",
       nullable : false,
       check    : "Boolean",
       apply    : "_applyShowScheduled"
+    },
+
+    startTimes :
+    {
+      init     :
+        [ "13:00", "13:00", "13:00", "13:00", "13:00", "13:00", "13:00" ],
+      nullable : false,
+      check    : "Array"
+    },
+
+    endTimes :
+    {
+      init     :
+        [ "20:00", "20:00", "20:00", "20:00", "20:00", "20:00", "20:00" ],
+      nullable : false,
+      check    : "Array"
     }
   },
 
@@ -101,6 +117,19 @@ qx.Class.define("bcp.client.Calendar",
         return;
       }
 
+      // Ensure it's a valid time
+      if (value)
+      {
+        day = value.day;
+        time = value.time;
+
+        if (! this._dayTimeNodes[day][time])
+        {
+console.warn("Throwing error: time is outside of allowed range. day=", day, ", time=", time, ", dayTimeNodes=", this._dayTimeNodes);
+          throw new Error("Time is outside of allowed range");
+        }
+      }
+
       this.__bInternalChange = true;
 
       if (old)
@@ -108,7 +137,10 @@ qx.Class.define("bcp.client.Calendar",
         day = old.day;
         time = old.time;
 
-        this._tree.nodeSetSelected(this._dayTimeNodes[day][time], false);
+        if (this._dayTimeNodes[day][time])
+        {
+          this._tree.nodeSetSelected(this._dayTimeNodes[day][time], false);
+        }
       }
 
       if (value)
@@ -242,6 +274,8 @@ qx.Class.define("bcp.client.Calendar",
             let         numDefaults;
             let         timestamp;
             let         formatted;
+            let         startTime;
+            let         endTime;
             let         value = this.getValue();
             const       fifteenMin = (1000 * 60 * 15);
             const       appointmentDefaults = result.appointmentDefaults;
@@ -280,6 +314,21 @@ qx.Class.define("bcp.client.Calendar",
               {
                 // Get the formatted time for this timestamp
                 formatted = this._formatTime(timestamp);
+
+                // If there is a start time specified for this day, elide
+                // any times that preceed the start time
+                startTime = this.getStartTimes()[dayNum];
+                if (typeof startTime == "string" && formatted < startTime)
+                {
+                  continue;
+                }
+
+                // Similarly, for end time
+                endTime = this.getEndTimes()[dayNum];
+                if (typeof endTime == "string" && formatted > endTime)
+                {
+                  break; // If this one is too large, others will be too
+                }
 
                 // Create the node for this time
                 timeNode = dm.addBranch(dayNode, formatted);
@@ -357,6 +406,12 @@ qx.Class.define("bcp.client.Calendar",
               {
                 // Retrieve the time node
                 timeNode = nodes[dayNum][formatted];
+
+                // If no time node (outside of scheduled times), we're done
+                if (! timeNode)
+                {
+                  return;
+                }
 
                 // Get the formatted time for this timestamp
                 formatted = this._formatTime(timestamp);

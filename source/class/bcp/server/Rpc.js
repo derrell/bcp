@@ -21,9 +21,10 @@ qx.Class.define("bcp.server.Rpc",
 
     server = jayson.server(
       {
-        getClientList   : this._getClientList.bind(this),
-        saveClient      : this._saveClient.bind(this),
-        getAppointments : this._getAppointments.bind(this)
+        getClientList       : this._getClientList.bind(this),
+        saveClient          : this._saveClient.bind(this),
+        getAppointments     : this._getAppointments.bind(this),
+        getDistributionList : this._getDistributionList.bind(this)
       });
 
     // Open the database
@@ -374,6 +375,57 @@ qx.Class.define("bcp.server.Rpc",
           });
 
       return p;
+    },
+
+    /**
+     * Retrieve the list of distribution start times and the first /
+     * last appointment-per-day schedule
+     *
+     * @param args {Array}
+     *   There are no arguments to this method. The array is unused.
+     *
+     * @param callback {Function}
+     *   @signature(err, result)
+     */
+    _getDistributionList(args, callback)
+    {
+      // TODO: move prepared statements to constructor
+      return this._db.prepare(
+        [
+          "SELECT ",
+          "    start_date",
+          "    day_1_first_appt,",
+          "    day_1_last_appt,",
+          "    day_2_first_appt,",
+          "    day_2_last_appt,",
+          "    day_3_first_appt,",
+          "    day_3_last_appt,",
+          "    day_4_first_appt,",
+          "    day_4_last_appt,",
+          "    day_5_first_appt,",
+          "    day_5_last_appt,",
+          "    day_6_first_appt,",
+          "    day_6_last_appt,",
+          "    day_7_first_appt,",
+          "    day_7_last_appt",
+          "  FROM DistributionPeriod",
+          "  ORDER BY start_date DESC;"
+        ].join(" "))
+    .then(
+      (stmt) =>
+      {
+        return stmt.all({});
+      })
+    .then(
+      (result) =>
+      {
+        callback(null, result);
+      })
+    .catch((e) =>
+      {
+        console.warn("Error in getDistributionList", e);
+        callback( { message : e.toString() } );
+      });
     }
   }
 });
