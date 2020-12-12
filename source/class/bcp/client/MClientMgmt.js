@@ -1,5 +1,11 @@
 qx.Mixin.define("bcp.client.MClientMgmt",
 {
+  events :
+  {
+    /** The client list has changed, e.g., by adding/editing a client */
+    clientListChanged : "qx.event.type.Event"
+  },
+
   members :
   {
     /** The client table */
@@ -603,6 +609,14 @@ qx.Mixin.define("bcp.client.MClientMgmt",
                 // Resort  by the Family column
                 this._tm.sortByColumn(
                   this._tm.getSortColumnIndex(), true);
+
+                // Let listeners know the client list changed
+                this.fireDataEvent(
+                  "clientListChanged",
+                  {
+                    family_name : formValues.family_name
+                  });
+
               })
             .catch(
               (e) =>

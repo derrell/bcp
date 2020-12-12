@@ -19,8 +19,9 @@ qx.Mixin.define("bcp.client.MFulfillment",
 
   members :
   {
-    _fullfillmentClients : null,
+    _fulfillmentClients  : null,
     _labelToListMap      : null,
+    _butNewClient        : null,
 
     /**
      * Create the fulfillment page
@@ -31,6 +32,7 @@ qx.Mixin.define("bcp.client.MFulfillment",
     _createFulfillmentTab(tabView)
     {
       let             page;
+      let             vBox;
       let             formData;
       const           _this = this;
 
@@ -53,19 +55,60 @@ qx.Mixin.define("bcp.client.MFulfillment",
       // Initialize the label to list map
       this._labelToListMap = {};
 
+      // Create a vbox for the client list and New Client button
+      vBox = new qx.ui.container.Composite(new qx.ui.layout.VBox(10));
+      page.add(vBox);
+
       // Add the list of client family-names
-      this._fullfillmentClients = new qx.ui.form.List();
-      this._fullfillmentClients.set(
+      this._fulfillmentClients = new qx.ui.form.List();
+      this._fulfillmentClients.set(
         {
           width : 240
         });
-      page.add(this._fullfillmentClients);
+      vBox.add(this._fulfillmentClients, { flex : 1 });
 
-      this._fullfillmentClients.addListener(
+      this._fulfillmentClients.addListener(
         "appear", this._onListAppear, this);
-      this._fullfillmentClients.addListener(
+      this._fulfillmentClients.addListener(
         "changeSelection", this._onListChangeSelection, this);
 
+      // Allow creating a new client right from here
+      this._butNewClient = new qx.ui.form.Button("New Client");
+      this._butNewClient.set(
+        {
+          maxWidth : 80
+        });
+      vBox.add(this._butNewClient);
+      this._butNewClient.addListener(
+        "execute",
+        () =>
+        {
+          this._buildClientForm();
+        },
+        this);
+
+      // After a new client is created, we'll get an event that tells us
+      // the client list was changed. The event data contains the family
+      // name, so we can pre-select that family for fulfullment.
+      this.addListener(
+        "clientListChanged",
+        (e) =>
+        {
+          let             data;
+
+          // Refresh the list
+          this._onListAppear();
+
+          // If one is provided, select the given family name
+          data = e.getData();
+          if (data && data.family_name)
+          {
+            this._fulfillmentClients.setSelection(
+              [ this._labelToListMap[data.family_name] ] );
+          }
+        });
+
+      // Create the form for adding/editing a fulfillment record
       this._fulfillmentForm = new qxl.dialog.FormEmbed(
         {
           callback         : function(result)
@@ -160,16 +203,47 @@ qx.Mixin.define("bcp.client.MFulfillment",
     },
 
     /**
+     * Disallow changing list selection, adding a new client, or switching
+     * tabs, while form is present. User must press Save or Cancel to
+     * continue.
+     *
+     * @param bDisable {Boolean}
+     *   true to disable them (called when form is shwon)
+     *   false to re-enable all of the buttons (called by Ok/Cancel handlers);
+     */
+    _disableAllForFulfillment : function(bDisable)
+    {
+      this._fulfillmentClients.setEnabled(! bDisable);
+      this._butNewClient.setEnabled(! bDisable);
+
+      // Disable/Enable all tabs other than "Fulfillment"
+      this._tabView.getChildren().forEach(
+        (child) =>
+        {
+          if (child.getLabel() != "Fulfillment")
+          {
+            child.getChildControl("button").setEnabled(! bDisable);
+          }
+        });
+    },
+
+    /**
      * Remove the selection in the client list when Ok or Cancel is
      * selected in the detail form
      */
     _onOkOrCancel : function()
     {
-      this._fullfillmentClients.resetSelection();
+      // Re-enable access to the rest of the gui
+      this._disableAllForFulfillment(false);
+
+      // Remove the selection. We're ready for the next fulfillment
+      this._fulfillmentClients.resetSelection();
     },
 
     _onListAppear : function()
     {
+      this._fulfillmentClients.removeAll();
+
       // Recreate the list of clients
       this._tm.getDataAsMapArray()
         .sort(
@@ -186,7 +260,7 @@ qx.Mixin.define("bcp.client.MFulfillment",
 
             listItem = new qx.ui.form.ListItem(entry.family_name);
             this._labelToListMap[entry.family_name] = listItem;
-            this._fullfillmentClients.add(listItem);
+            this._fulfillmentClients.add(listItem);
           });
     },
 
@@ -212,6 +286,9 @@ qx.Mixin.define("bcp.client.MFulfillment",
           ].join(""));
       }
 
+      // Disable access to the rest of the gui while working with the form
+      this._disableAllForFulfillment(true);
+
       // Retrieve the family name selected in the client list
       familyName = e.getData()[0].getLabel();
 
@@ -221,7 +298,6 @@ qx.Mixin.define("bcp.client.MFulfillment",
         {
           return entry.family_name == familyName;
         })[0];
-console.log("client=", client);
 
       formData =
         {

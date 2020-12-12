@@ -19,6 +19,8 @@ qx.Class.define("bcp.client.Client",
 
   members :
   {
+    _tabView  : null,
+
     main()
     {
       let             mainContainer;
@@ -28,7 +30,6 @@ qx.Class.define("bcp.client.Client",
       let             label;
       let             butLogin;
       let             butLogout;
-      let             tabView;
 
 
       this.base(arguments);
@@ -94,14 +95,14 @@ qx.Class.define("bcp.client.Client",
       //
 
       // Create a tabview for the remainder of the page
-      tabView = new qx.ui.tabview.TabView();
-      mainContainer.add(tabView, { flex : 1 });
+      this._tabView = new qx.ui.tabview.TabView();
+      mainContainer.add(this._tabView, { flex : 1 });
 
       // Create each of the tabview pages
-      this._createClientListTab(tabView);
-      this._createFulfillmentTab(tabView);
-      this._createDistributionTab(tabView);
-      this._createReportsTab(tabView);
+      this._createClientListTab(this._tabView);
+      this._createFulfillmentTab(this._tabView);
+      this._createDistributionTab(this._tabView);
+      this._createReportsTab(this._tabView);
     }
   }
 });
