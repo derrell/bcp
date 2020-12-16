@@ -1,3 +1,16 @@
+/*
+ * Billerica Community Pantry
+ *
+ * Copyright:
+ *   2020 Derrell Lipman
+ *
+ * License:
+ *   MIT: https://opensource.org/licenses/MIT
+ *   See the LICENSE file in the project's top-level directory for details.
+ *
+ * Authors:
+ *   * Derrell Lipman (derrell)
+ */
 qx.Class.define("bcp.client.Appointment",
 {
   extend     : qx.ui.container.Composite,
