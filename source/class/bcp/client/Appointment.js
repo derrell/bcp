@@ -44,17 +44,17 @@ qx.Class.define("bcp.client.Appointment",
     startTimes :
     {
       init     :
-        [ "13:00", "13:00", "13:00", "13:00", "13:00", "13:00", "13:00" ],
+        [ "08:00", "08:00", "08:00", "08:00", "08:00", "08:00", "08:00" ],
       nullable : false,
-      check    : "Array"
+      check    : "this._checkTime(value)"
     },
 
     endTimes :
     {
       init     :
-        [ "20:00", "20:00", "20:00", "20:00", "20:00", "20:00", "20:00" ],
+        [ "22:00", "22:00", "22:00", "22:00", "22:00", "22:00", "22:00" ],
       nullable : false,
-      check    : "Array"
+      check    : "this._checkTime(value)"
     }
   },
 
@@ -68,6 +68,45 @@ qx.Class.define("bcp.client.Appointment",
 
     // Node IDs by day, time
     _dayTimeNodes : null,
+
+    /**
+     * Ensure that start and end times are valid
+     *
+     * @param value {String}
+     *   The value to be checked
+     *
+     * @return {Boolean}
+     *   true if the value is an array of 7 strings of format HH:MM;
+     *   false otherwise
+     */
+    _checkTime : function(value)
+    {
+      let             i;
+
+      // Ensure we got an array
+      if (! Array.isArray(value))
+      {
+        return false;
+      }
+
+      // Ensure it's an array of length 7
+      if (value.length != 7)
+      {
+        return false;
+      }
+
+      // Ensure each element of the array is of format HH:MM
+      for (i = 0; i < 7; i++)
+      {
+        if (! (/^[0-9][0-9]:[0-9][0-9]$/.test(value[i])))
+        {
+          return false;
+        }
+      }
+
+      // All good!
+      return true;
+    },
 
     // property apply
     _applyShowScheduled(value, old)
@@ -292,7 +331,7 @@ console.warn("Throwing error: time is outside of allowed range. day=", day, ", t
               // Add each possible time for this day
               for (timestamp = new Date("2020-01-01T08:00"),
                      numNodes = 0;
-                   numNodes < 4 * 14; // 4x per hour, many hours
+                   numNodes < 4 * 15; // 4x per hour, many hours
                    timestamp = new Date(timestamp.getTime() + fifteenMin),
                      numNodes++)
               {
@@ -301,14 +340,14 @@ console.warn("Throwing error: time is outside of allowed range. day=", day, ", t
 
                 // If there is a start time specified for this day, elide
                 // any times that preceed the start time
-                startTime = this.getStartTimes()[dayNum];
+                startTime = this.getStartTimes()[dayNum - 1];
                 if (typeof startTime == "string" && formatted < startTime)
                 {
                   continue;
                 }
 
                 // Similarly, for end time
-                endTime = this.getEndTimes()[dayNum];
+                endTime = this.getEndTimes()[dayNum - 1];
                 if (typeof endTime == "string" && formatted > endTime)
                 {
                   break; // If this one is too large, others will be too
