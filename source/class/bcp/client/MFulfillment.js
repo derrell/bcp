@@ -1,28 +1,11 @@
 qx.Mixin.define("bcp.client.MFulfillment",
 {
-  statics :
-  {
-    _registration :
-    {
-      initElement : function(fieldType, fieldData, key)
-      {
-        let formElement = new bcp.client.Calendar(true);
-        return formElement;
-      },
-
-      addToFormController : function(fieldType, fieldData, key, formElement)
-      {
-        this._formController.addTarget(formElement, "value", key, true, null);
-      }
-    }
-  },
-
   members :
   {
-    _fulfillmentClients  : null,
-    _fulfillmentForm     : null,
-    _labelToListMap      : null,
-    _butNewClient        : null,
+    _fulfillmentClients        : null,
+    _fulfillmentForm           : null,
+    _fulfillmentLabelToListMap : null,
+    _butNewClient              : null,
 
     /**
      * Create the fulfillment page
@@ -37,24 +20,12 @@ qx.Mixin.define("bcp.client.MFulfillment",
       let             formData;
       const           _this = this;
 
-      // If we haven't yet registered our appointment calendar to be a
-      // form element...
-      if (bcp.client.MFulfillment._registration)
-      {
-        // ... then do so now.
-        qxl.dialog.Dialog.registerFormElementHandlers(
-          "appointments", bcp.client.MFulfillment._registration);
-
-        // Preevent doing so again.
-        bcp.client.MFulfillment._registration = null;
-      }
-
       page = new qx.ui.tabview.Page("Fulfillment");
       page.setLayout(new qx.ui.layout.HBox(12));
       tabView.add(page);
 
       // Initialize the label to list map
-      this._labelToListMap = {};
+      this._fulfillmentLabelToListMap = {};
 
       // Create a vbox for the client list and New Client button
       vBox = new qx.ui.container.Composite(new qx.ui.layout.VBox(10));
@@ -69,9 +40,9 @@ qx.Mixin.define("bcp.client.MFulfillment",
       vBox.add(this._fulfillmentClients, { flex : 1 });
 
       this._fulfillmentClients.addListener(
-        "appear", this._onListAppear, this);
+        "appear", this._onFulfillmentListAppear, this);
       this._fulfillmentClients.addListener(
-        "changeSelection", this._onListChangeSelection, this);
+        "changeSelection", this._onFulfillmentListChangeSelection, this);
 
       // Allow creating a new client right from here
       this._butNewClient = new qx.ui.form.Button("New Client");
@@ -98,14 +69,14 @@ qx.Mixin.define("bcp.client.MFulfillment",
           let             data;
 
           // Refresh the list
-          this._onListAppear();
+          this._onFulfillmentListAppear();
 
           // If one is provided, select the given family name
           data = e.getData();
           if (data && data.family_name)
           {
             this._fulfillmentClients.setSelection(
-              [ this._labelToListMap[data.family_name] ] );
+              [ this._fulfillmentLabelToListMap[data.family_name] ] );
           }
         });
 
@@ -197,13 +168,14 @@ qx.Mixin.define("bcp.client.MFulfillment",
             layout.setColumnAlign(col(0), "right", "top");
 
             layout.setColumnFlex(col(1), 1);
+            layout.setRowFlex(10, 1);
 
             renderer._setLayout(layout);
             return renderer;
           }
         });
 
-      // Initially hide form so the top (before-form) buttons get hidden
+      // Initially hide form
       this._fulfillmentForm.hide();
 
       // When the form is OK'ed or Canceled, remove list-box selection
@@ -254,7 +226,7 @@ qx.Mixin.define("bcp.client.MFulfillment",
       this._fulfillmentClients.resetSelection();
     },
 
-    _onListAppear : function()
+    _onFulfillmentListAppear : function()
     {
       this._fulfillmentClients.removeAll();
 
@@ -273,18 +245,15 @@ qx.Mixin.define("bcp.client.MFulfillment",
             let             listItem;
 
             listItem = new qx.ui.form.ListItem(entry.family_name);
-            this._labelToListMap[entry.family_name] = listItem;
+            this._fulfillmentLabelToListMap[entry.family_name] = listItem;
             this._fulfillmentClients.add(listItem);
           });
     },
 
-    _onListChangeSelection : function(e)
+    _onFulfillmentListChangeSelection : function(e)
     {
-      let             rpc;
-      let             formData;
-      let             client;
       let             familyName;
-      let             eData = e.getData();
+      const           eData = e.getData();
 
       // If the selection is being cleared, we have nothing to do.
       if (eData.length === 0)
@@ -292,25 +261,60 @@ qx.Mixin.define("bcp.client.MFulfillment",
         return;
       }
 
-      rpc = new qx.io.jsonrpc.Client(new qx.io.transport.Xhr("/rpc"));
-      rpc.sendRequest("getDistributionList", [])
-        .then(
-          (distributions) =>
-          {
-            // If there are no distributions, we can't do anything
-            if (! distributions || distributions.length < 1)
-            {
-              qxl.dialog.Dialog.alert(
-                "There are no distributions yet scheduled");
-              return;
-            }
+      // Retrieve the family name selected in the client list
+      familyName = eData[0].getLabel();
 
+      // Fill in the fulfillment form and process its result
+      this._handleFulfillmentForm(familyName);
+    },
+
+    _handleFulfillmentForm : function(familyName, distributionStart)
+    {
+      let             rpc;
+      let             formData;
+      let             client;
+
+      rpc = new qx.io.jsonrpc.Client(new qx.io.transport.Xhr("/rpc"));
+
+      // Concurrently, retrieve the distribution list and this fulfillment
+      rpc.sendRequest(
+        "getAppointments",
+        [
+          distributionStart || true,
+          familyName
+        ])
+        .then(
+          (data) =>
+          {
+            let             distribution;
+            let             distributions = data.distributions;
+            let             appointmentsScheduled = data.appoitnmentsScheduled;
+            let             fulfillment = data.fulfillment[0] || {};
+
+console.log("getAppointments returned ", data);
             // Disable access to the rest of the gui while working
             // with the form
             this._disableAllForFulfillment(true);
 
-            // Retrieve the family name selected in the client list
-            familyName = eData[0].getLabel();
+            // Get the information for the selected distribution
+            if (! distributionStart)
+            {
+              distribution = distributions[0];
+            }
+            else
+            {
+              distribution = distributions.filter(
+                (distro => distro.start_date == distributionStart))[0];
+            }
+
+            // Sanity check
+            if (! distribution)
+            {
+              console.error(
+                `Did not find distribution ${distributionStart} in:`,
+                distributions);
+              throw new Error("Did not find expected distribution");
+            }
 
             // Get the client record for the selected list item
             client = this._tm.getDataAsMapArray().filter(
@@ -321,11 +325,11 @@ qx.Mixin.define("bcp.client.MFulfillment",
 
             formData =
               {
-                distribution_start_date :
+                distribution :
                 {
                   type       : "SelectBox",
                   label      : "Distribution start date",
-                  value      : distributions[0].start_date,
+                  value      : distribution.start_date,
                   options    : distributions.map(
                     (distribution) =>
                     {
@@ -335,6 +339,21 @@ qx.Mixin.define("bcp.client.MFulfillment",
                           value : distribution.start_date
                         });
                     }),
+                  userdata   :
+                  {
+                    row           : 1,
+                    distributions : distributions
+                  },
+                  events     :
+                  {
+                    changeSelection : function(e)
+                    {
+                      console.log(
+                        "distribution changeSelection:",
+                        e.getData(),
+                        "distributions=", this.getUserData("distributions"));
+                    }
+                  },
                   enabled    : false
                 },
 
@@ -352,7 +371,7 @@ qx.Mixin.define("bcp.client.MFulfillment",
                 {
                   type       : "TextField",
                   label      : "Day",
-                  value      : "" + client.appt_day_default,
+                  value      : "" + (client.appt_day_default || ""),
                   enabled    : false
                 },
 
@@ -364,15 +383,19 @@ qx.Mixin.define("bcp.client.MFulfillment",
                   enabled    : false
                 },
 
-                address_default :
+                delivery_address :
                 {
                   type       : "TextArea",
                   label      : "Delivery address",
                   lines      : 3,
-                  value      : client.address_default || "",
+                  value      : fulfillment.delivery_address || "",
                   userdata   :
                   {
                     rowspan    : 3
+                  },
+                  properties :
+                  {
+                    height     : 70
                   }
                 },
 
@@ -380,28 +403,37 @@ qx.Mixin.define("bcp.client.MFulfillment",
                 {
                   type       : "appointments",
                   label      : "",
+                  value      :
+                    (fulfillment.appt_time
+                     ?
+                     {
+                       day  : fulfillment.appt_day,
+                       time : fulfillment.appt_time
+                     }
+                     : null),
                   properties :
                   {
+                    height        : 200,
                     showScheduled : true,
                     startTimes    :
                     [
-                      distributions[0].day_1_first_appt,
-                      distributions[0].day_2_first_appt,
-                      distributions[0].day_3_first_appt,
-                      distributions[0].day_4_first_appt,
-                      distributions[0].day_5_first_appt,
-                      distributions[0].day_6_first_appt,
-                      distributions[0].day_7_first_appt
+                      distribution.day_1_first_appt,
+                      distribution.day_2_first_appt,
+                      distribution.day_3_first_appt,
+                      distribution.day_4_first_appt,
+                      distribution.day_5_first_appt,
+                      distribution.day_6_first_appt,
+                      distribution.day_7_first_appt
                     ],
                     endTimes    :
                     [
-                      distributions[0].day_1_last_appt,
-                      distributions[0].day_2_last_appt,
-                      distributions[0].day_3_last_appt,
-                      distributions[0].day_4_last_appt,
-                      distributions[0].day_5_last_appt,
-                      distributions[0].day_6_last_appt,
-                      distributions[0].day_7_last_appt
+                      distribution.day_1_last_appt,
+                      distribution.day_2_last_appt,
+                      distribution.day_3_last_appt,
+                      distribution.day_4_last_appt,
+                      distribution.day_5_last_appt,
+                      distribution.day_6_last_appt,
+                      distribution.day_7_last_appt
                     ]
                   },
                   userdata   :
@@ -447,11 +479,36 @@ qx.Mixin.define("bcp.client.MFulfillment",
 
             this._fulfillmentForm.promise()
               .then(
-                result =>
+                (result) =>
                 {
+                  let             rpc;
+
                   this.debug(
                     "fulfillment result: ", qx.util.Serializer.toJson(result));
-                  return Promise.resolve();
+
+                  // If the form was cancelled...
+                  if (! result)
+                  {
+                    // ... then just reset the selection, ...
+                    this._fulfillmentClients.resetSelection();
+
+                    // ... and get outta Dodge!
+                    return Promise.resolve();
+                  }
+
+                  // Ensure the start date is included in the data to be saved
+                  result.family_name = familyName;
+
+                  rpc = new qx.io.jsonrpc.Client(
+                    new qx.io.transport.Xhr("/rpc"));
+
+                  return rpc.sendRequest("saveFulfillment", [ result ])
+                    .catch(
+                      (e) =>
+                      {
+                        console.warn("Error saving changes:", e);
+                        qxl.dialog.Dialog.error(`Error saving changes: ${e}`);
+                      });
                 });
 
             this._fulfillmentForm.show();

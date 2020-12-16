@@ -23,8 +23,12 @@ qx.Class.define("bcp.server.Rpc",
       {
         getClientList       : this._getClientList.bind(this),
         saveClient          : this._saveClient.bind(this),
+
         getAppointments     : this._getAppointments.bind(this),
-        getDistributionList : this._getDistributionList.bind(this)
+        saveFulfillment     : this._saveFulfillment.bind(this),
+
+        getDistributionList : this._getDistributionList.bind(this),
+        saveDistribution    : this._saveDistribution.bind(this)
       });
 
     // Open the database
@@ -60,7 +64,7 @@ qx.Class.define("bcp.server.Rpc",
       InternalError    : -32603,
 
       // Application-specific errors (-32000.. -32099)
-      ClientAlreadyExists : -32000
+      AlreadyExists    : -32000
     }
   },
 
@@ -133,7 +137,7 @@ qx.Class.define("bcp.server.Rpc",
      *     The map containing complete data for a client record
      *
      *   args[1] {Boolean}
-     *     true if this is an edit; false to insert a new family
+     *     true if this is a new entry; false if it is an edit
      *
      * @param callback {Function}
      *   @signature(err, result)
@@ -270,11 +274,10 @@ qx.Class.define("bcp.server.Rpc",
             switch(e.code)
             {
             case "SQLITE_CONSTRAINT" :
-              error.code = this.constructor.Error.ClientAlreadyExists;
+              error.code = this.constructor.Error.AlreadyExists;
               break;
             }
 
-            // Return error as result, not as error
             callback(error);
           });
 
@@ -298,6 +301,11 @@ qx.Class.define("bcp.server.Rpc",
      *
      *     When falsy, scheduled appointments are not retrieved.
      *
+     *   args[1] {String?}
+     *     The family name. This argument is only used if args[0] is truthy.
+     *     When used, it allows retrieving the fulfillment record for the
+     *     given distribution and family.
+     *
      * @param callback {Function}
      *   @signature(err, result)
      */
@@ -306,6 +314,7 @@ qx.Class.define("bcp.server.Rpc",
       let             p;
       let             results = {};
       let             distribution = args.length > 0 ? args[0] : null;
+      let             familyName = args.length > 1 ? args[1] : null;
 
       // TODO: move prepared statements to constructor
       p = Promise.resolve()
@@ -328,13 +337,28 @@ qx.Class.define("bcp.server.Rpc",
           {
             return this._db.prepare(
               [
-                "SELECT start_date",
+                "SELECT ",
+                "    start_date,",
+                "    day_1_first_appt,",
+                "    day_1_last_appt,",
+                "    day_2_first_appt,",
+                "    day_2_last_appt,",
+                "    day_3_first_appt,",
+                "    day_3_last_appt,",
+                "    day_4_first_appt,",
+                "    day_4_last_appt,",
+                "    day_5_first_appt,",
+                "    day_5_last_appt,",
+                "    day_6_first_appt,",
+                "    day_6_last_appt,",
+                "    day_7_first_appt,",
+                "    day_7_last_appt",
                 "  FROM DistributionPeriod",
                 "  ORDER BY start_date DESC;"
               ].join(" "));
           })
         .then(stmt => stmt.all({}))
-        .then(result => (results.distributionStarts = result))
+        .then(result => (results.distributions = result))
 
         .then(
           () =>
@@ -349,8 +373,8 @@ qx.Class.define("bcp.server.Rpc",
             if (typeof distribution == "boolean")
             {
               distribution =
-                (results.distributionStarts.length > 0
-                 ? results.distributionStarts[0].start_date
+                (results.distributions.length > 0
+                 ? results.distributions[0].start_date
                  : distribution);
             }
 
@@ -366,12 +390,129 @@ qx.Class.define("bcp.server.Rpc",
         .then(stmt => stmt ? stmt.all({ $distribution : distribution }) : null)
         .then(result => (results.appointmentsScheduled = result))
 
+        .then(
+          () =>
+          {
+            if (! distribution || ! familyName)
+            {
+              return null;
+            }
+
+            return this._db.prepare(
+              [
+                "SELECT ",
+                "    f.family_name AS family_name,",
+                "    f.appt_day AS appt_day,",
+                "    f.appt_time AS appt_time,",
+                "    COALESCE(f.delivery_address, c.address_default)",
+                "      AS delivery_address",
+                "  FROM Fulfillment f,",
+                "       Client c",
+                "  WHERE f.family_name = $family_name",
+                "    AND c.family_name = f.family_name",
+                "    AND distribution = $distribution;"
+              ].join(" "));
+          })
+        .then(stmt => stmt ? stmt.all(
+          {
+            $distribution : distribution,
+            $family_name  : familyName
+          }) : null)
+        .then(result => (results.fulfillment = result))
+
         // Give 'em what they came for!
+.then(() => console.log("getAppointment results=", results))
         .then(() => callback(null, results))
         .catch((e) =>
           {
             console.warn("Error in getAppointments", e);
             callback( { message : e.toString() } );
+          });
+
+      return p;
+    },
+
+    /**
+     * Save a new or updated fulfillment. When updating the record is
+     * replaced in its entirety.
+     *
+     * @param args {Array}
+     *   args[0] {Map}
+     *     The map containing complete data for a fulfillment record
+     *
+     *   args[1] {Boolean}
+     *     true if this is a new entry; false if it is an edit
+     *
+     * @param callback {Function}
+     *   @signature(err, result)
+     */
+    _saveFulfillment(args, callback)
+    {
+      let             p;
+      let             prepare;
+      let             day = null;
+      let             time = null;
+      const           fulfillmentInfo = args[0];
+
+      // If there's an appointment...
+      if (fulfillmentInfo.appointments)
+      {
+        day = fulfillmentInfo.appointments.day;
+        time = fulfillmentInfo.appointments.time;
+      }
+
+      // This is a new entry
+      prepare = this._db.prepare(
+        [
+          "INSERT OR REPLACE INTO Fulfillment",
+          "  (",
+          "    distribution,",
+          "    family_name,",
+          "    appt_day,",
+          "    appt_time,",
+          "    delivery_address,",
+          "    fulfilled,",
+          "    fulfillment_time",
+          "  )",
+          "  VALUES",
+          "  (",
+          "    $distribution,",
+          "    $family_name,",
+          "    $appt_day,",
+          "    $appt_time,",
+          "    $delivery_address,",
+          "    $fulfilled,",
+          "    $fulfillment_time",
+          "  );"
+        ].join(" "));
+
+      // TODO: move prepared statements to constructor
+      p = prepare
+        .then(stmt => stmt.run(
+          {
+            $distribution      : fulfillmentInfo.distribution,
+            $family_name       : fulfillmentInfo.family_name,
+            $appt_day          : day,
+            $appt_time         : time,
+            $delivery_address  : fulfillmentInfo.delivery_address,
+            $fulfilled         : fulfillmentInfo.fulfilled,
+            $fulfillment_time  : fulfillmentInfo.fulfillment_time
+          }))
+
+        .then(
+          function (result)
+          {
+            return result;
+          })
+
+        // Give 'em what they came for!
+        .then((result) => callback(null, null))
+        .catch((e) =>
+          {
+            let             error = { message : e.toString() };
+
+            console.warn(`Error in saveFulfillment`, e);
+            callback(error);
           });
 
       return p;
@@ -393,7 +534,7 @@ qx.Class.define("bcp.server.Rpc",
       return this._db.prepare(
         [
           "SELECT ",
-          "    start_date",
+          "    start_date,",
           "    day_1_first_appt,",
           "    day_1_last_appt,",
           "    day_2_first_appt,",
@@ -419,6 +560,7 @@ qx.Class.define("bcp.server.Rpc",
     .then(
       (result) =>
       {
+console.log("getDistributionList result=", result);
         callback(null, result);
       })
     .catch((e) =>
@@ -426,6 +568,150 @@ qx.Class.define("bcp.server.Rpc",
         console.warn("Error in getDistributionList", e);
         callback( { message : e.toString() } );
       });
-    }
+    },
+
+    /**
+     * Save a new or updated distribution. When updating the record is
+     * replaced in its entirety.
+     *
+     * @param args {Array}
+     *   args[0] {Map}
+     *     The map containing complete data for a distribution record
+     *
+     *   args[1] {Boolean}
+     *     true if this is a new entry; false if it is an edit
+     *
+     * @param callback {Function}
+     *   @signature(err, result)
+     */
+    _saveDistribution(args, callback)
+    {
+      let             p;
+      let             prepare;
+      const           distroInfo = args[0];
+      const           bNew = args[1];
+
+      if (! bNew)
+      {
+        prepare = this._db.prepare(
+          [
+            "UPDATE DistributionPeriod",
+            "  SET ",
+            "    day_1_first_appt = $day_1_first_appt,",
+            "    day_2_first_appt = $day_2_first_appt,",
+            "    day_3_first_appt = $day_3_first_appt,",
+            "    day_4_first_appt = $day_4_first_appt,",
+            "    day_5_first_appt = $day_5_first_appt,",
+            "    day_6_first_appt = $day_6_first_appt,",
+            "    day_7_first_appt = $day_7_first_appt,",
+            "    day_1_last_appt = $day_1_last_appt,",
+            "    day_2_last_appt = $day_2_last_appt,",
+            "    day_3_last_appt = $day_3_last_appt,",
+            "    day_4_last_appt = $day_4_last_appt,",
+            "    day_5_last_appt = $day_5_last_appt,",
+            "    day_6_last_appt = $day_6_last_appt,",
+            "    day_7_last_appt = $day_7_last_appt",
+            "  WHERE start_date = $start_date;",
+          ].join(" "));
+      }
+      else
+      {
+        // This is a new entry
+        prepare = this._db.prepare(
+          [
+            "INSERT INTO DistributionPeriod",
+            "  (",
+            "    start_date,",
+            "    day_1_first_appt,",
+            "    day_2_first_appt,",
+            "    day_3_first_appt,",
+            "    day_4_first_appt,",
+            "    day_5_first_appt,",
+            "    day_6_first_appt,",
+            "    day_7_first_appt,",
+            "    day_1_last_appt,",
+            "    day_2_last_appt,",
+            "    day_3_last_appt,",
+            "    day_4_last_appt,",
+            "    day_5_last_appt,",
+            "    day_6_last_appt,",
+            "    day_7_last_appt",
+            "  )",
+            "  VALUES",
+            "  (",
+            "    $start_date,",
+            "    $day_1_first_appt,",
+            "    $day_2_first_appt,",
+            "    $day_3_first_appt,",
+            "    $day_4_first_appt,",
+            "    $day_5_first_appt,",
+            "    $day_6_first_appt,",
+            "    $day_7_first_appt,",
+            "    $day_1_last_appt,",
+            "    $day_2_last_appt,",
+            "    $day_3_last_appt,",
+            "    $day_4_last_appt,",
+            "    $day_5_last_appt,",
+            "    $day_6_last_appt,",
+            "    $day_7_last_appt",
+            "  );"
+          ].join(" "));
+      }
+
+      // TODO: move prepared statements to constructor
+      p = prepare
+        .then(stmt => stmt.run(
+          {
+            $start_date : distroInfo.start_date,
+            $day_1_first_appt : distroInfo.day_1_first_appt,
+            $day_2_first_appt : distroInfo.day_2_first_appt,
+            $day_3_first_appt : distroInfo.day_3_first_appt,
+            $day_4_first_appt : distroInfo.day_4_first_appt,
+            $day_5_first_appt : distroInfo.day_5_first_appt,
+            $day_6_first_appt : distroInfo.day_6_first_appt,
+            $day_7_first_appt : distroInfo.day_7_first_appt,
+            $day_1_last_appt  : distroInfo.day_1_last_appt,
+            $day_2_last_appt  : distroInfo.day_2_last_appt,
+            $day_3_last_appt  : distroInfo.day_3_last_appt,
+            $day_4_last_appt  : distroInfo.day_4_last_appt,
+            $day_5_last_appt  : distroInfo.day_5_last_appt,
+            $day_6_last_appt  : distroInfo.day_6_last_appt,
+            $day_7_last_appt  : distroInfo.day_7_last_appt,
+          }))
+
+        .then(
+          function (result)
+          {
+            // Ensure that a request to edit actually edited something
+            if (! bNew && result.changes != 1)
+            {
+              throw new Error("Edit did not find a row to modify");
+            }
+
+            return result;
+          })
+
+        // Give 'em what they came for!
+        .then((result) => callback(null, null))
+        .catch((e) =>
+          {
+            let             error = { message : e.toString() };
+
+            console.warn(`Error in saveDistribution`, e);
+
+            // Is the error one we expect? If so, specify an error code.
+            // Otherwise, it will default to InternalError
+            switch(e.code)
+            {
+            case "SQLITE_CONSTRAINT" :
+              error.code = this.constructor.Error.AlreadyExists;
+              break;
+            }
+
+            callback(error);
+          });
+
+      return p;
+    }    
   }
 });

@@ -98,6 +98,9 @@ qx.Class.define("bcp.client.Client",
       this._tabView = new qx.ui.tabview.TabView();
       mainContainer.add(this._tabView, { flex : 1 });
 
+      // Make sure all of our local form elements are registered
+      bcp.client.RegisterFormElements.register();
+
       // Create each of the tabview pages
       this._createClientListTab(this._tabView);
       this._createFulfillmentTab(this._tabView);

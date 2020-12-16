@@ -622,7 +622,7 @@ qx.Mixin.define("bcp.client.MClientMgmt",
               (e) =>
               {
                 console.warn("Error saving changes:", e);
-                if (e.code == this.constructor.RpcError.ClientAlreadyExists)
+                if (e.code == this.constructor.RpcError.AlreadyExists)
                 {
                   qxl.dialog.Dialog.error(
                     `Family name "${formValues.family_name}" already exists`);

@@ -1,4 +1,4 @@
-qx.Class.define("bcp.client.Calendar",
+qx.Class.define("bcp.client.Appointment",
 {
   extend     : qx.ui.container.Composite,
   include   : [ qx.ui.form.MForm ],
@@ -255,6 +255,7 @@ console.warn("Throwing error: time is outside of allowed range. day=", day, ", t
             let         nodes;
             let         dayNum;
             let         numDefaults;
+            let         numScheduled;
             let         timestamp;
             let         formatted;
             let         startTime;
@@ -323,7 +324,7 @@ console.warn("Throwing error: time is outside of allowed range. day=", day, ", t
                 node = tree.nodeGet(timeNode);
                 node._bTimeNode = true;
 
-                // If this node has the time of the Calendar's value...
+                // If this node has the time of the Appointment's value...
                 if (value && day == dayNum && time == formatted)
                 {
                   // ... then mark this node as selected
@@ -360,7 +361,7 @@ console.warn("Throwing error: time is outside of allowed range. day=", day, ", t
                 catch(e)
                 {
                   qxl.dialog.Alert(
-                    "Invalid data in database: " +
+                    "Invalid data in database (defaults): " +
                       "appointment day '" + day + "'" +
                       ", appointment time '" + time + "'");
                   return;
@@ -378,6 +379,52 @@ console.warn("Throwing error: time is outside of allowed range. day=", day, ", t
                 }
               });
 
+            if (bShowScheduledToo)
+            {
+              // Prepare to track number of actual appointments per timeslot
+              numScheduled =
+                {
+                  1 : {},
+                  2 : {},
+                  3 : {},
+                  4 : {},
+                  5 : {},
+                  6 : {},
+                  7 : {}
+                };
+
+              // Add the appointment defaults data to the tree
+              appointmentsScheduled.forEach(
+                (entry) =>
+                {
+                  let             day = entry.appt_day;
+                  let             time = entry.appt_time;
+
+                  // Get the node for this time slot
+                  try
+                  {
+                    timeNode = nodes[day][time];
+                  }
+                  catch(e)
+                  {
+                    qxl.dialog.Alert(
+                      "Invalid data in database (appointments): " +
+                        "appointment day '" + day + "'" +
+                        ", appointment time '" + time + "'");
+                    return;
+                  }
+
+                  // Keep track of number of default appointments per timeslot
+                  numScheduled[day][time] =
+                    (numScheduled[day][time]
+                     ? numScheduled[day][time] + 1
+                     : 1);
+
+                  // Add the family name to the current time branch
+                  dm.addLeaf(timeNode, entry.family_name);
+                });
+            }
+
             // Update the number of appointments for each time slot
             for (dayNum = 1; dayNum <= 7; dayNum++)
             {
@@ -387,6 +434,9 @@ console.warn("Throwing error: time is outside of allowed range. day=", day, ", t
                    timestamp = new Date(timestamp.getTime() + fifteenMin),
                      numNodes++)
               {
+                // Get the formatted time for this timestamp
+                formatted = this.constructor.formatTime(timestamp);
+
                 // Retrieve the time node
                 timeNode = nodes[dayNum][formatted];
 
@@ -409,10 +459,11 @@ console.warn("Throwing error: time is outside of allowed range. day=", day, ", t
                 // number for each timeslot
                 if (bShowScheduledToo)
                 {
+                  // Show the number of default appointments for each timeslot
                   dm.setColumnData(
                     timeNode,
                     2,
-                    "" + tree.nodeGet(timeNode).children.length);
+                    "" + (numScheduled[dayNum][formatted] || 0));
                 }
               }
             }
