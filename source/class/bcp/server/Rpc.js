@@ -28,7 +28,10 @@ qx.Class.define("bcp.server.Rpc",
         saveFulfillment     : this._saveFulfillment.bind(this),
 
         getDistributionList : this._getDistributionList.bind(this),
-        saveDistribution    : this._saveDistribution.bind(this)
+        saveDistribution    : this._saveDistribution.bind(this),
+
+        getReportList       : this._getReportList.bind(this),
+        generateReport      : this._generateReport.bind(this)
       });
 
     // Open the database
@@ -111,21 +114,21 @@ qx.Class.define("bcp.server.Rpc",
           "FROM Client",
           "ORDER BY family_name"
         ].join(" "))
-    .then(
-      (stmt) =>
-      {
-        return stmt.all({});
-      })
-    .then(
-      (result) =>
-      {
-        callback(null, result);
-      })
-    .catch((e) =>
-      {
-        console.warn("Error in getClientList", e);
-        callback( { message : e.toString() } );
-      });
+        .then(
+          (stmt) =>
+          {
+            return stmt.all({});
+          })
+        .then(
+          (result) =>
+          {
+            callback(null, result);
+          })
+        .catch((e) =>
+          {
+            console.warn("Error in getClientList", e);
+            callback( { message : e.toString() } );
+          });
     },
 
     /**
@@ -552,22 +555,22 @@ qx.Class.define("bcp.server.Rpc",
           "  FROM DistributionPeriod",
           "  ORDER BY start_date DESC;"
         ].join(" "))
-    .then(
-      (stmt) =>
-      {
-        return stmt.all({});
-      })
-    .then(
-      (result) =>
-      {
+        .then(
+          (stmt) =>
+          {
+            return stmt.all({});
+          })
+        .then(
+          (result) =>
+          {
 console.log("getDistributionList result=", result);
-        callback(null, result);
-      })
-    .catch((e) =>
-      {
-        console.warn("Error in getDistributionList", e);
-        callback( { message : e.toString() } );
-      });
+            callback(null, result);
+          })
+        .catch((e) =>
+          {
+            console.warn("Error in getDistributionList", e);
+            callback( { message : e.toString() } );
+          });
     },
 
     /**
@@ -712,6 +715,104 @@ console.log("getDistributionList result=", result);
           });
 
       return p;
-    }    
+    },
+
+    /**
+     * Retrieve the list of available reports
+     *
+     * @param args {Array}
+     *   There are no arguments to this method. The array is unused.
+     *
+     * @param callback {Function}
+     *   @signature(err, result)
+     */
+    _getReportList(args, callback)
+    {
+      // TODO: move prepared statements to constructor
+      return this._db.prepare(
+        [
+          "SELECT",
+          [
+            "name",
+            "description",
+            "input_fields",
+            "separate_by",
+            "landscape"
+          ].join(", "),
+          "FROM Report",
+          "ORDER BY name"
+        ].join(" "))
+        .then(
+          (stmt) =>
+          {
+            return stmt.all({});
+          })
+        .then(
+          (result) =>
+          {
+console.log("report list: " + JSON.stringify(result));
+            callback(null, result);
+          })
+        .catch((e) =>
+          {
+            console.warn("Error in getReportList", e);
+            callback( { message : e.toString() } );
+          });
+    },
+
+    /**
+     * Generate a specified report
+     *
+     * @param args {Array}
+     *   args[0] {name}
+     *     The name of the report to be generated
+     *
+     * @param callback {Function}
+     *   @signature(err, result)
+     */
+    _generateReport(args, callback)
+    {
+      let             name = args[0];
+
+      // TODO: move prepared statements to constructor
+      return Promise.resolve()
+        .then(
+          () =>
+          {
+            return this._db.prepare(
+              [
+                "SELECT query",
+                "  FROM Report",
+                "  WHERE name = $name;"
+              ].join(" "));
+          })
+        .then(
+          (stmt) =>
+          {
+            return stmt.all({ $name : args[0] });
+          })
+        .then(
+          (result) =>
+          {
+console.log("generateReport query result=", result);
+            return this._db.prepare(result[0].query);
+          })
+        .then(
+          (stmt) =>
+          {
+            return stmt.all({});
+          })
+        .then(
+          (result) =>
+          {
+console.log("generateReport query result=", result);
+            callback(null, result);
+          })
+        .catch((e) =>
+          {
+            console.warn("Error in getDistributionList", e);
+            callback( { message : e.toString() } );
+          });
+    }
   }
 });
