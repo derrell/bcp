@@ -15,6 +15,7 @@ qx.Mixin.define("bcp.client.MReports",
 {
   members :
   {
+    _win                  : null,
     _reports              : null,
     _reportForm           : null,
     _reportLabelToListMap : null,
@@ -225,7 +226,6 @@ console.log("getReportList reports=", reports);
               .then(
                 (report) =>
                 {
-                  let             win;
                   let             headings;
                   
                   console.log("Report data:", report);
@@ -237,39 +237,48 @@ console.log("getReportList reports=", reports);
                     return;
                   }
 
+                  // If there's a prior report window, close it
+                  if (this._win)
+                  {
+                    this._win.close();
+                  }
+
                   // Create a window in which to generate the report
-                  win = window.open(
-                    "", "Report", "resizable=yes,scrollbars=yes");
+                  this._win = window.open(
+                    "",
+                    "Report",
+                    "resizable=yes,scrollbars=yes,width=1000,height=600");
 
                   // Insert the common prefix HTML code
-                  this._insertPrefix(win, result.name, reportInfo.landscape);
+                  this._insertPrefix(
+                    this._win, result.name, reportInfo.landscape);
 
                   // Write the heading
-                  win.document.write("<thead><tr>");
+                  this._win.document.write("<thead><tr>");
                   Object.keys(report[0]).forEach(
                     (heading) =>
                     {
-                      win.document.write(`<th>${heading}</th>`);
+                      this._win.document.write(`<th>${heading}</th>`);
                     });
-                  win.document.write("</tr></thead>");
+                  this._win.document.write("</tr></thead>");
 
                   // Write the body
-                  win.document.write("<tbody>");
+                  this._win.document.write("<tbody>");
                   report.forEach(
                     (row) =>
                     {
-                      win.document.write("<tr>");
+                      this._win.document.write("<tr>");
                       Object.keys(report[0]).forEach(
                         (heading) =>
                         {
-                          win.document.write(`<td>${row[heading]}</td>`);
+                          this._win.document.write(`<td>${row[heading]}</td>`);
                         });
-                      win.document.write("</tr>");
+                      this._win.document.write("</tr>");
                     });
-                  win.document.write("</tbody>");
+                  this._win.document.write("</tbody>");
 
                   // Insert the common suffix HTML code
-                  this._insertSuffix(win);
+                  this._insertSuffix(this._win);
                 });
           });
 
@@ -281,6 +290,7 @@ console.log("getReportList reports=", reports);
       let             media =
           bLandscape ? "@media print{@page {size: landscape}}" : "";
 
+      // Write the boilerplate prefix stuff
       win.document.write(
         [
           "<html>",
