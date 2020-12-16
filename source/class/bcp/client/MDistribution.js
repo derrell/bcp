@@ -258,7 +258,6 @@ qx.Mixin.define("bcp.client.MDistribution",
         .then(
           (distributions) =>
           {
-console.log("distributions=", distributions);
             distributions.forEach(
               (distribution) =>
               {

@@ -291,7 +291,6 @@ qx.Mixin.define("bcp.client.MFulfillment",
             let             appointmentsScheduled = data.appoitnmentsScheduled;
             let             fulfillment = data.fulfillment[0] || {};
 
-console.log("getAppointments returned ", data);
             // Disable access to the rest of the gui while working
             // with the form
             this._disableAllForFulfillment(true);
@@ -482,9 +481,6 @@ console.log("getAppointments returned ", data);
                 (result) =>
                 {
                   let             rpc;
-
-                  this.debug(
-                    "fulfillment result: ", qx.util.Serializer.toJson(result));
 
                   // If the form was cancelled...
                   if (! result)
