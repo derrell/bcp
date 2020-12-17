@@ -190,29 +190,34 @@ qx.Mixin.define("bcp.client.MClientMgmt",
       // Allow sorting for appointment viewing
       tm.setSortMethods(
         tm.getColumnIndexById("appt_day_default"),
-        (a, b) =>
+        (aRow, bRow) =>
         {
+          let             a;
+          let             b;
           let             index;
 
           // Start with appointment day
           index = tm.getColumnIndexById("appt_day_default");
 
-          if (a[index] !== null && b[index] === null)
+          a = aRow[index] ? aRow[index] : "";
+          b = bRow[index] ? bRow[index] : "";
+
+          if (a != "" && b == "")
           {
             return -1;
           }
 
-          if (a[index] === null && b[index] !== null)
+          if (a == "" && b != "")
           {
             return 1;
           }
 
-          if (a[index] < b[index])
+          if (a < b)
           {
             return -1;
           }
 
-          if (a[index] > b[index])
+          if (a > b)
           {
             return 1;
           }
@@ -220,29 +225,36 @@ qx.Mixin.define("bcp.client.MClientMgmt",
           // Appointment days were the same. Try appointment time
           index = tm.getColumnIndexById("appt_time_default");
 
-          if (a[index] !== null && b[index] === null)
+          a = aRow[index] ? aRow[index] : "";
+          b = bRow[index] ? bRow[index] : "";
+
+          if (a != "" && b == "")
           {
             return -1;
           }
 
-          if (a[index] === null && b[index] !== null)
+          if (a == "" && b != "")
           {
             return 1;
           }
 
-          if (a[index] < b[index])
+          if (a < b)
           {
             return -1;
           }
 
-          if (a[index] > b[index])
+          if (a > b)
           {
             return 1;
           }
 
           // Both were the same. They sort equally. Sort by family name
           index = tm.getColumnIndexById("family_name");
-          return (a[index] < b[index] ? -1 : (a[index] > b[index] ? 1 : 0));
+          return (aRow[index] < bRow[index]
+                  ? -1
+                  : (aRow[index] > bRow[index]
+                     ? 1
+                     : 0));
         });
 
       // The 'verified' column shows a checkmark when client is verified
