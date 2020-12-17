@@ -266,17 +266,6 @@ console.log("getReportList reports=", reports);
                   report.forEach(
                     (row, index) =>
                     {
-                      let             separatorStyle;
-                      let             separatorHeight = 32 / 2;
-
-                      separatorStyle =
-                        [
-                          "style='",
-                          `  height: ${separatorHeight}px;`,
-                          "  background: white;",
-                          "  border: 0px;'"
-                        ].join("");
-
                       // See if we need a separator here
                       if (reportInfo.separate_by &&
                           row[reportInfo.separate_by] != prior)
@@ -286,19 +275,21 @@ console.log("getReportList reports=", reports);
                         // striping remains consistent.
                         this._reportWin.document.write(
                           [
-                            `<tr style='line-height: ${separatorHeight}px;'>`,
+                            `<tr>`,
                             "<td ",
                             `  colspan='${Object.keys(report[0]).length}'`,
-                            `  ${separatorStyle}`,
+                            "  class='sep'>",
                             "&nbsp;",
                             "</td>",
                             "</tr>",
 
-                            `<tr style='line-height: ${separatorHeight}px;'>`,
+                            `<tr>`,
                             "<td ",
                             `  colspan='${Object.keys(report[0]).length}'`,
-                            `  ${separatorStyle}`,
-                            "&nbsp;",
+                            "  class='sep'>",
+                            "<span style='font-weight: bold;'>",
+                            `${row[reportInfo.separate_by]}`,
+                            "</span>",
                             "</td>",
                             "</tr>"
                           ].join(""));
@@ -331,6 +322,7 @@ console.log("getReportList reports=", reports);
 
     _insertPrefix(win, title, bLandscape)
     {
+      let             separatorHeight = 48 / 2; // separators always in pairs
       let             media =
           bLandscape ? "@media print{@page {size: landscape}}" : "";
 
@@ -352,6 +344,11 @@ console.log("getReportList reports=", reports);
           "      }",
           "      tbody tr:nth-child(odd) {",
           "        background: #eee;",
+          "      }",
+          "      .sep {",
+          `        height: ${separatorHeight}px;`,
+          "        background: white;",
+          "        border: 0px;'",
           "      }",
           "    </style>",
           "  </head>",
