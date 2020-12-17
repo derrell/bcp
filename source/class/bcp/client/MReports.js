@@ -128,8 +128,6 @@ qx.Mixin.define("bcp.client.MReports",
         .then(
           (reports) =>
           {
-console.log("getReportList reports=", reports);
-
             reports.forEach(
               (report) =>
               {
@@ -151,6 +149,7 @@ console.log("getReportList reports=", reports);
       let             i;
       let             rpc;
       let             formData;
+      let             extraFormData;
       let             reports;
       let             reportInfo;
       let             eData = e.getData();
@@ -186,6 +185,16 @@ console.log("getReportList reports=", reports);
           }
         };
 
+      // If any input fields were specified...
+      if (reportInfo.input_fields)
+      {
+        // ... they're encoded as JSON. Parse them.
+        extraFormData = JSON.parse(reportInfo.input_fields);
+
+        // Append them to the standard form data
+        formData = Object.assign(formData, extraFormData);
+      }
+
       this._reportForm.set(
         {
           width            : 800,
@@ -216,7 +225,7 @@ console.log("getReportList reports=", reports);
             }
 
             rpc = new qx.io.jsonrpc.Client(new qx.io.transport.Xhr("/rpc"));
-            return rpc.sendRequest("generateReport", [ result.name ])
+            return rpc.sendRequest("generateReport", [ result ])
               .catch(
                 (e) =>
                 {
@@ -250,7 +259,10 @@ console.log("getReportList reports=", reports);
 
                   // Insert the common prefix HTML code
                   this._insertPrefix(
-                    this._reportWin, result.name, reportInfo.landscape);
+                    this._reportWin,
+                    result.name,
+                    result[reportInfo.subtitle_field],
+                    reportInfo.landscape);
 
                   // Write the heading
                   this._reportWin.document.write("<thead><tr>");
@@ -320,7 +332,7 @@ console.log("getReportList reports=", reports);
       this._reportForm.show();
     },
 
-    _insertPrefix(win, title, bLandscape)
+    _insertPrefix(win, title, subtitle, bLandscape)
     {
       let             separatorHeight = 48 / 2; // separators always in pairs
       let             media =
@@ -340,6 +352,8 @@ console.log("getReportList reports=", reports);
           "      td, th {",
           "        border: 1px solid #999;",
           "        padding: 0px;",
+          "        padding-left: 6px;",
+          "        padding-right: 6px;",
           "        text-align: left;",
           "      }",
           "      tbody tr:nth-child(odd) {",
@@ -353,7 +367,16 @@ console.log("getReportList reports=", reports);
           "    </style>",
           "  </head>",
           "  <body>",
-          `    <h1>${title}</h1>`,
+          `    <h1>${title}</h1>`
+        ].join(""));
+
+      if (subtitle)
+      {
+        win.document.write(`<h2>${subtitle}</h2>`);
+      }
+
+      win.document.write(
+        [
           "    <table>"
         ].join(""));
     },

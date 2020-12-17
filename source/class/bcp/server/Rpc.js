@@ -563,7 +563,6 @@ qx.Class.define("bcp.server.Rpc",
         .then(
           (result) =>
           {
-console.log("getDistributionList result=", result);
             callback(null, result);
           })
         .catch((e) =>
@@ -736,6 +735,7 @@ console.log("getDistributionList result=", result);
             "name",
             "description",
             "input_fields",
+            "subtitle_field",
             "separate_by",
             "landscape"
           ].join(", "),
@@ -750,7 +750,6 @@ console.log("getDistributionList result=", result);
         .then(
           (result) =>
           {
-console.log("report list: " + JSON.stringify(result));
             callback(null, result);
           })
         .catch((e) =>
@@ -772,8 +771,6 @@ console.log("report list: " + JSON.stringify(result));
      */
     _generateReport(args, callback)
     {
-      let             name = args[0];
-
       // TODO: move prepared statements to constructor
       return Promise.resolve()
         .then(
@@ -789,23 +786,33 @@ console.log("report list: " + JSON.stringify(result));
         .then(
           (stmt) =>
           {
-            return stmt.all({ $name : args[0] });
+            return stmt.all({ $name : args[0].name });
           })
         .then(
           (result) =>
           {
-console.log("generateReport query result=", result);
             return this._db.prepare(result[0].query);
           })
         .then(
           (stmt) =>
           {
-            return stmt.all({});
+            let             key;
+            let             queryArgs = Object.assign({}, args[0]);
+
+            // Delete keys that don't begin with '$'
+            for (key in queryArgs)
+            {
+              if (! key.startsWith("$"))
+              {
+                delete queryArgs[key];
+              }
+            }
+
+            return stmt.all(queryArgs);
           })
         .then(
           (result) =>
           {
-console.log("generateReport query result=", result);
             callback(null, result);
           })
         .catch((e) =>
