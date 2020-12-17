@@ -122,6 +122,19 @@ qx.Class.define("bcp.client.Client",
       this._createReportsTab(this._tabView);
     },
 
+    close : function()
+    {
+      this.base(arguments);
+
+      // If the report window is open...
+      if (this._reportWin)
+      {
+        // ... then close it
+        this._reportWin.close();
+        this._reportWin = null;
+      }
+    },
+
     /**
      * Convert the given text to an HTML span with font-weight: bold
      *

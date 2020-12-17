@@ -15,9 +15,9 @@ qx.Mixin.define("bcp.client.MReports",
 {
   members :
   {
-    _win                  : null,
     _reports              : null,
     _reportForm           : null,
+    _reportWin            : null,
     _reportLabelToListMap : null,
 
     /**
@@ -227,9 +227,8 @@ console.log("getReportList reports=", reports);
                 (report) =>
                 {
                   let             headings;
+                  let             prior = "";
                   
-                  console.log("Report data:", report);
-
                   if (report.length === 0)
                   {
                     // If there is no data, let 'em know
@@ -238,47 +237,92 @@ console.log("getReportList reports=", reports);
                   }
 
                   // If there's a prior report window, close it
-                  if (this._win)
+                  if (this._reportWin)
                   {
-                    this._win.close();
+                    this._reportWin.close();
                   }
 
                   // Create a window in which to generate the report
-                  this._win = window.open(
+                  this._reportWin = window.open(
                     "",
                     "Report",
                     "resizable=yes,scrollbars=yes,width=1000,height=600");
 
                   // Insert the common prefix HTML code
                   this._insertPrefix(
-                    this._win, result.name, reportInfo.landscape);
+                    this._reportWin, result.name, reportInfo.landscape);
 
                   // Write the heading
-                  this._win.document.write("<thead><tr>");
+                  this._reportWin.document.write("<thead><tr>");
                   Object.keys(report[0]).forEach(
                     (heading) =>
                     {
-                      this._win.document.write(`<th>${heading}</th>`);
+                      this._reportWin.document.write(`<th>${heading}</th>`);
                     });
-                  this._win.document.write("</tr></thead>");
+                  this._reportWin.document.write("</tr></thead>");
 
                   // Write the body
-                  this._win.document.write("<tbody>");
+                  this._reportWin.document.write("<tbody>");
                   report.forEach(
-                    (row) =>
+                    (row, index) =>
                     {
-                      this._win.document.write("<tr>");
+                      let             separatorStyle;
+                      let             separatorHeight = 32 / 2;
+
+                      separatorStyle =
+                        [
+                          "style='",
+                          `  height: ${separatorHeight}px;`,
+                          "  background: white;",
+                          "  border: 0px;'"
+                        ].join("");
+
+                      // See if we need a separator here
+                      if (reportInfo.separate_by &&
+                          row[reportInfo.separate_by] != prior)
+                      {
+                        // Yup, we do. Insert one here. We do it with
+                        // two separate rows so that the zebra
+                        // striping remains consistent.
+                        this._reportWin.document.write(
+                          [
+                            `<tr style='line-height: ${separatorHeight}px;'>`,
+                            "<td ",
+                            `  colspan='${Object.keys(report[0]).length}'`,
+                            `  ${separatorStyle}`,
+                            "&nbsp;",
+                            "</td>",
+                            "</tr>",
+
+                            `<tr style='line-height: ${separatorHeight}px;'>`,
+                            "<td ",
+                            `  colspan='${Object.keys(report[0]).length}'`,
+                            `  ${separatorStyle}`,
+                            "&nbsp;",
+                            "</td>",
+                            "</tr>"
+                          ].join(""));
+                      }
+
+                      // Save the separator field for next comparison
+                      prior = row[reportInfo.separate_by];
+
+                      this._reportWin.document.write("<tr>");
                       Object.keys(report[0]).forEach(
                         (heading) =>
                         {
-                          this._win.document.write(`<td>${row[heading]}</td>`);
+                          this._reportWin.document.write(
+                            `<td>${row[heading]}</td>`);
                         });
-                      this._win.document.write("</tr>");
+
+                      // That's the end of this row
+                      this._reportWin.document.write("</tr>");
                     });
-                  this._win.document.write("</tbody>");
+
+                  this._reportWin.document.write("</tbody>");
 
                   // Insert the common suffix HTML code
-                  this._insertSuffix(this._win);
+                  this._insertSuffix(this._reportWin);
                 });
           });
 
@@ -303,7 +347,7 @@ console.log("getReportList reports=", reports);
           "      }",
           "      td, th {",
           "        border: 1px solid #999;",
-          "        padding: 0.5rem;",
+          "        padding: 0px;",
           "        text-align: left;",
           "      }",
           "      tbody tr:nth-child(odd) {",
