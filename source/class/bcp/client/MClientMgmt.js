@@ -521,10 +521,42 @@ qx.Mixin.define("bcp.client.MClientMgmt",
                 });
             });
         },
+        afterFormFunction : function(container, form)
+        {
+          this._wrongCountsWarning = new qx.ui.basic.Label(
+            [
+              "<span style='color: red;'>",
+              "The counts by age do not match counts by sex",
+              "</span>"
+            ].join(""));
+          container.add(this._wrongCountsWarning);
+          this._wrongCountsWarning.setRich(true);
+          this._wrongCountsWarning.exclude();
+
+          this._noCountsWarning = new qx.ui.basic.Label(
+            [
+              "<span style='color: red;'>",
+              "Family counts have not yet been entered",
+              "</span>"
+            ].join(""));
+          container.add(this._noCountsWarning);
+          this._noCountsWarning.setRich(true);
+          this._noCountsWarning.exclude();
+
+          this._veteranWarning = new qx.ui.basic.Label(
+            [
+              "<span style='color: red;'>",
+              "The number of veterans exceeds the number of family members",
+              "</span>"
+            ].join(""));
+          container.add(this._veteranWarning);
+          this._veteranWarning.setRich(true);
+          this._veteranWarning.exclude();
+        },
         setupFormRendererFunction : function(form) {
-          var renderer = new qxl.dialog.MultiColumnFormRenderer(form);
-          var layout = new qx.ui.layout.Grid();
-          const col = renderer.column;
+          var         renderer = new qxl.dialog.MultiColumnFormRenderer(form);
+          var         layout = new qx.ui.layout.Grid();
+          const       col = renderer.column;
 
           layout.setSpacing(6);
 
@@ -550,7 +582,95 @@ qx.Mixin.define("bcp.client.MClientMgmt",
           layout.setColumnAlign(col(5), "left", "top");
 
           renderer._setLayout(layout);
+
+          // Give 'em what they came for
           return renderer;
+        },
+        finalizeFunction : function(form, formDialog)
+        {
+          let         f;
+          let         manager;
+
+          //
+          // Use a validation manager. Ensure that the entered data is
+          // consistent, and that all required fields are entered.
+          // When valid, enable the Save button.
+          //
+
+          // Instantiate a validation manager
+          form._validationManager = manager =
+            new qx.ui.form.validation.Manager();
+
+          // Prepare a validation function
+          f = function()
+          {
+            let             familyName;
+            let             ageSenior;
+            let             ageAdult;
+            let             ageChild;
+            let             sexMale;
+            let             sexFemale;
+            let             sexOther;
+            let             veteran;
+
+            // Enable the Save button if the form validates
+            manager.bind(
+              "valid",
+              formDialog._okButton,
+              "enabled",
+              {
+                converter: function(value)
+                {
+                  return value || false;
+                }
+              });
+
+            familyName = formDialog._formElements["family_name"].getValue();
+            ageSenior = formDialog._formElements["count_senior"].getValue();
+            ageAdult = formDialog._formElements["count_adult"].getValue();
+            ageChild = formDialog._formElements["count_child"].getValue();
+            sexMale = formDialog._formElements["count_sex_male"].getValue();
+            sexFemale = formDialog._formElements["count_sex_female"].getValue();
+            sexOther = formDialog._formElements["count_sex_other"].getValue();
+            veteran = formDialog._formElements["count_veteran"].getValue();
+
+            // If there's text in Family Name, it's valid
+            formDialog._formElements["family_name"].setValid(!! familyName);
+            manager.add(formDialog._formElements["family_name"]);
+
+            // Reset warnings
+            _this._wrongCountsWarning.exclude();
+            _this._noCountsWarning.exclude();
+            _this._veteranWarning.exclude();
+
+            // Sums of by-age and by-sex must match
+            if (ageSenior + ageAdult + ageChild !=
+                sexMale + sexFemale + sexOther)
+            {
+              _this._wrongCountsWarning.show();
+              return false;
+            }
+
+            // There must be at least one family member
+            if (ageSenior + ageAdult + ageChild <= 0)
+            {
+              _this._noCountsWarning.show();
+              return false;
+            }
+
+            // Number of veterans must not exceed number of family members
+            if (veteran > ageSenior + ageAdult + ageChild)
+            {
+              _this._veteranWarning.show();
+              return false;
+            }
+
+            return true;
+          }.bind(this);
+
+          // Use that validator
+          manager.setValidator(f);
+          form.validate(manager);
         }
       });
 
@@ -559,7 +679,10 @@ qx.Mixin.define("bcp.client.MClientMgmt",
           labelColumnWidth : 150,
           formData         : formData,
         });
-      form._okButton.setLabel("Save");
+      form._okButton.set(
+        {
+          label   : "Save"
+        });
       form.show();
 
       p = form.promise();
