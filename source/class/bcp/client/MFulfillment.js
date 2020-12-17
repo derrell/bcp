@@ -80,6 +80,18 @@ qx.Mixin.define("bcp.client.MFulfillment",
         (e) =>
         {
           let             data;
+          let             selection;
+
+          // The purpose of this is so that New Client on the
+          // Fulfillment tab pre-selects the just-added client. We
+          // don't want to pre-select anything if we're not on the
+          // Fulfillment tab, e.g., a client is edited from the
+          // Clients page)
+          selection = this._tabView.getSelection();
+          if (selection[0].getLabel() != "Fulfillment")
+          {
+            return;
+          }
 
           // Refresh the list
           this._onFulfillmentListAppear();
