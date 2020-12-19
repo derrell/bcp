@@ -426,7 +426,6 @@ qx.Class.define("bcp.server.Rpc",
         .then(result => (results.fulfillment = result))
 
         // Give 'em what they came for!
-.then(() => console.log("getAppointment results=", results))
         .then(() => callback(null, results))
         .catch((e) =>
           {
