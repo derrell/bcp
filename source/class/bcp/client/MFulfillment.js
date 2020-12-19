@@ -504,7 +504,7 @@ qx.Mixin.define("bcp.client.MFulfillment",
                 {
                   type      : "SelectBox",
                   label     : "Fulfilment method",
-                  value     : "Pick-up",
+                  value     : fulfillment.method || "Pick-up",
                   options   :
                   [
                     { label : "Pick-up",  value : "Pick-up" },
