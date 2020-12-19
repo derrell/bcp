@@ -26,24 +26,6 @@ CREATE TABLE Client
   UNIQUE (family_name COLLATE NOCASE)
 );
 
-INSERT INTO Client
-      (family_name, phone, email, ethnicity, verified,
-       count_senior, count_adult, count_child,
-       count_sex_male, count_sex_female, count_sex_other, count_veteran,
-       income_source, income_amount,
-       pet_types, appt_day_default, appt_time_default)
-  SELECT
-      `Family Name`, `Phone number`, Email, Ethnicity, Verified,
-      `65+`, `18+`, `0-18`,
-      Male, Female, `Undefined Gender`, Veteran,
-      `Income source`, `Income Amount`,
-      Pets, 1, strftime('%H:%M', `Appt time`)
-    FROM Clients;
-
--- We no longer need the original table we imported from
-DROP TABLE Clients;
-
-
 CREATE TABLE Fulfillment
 (
   distribution      VARCHAR REFERENCES DistributionPeriod
