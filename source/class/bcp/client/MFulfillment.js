@@ -197,6 +197,38 @@ qx.Mixin.define("bcp.client.MFulfillment",
 
             renderer._setLayout(layout);
             return renderer;
+          },
+          finalizeFunction : function(form, formDialog)
+          {
+            let             method;
+            let             deliveryAddress;
+
+            // Show the delivery address if method is Delivery
+            formDialog._formElements["method"].bind(
+              "value",
+              formDialog._formElements["delivery_address"],
+              "enabled",
+              {
+                converter: function(value)
+                {
+                  return value.getLabel() == "Delivery" || false;
+                }
+              });
+
+            // Set a background color if method is Delivery
+            formDialog._formElements["method"].bind(
+              "value",
+              formDialog._formElements["delivery_address"],
+              "backgroundColor",
+              {
+                converter: function(value)
+                {
+                  return (
+                    value.getLabel() == "Delivery"
+                      ? undefined
+                      : "gray");
+                }
+              });
           }
         });
 
