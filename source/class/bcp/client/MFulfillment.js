@@ -468,7 +468,7 @@ qx.Mixin.define("bcp.client.MFulfillment",
                   }
                 },
 
-                deliver :
+                method :
                 {
                   type      : "SelectBox",
                   label     : "Fulfilment method",
@@ -488,7 +488,7 @@ qx.Mixin.define("bcp.client.MFulfillment",
                 {
                   type      : "CheckBox",
                   label     : "Fulfilled",
-                  value     : false
+                  value     : !! fulfillment.fulfilled
                 }
               };
 

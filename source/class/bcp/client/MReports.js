@@ -19,6 +19,7 @@ qx.Mixin.define("bcp.client.MReports",
     _reportForm           : null,
     _reportWin            : null,
     _reportLabelToListMap : null,
+    _reportDistributions  : null,
 
     /**
      * Create the report page
@@ -126,8 +127,13 @@ qx.Mixin.define("bcp.client.MReports",
             console.error("getReportList:", e);
           })
         .then(
-          (reports) =>
+          (results) =>
           {
+            const           { reports, distributions } = results;
+
+            // Save the distributions list for when the form appears
+            this._reportDistributions = distributions;
+
             reports.forEach(
               (report) =>
               {
@@ -193,6 +199,22 @@ qx.Mixin.define("bcp.client.MReports",
 
         // Append them to the standard form data
         formData = Object.assign(formData, extraFormData);
+
+        // If the form data includes $distribution...
+        if ("$distribution" in formData)
+        {
+          // ... then fill in the options
+          formData.$distribution.options =
+            this._reportDistributions.map(
+              (entry) =>
+              {
+                return { label : entry.start_date, value : entry.start_date };
+              });
+
+          // Pre-select the most recent distribution
+          formData.$distribution.value =
+            this._reportDistributions[0].start_date;
+        }
       }
 
       this._reportForm.set(

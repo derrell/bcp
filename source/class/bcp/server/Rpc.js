@@ -408,7 +408,8 @@ qx.Class.define("bcp.server.Rpc",
                 "    f.appt_day AS appt_day,",
                 "    f.appt_time AS appt_time,",
                 "    COALESCE(f.delivery_address, c.address_default)",
-                "      AS delivery_address",
+                "      AS delivery_address,",
+                "    f.fulfilled AS fulfilled",
                 "  FROM Fulfillment f,",
                 "       Client c",
                 "  WHERE f.family_name = $family_name",
@@ -473,6 +474,7 @@ qx.Class.define("bcp.server.Rpc",
           "    family_name,",
           "    appt_day,",
           "    appt_time,",
+          "    method,",
           "    delivery_address,",
           "    fulfilled,",
           "    fulfillment_time",
@@ -483,6 +485,7 @@ qx.Class.define("bcp.server.Rpc",
           "    $family_name,",
           "    $appt_day,",
           "    $appt_time,",
+          "    $method,",
           "    $delivery_address,",
           "    $fulfilled,",
           "    $fulfillment_time",
@@ -497,6 +500,7 @@ qx.Class.define("bcp.server.Rpc",
             $family_name       : fulfillmentInfo.family_name,
             $appt_day          : day,
             $appt_time         : time,
+            $method            : fulfillmentInfo.method,
             $delivery_address  : fulfillmentInfo.delivery_address,
             $fulfilled         : fulfillmentInfo.fulfilled,
             $fulfillment_time  : fulfillmentInfo.fulfillment_time
@@ -727,21 +731,25 @@ qx.Class.define("bcp.server.Rpc",
      */
     _getReportList(args, callback)
     {
+      let             results = {};
+
       // TODO: move prepared statements to constructor
-      return this._db.prepare(
-        [
-          "SELECT",
-          [
-            "name",
-            "description",
-            "input_fields",
-            "subtitle_field",
-            "separate_by",
-            "landscape"
-          ].join(", "),
-          "FROM Report",
-          "ORDER BY name"
-        ].join(" "))
+      return Promise.resolve()
+        .then(
+          () =>this._db.prepare(
+            [
+              "SELECT",
+              [
+                "name",
+                "description",
+                "input_fields",
+                "subtitle_field",
+                "separate_by",
+                "landscape"
+              ].join(", "),
+              "FROM Report",
+              "ORDER BY name"
+            ].join(" ")))
         .then(
           (stmt) =>
           {
@@ -750,7 +758,26 @@ qx.Class.define("bcp.server.Rpc",
         .then(
           (result) =>
           {
-            callback(null, result);
+            results.reports = result;
+          })
+        .then(
+          () =>this._db.prepare(
+            [
+              "SELECT start_date",
+              "  FROM DistributionPeriod",
+              "  ORDER BY start_date DESC;"
+            ].join(" ")))
+        .then(
+          (stmt) =>
+          {
+            return stmt.all({});
+          })
+        .then(
+          (result) =>
+          {
+            results.distributions = result;
+
+            callback(null, results);
           })
         .catch((e) =>
           {
