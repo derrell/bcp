@@ -2,6 +2,13 @@
 -- Compare with mdb-to-sqlite.sh. Latest is likely there
 --
 
+CREATE TABLE User
+(
+  username          VARCHAR PRIMARY KEY NOT NULL,
+  password          VARCHAR,
+  permission_level  INTEGER DEFAULT 0
+);
+
 CREATE TABLE Client
 (
   family_name       VARCHAR PRIMARY KEY NOT NULL,
