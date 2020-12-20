@@ -77,6 +77,12 @@ qx.Class.define("bcp.server.Rpc",
         {
           handler             : this._generateReport.bind(this),
           permission_level    : 50
+        },
+
+        getDeliveryDay      :
+        {
+          handler             : this._getDeliveryDay.bind(this),
+          permission_level    : 20
         }
       };
 
@@ -949,6 +955,102 @@ qx.Class.define("bcp.server.Rpc",
         .catch((e) =>
           {
             console.warn("Error in getDistributionList", e);
+            callback( { message : e.toString() } );
+          });
+    },
+
+    /**
+     * Get delivery day data, for fulfillment check-off
+     *
+     * @param args {Array}
+     *   args[0] {name}
+     *     The name of the report to be generated
+     *
+     * @param callback {Function}
+     *   @signature(err, result)
+     */
+    _getDeliveryDay(args, callback)
+    {
+      let             results = {};
+
+      // TODO: move prepared statements to constructor
+      return Promise.resolve()
+        .then(
+          () =>
+          {
+            // First, retrieve the most recent distribution start date
+            return this._db.prepare(
+              [
+                "SELECT MAX(start_date) AS distribution",
+                "  FROM DistributionPeriod;",
+              ].join(" "));
+          })
+        .then(
+          (stmt) =>
+          {
+            return stmt.all({});
+          })
+        .then(
+          (result) =>
+          {
+            // If there was at least one distribution, save its start date
+            if (result.length < 1)
+            {
+              return null;
+            }
+
+            results.distribution = result[0].distribution;
+            return result.distribution;
+          })
+        .then(
+          (distribution) =>
+          {
+            // If no distributions, there's nothing more to do
+            if (distribution === null)
+            {
+              return null;
+            }
+
+            // Get all of the appointments for this most recent distribution
+            return this._db.prepare(
+              [
+                "SELECT ",
+                "    family_name,",
+                "    appt_day,",
+                "    appt_time,",
+                "    method,",
+                "    delivery_address,",
+                "    fulfilled",
+                "  FROM Fulfillment",
+                "  WHERE distribution = $distribution",
+                "  ORDER BY ",
+                "    CASE WHEN method = 'Pick-up' THEN 0 ELSE 1 END,",
+                "    appt_day, appt_time, family_name"
+              ].join(" "));
+          })
+        .then(
+          (stmt) =>
+          {
+            // If no distributions, there's nothing more to do
+            if (stmt === null)
+            {
+              return null;
+            }
+
+            return stmt.all( { $distribution : results.distribution } );
+          })
+        .then(
+          (result) =>
+          {
+            // Save the appointments for this distribution
+            results.appointments = result;
+
+            // Give 'em what they came for
+            callback(null, results);
+          })
+        .catch((e) =>
+          {
+            console.warn("Error in getDeliveryDay", e);
             callback( { message : e.toString() } );
           });
     }
