@@ -190,6 +190,28 @@ qx.Mixin.define("bcp.client.MAppointment",
                   });
               });
           },
+          afterFormFunction : function(container, form)
+          {
+            _this._requireAppointment = new qx.ui.basic.Label(
+              [
+                "<span style='color: red;'>",
+                "An appointment is required, for Pick-up",
+                "</span>"
+              ].join(""));
+            container.add(_this._requireAppointment);
+            _this._requireAppointment.setRich(true);
+            _this._requireAppointment.exclude();
+
+            _this._elideAppointment = new qx.ui.basic.Label(
+              [
+                "<span style='color: red;'>",
+                "Cancel the appointment time, for Delivery",
+                "</span>"
+              ].join(""));
+            container.add(_this._elideAppointment);
+            _this._elideAppointment.setRich(true);
+            _this._elideAppointment.exclude();
+          },
           setupFormRendererFunction : function(form)
           {
             var renderer = new qxl.dialog.MultiColumnFormRenderer(form);
@@ -210,11 +232,18 @@ qx.Mixin.define("bcp.client.MAppointment",
           },
           finalizeFunction : function(form, formDialog)
           {
-            let             method;
-            let             deliveryAddress;
+            let             f;
+            let             manager;
+            const           method =
+                  formDialog._formElements["method"];
+            const           appointments =
+                  formDialog._formElements["appointments"];
+            const           deliveryAddress =
+                  formDialog._formElements["delivery_address"];
+
 
             // Show the delivery address if method is Delivery
-            formDialog._formElements["method"].bind(
+            method.bind(
               "value",
               formDialog._formElements["delivery_address"],
               "enabled",
@@ -226,9 +255,9 @@ qx.Mixin.define("bcp.client.MAppointment",
               });
 
             // Set a background color if method is Delivery
-            formDialog._formElements["method"].bind(
+            method.bind(
               "value",
-              formDialog._formElements["delivery_address"],
+              deliveryAddress,
               "backgroundColor",
               {
                 converter: function(value)
@@ -239,6 +268,61 @@ qx.Mixin.define("bcp.client.MAppointment",
                       : "gray");
                 }
               });
+
+            //
+            // Use a validation manager. Ensure that the entered data is
+            // consistent, and that all required fields are entered.
+            // When valid, enable the Save button.
+            //
+
+            // Instantiate a validation manager
+            form._validationManager = manager =
+              new qx.ui.form.validation.Manager();
+
+            // Prepare a validation function
+            f = function()
+            {
+              let             methodLabel;
+
+              // Enable the Save button if the form validates
+              manager.bind(
+                "valid",
+                formDialog._okButton,
+                "enabled",
+               {
+                  converter: function(value)
+                  {
+                    return value || false;
+                  }
+                });
+
+              // Reset warnings
+              _this._requireAppointment.exclude();
+              _this._elideAppointment.exclude();
+
+              // Retrieve the current method selection
+              methodLabel = method.getValue().getLabel();
+
+              // Pick-up requires an appointment time
+              if (methodLabel == "Pick-up" && ! appointments.getValue())
+              {
+                _this._requireAppointment.show();
+                return false;
+              }
+
+              // Delivery requires no specified appointment time
+              if (methodLabel == "Delivery" && appointments.getValue())
+              {
+                _this._elideAppointment.show();
+                return false;
+              }
+
+              return true;
+            }.bind(this);
+
+            // Use that validator
+            manager.setValidator(f);
+            form.validate(manager);
           }
         });
 
@@ -339,6 +423,7 @@ qx.Mixin.define("bcp.client.MAppointment",
     {
       let             formData;
       let             client;
+      let             _this = this;
 
       // Concurrently, retrieve the distribution list and this appointment
       this.rpc(
@@ -499,6 +584,15 @@ qx.Mixin.define("bcp.client.MAppointment",
                       distribution.day_7_last_appt
                     ]
                   },
+                  events    :
+                  {
+                    changeValue : function(e)
+                    {
+                      setTimeout(
+                        () => _this._appointmentForm.getForm().validate(),
+                        100);
+                    }
+                  },
                   userdata   :
                   {
                     row      : 0,
@@ -517,6 +611,15 @@ qx.Mixin.define("bcp.client.MAppointment",
                     { label : "Pick-up",  value : "Pick-up" },
                     { label : "Delivery", value : "Delivery" },
                   ],
+                  events    :
+                  {
+                    changeSelection : function(e)
+                    {
+                      setTimeout(
+                        () => _this._appointmentForm.getForm().validate(),
+                        100);
+                    }
+                  },
                   userdata  :
                   {
                     row       : 22
