@@ -685,8 +685,6 @@ qx.Mixin.define("bcp.client.MClientMgmt",
       p.then(
         (formValues) =>
         {
-          let             client;
-
           // Cancelled?
           if (! formValues)
           {
@@ -709,8 +707,7 @@ qx.Mixin.define("bcp.client.MClientMgmt",
 
           console.log("formValues=", formValues);
 
-          client = new qx.io.jsonrpc.Client(new qx.io.transport.Xhr("/rpc"));
-          client.sendRequest("saveClient", [ formValues, bNew ])
+          this.rpc("saveClient", [ formValues, bNew ])
             .then(
               (result) =>
               {

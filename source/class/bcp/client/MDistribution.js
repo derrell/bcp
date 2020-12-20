@@ -256,13 +256,10 @@ qx.Mixin.define("bcp.client.MDistribution",
 
     _onDistributionListAppear : function()
     {
-      let             rpc;
-
       this._distributions.removeAll();
 
       // Recreate the list of distributions
-      rpc = new qx.io.jsonrpc.Client(new qx.io.transport.Xhr("/rpc"));
-      rpc.sendRequest("getDistributionList", [])
+      this.rpc("getDistributionList", [])
         .catch(
           (e) =>
           {
@@ -569,8 +566,6 @@ qx.Mixin.define("bcp.client.MDistribution",
         .then(
           (result) =>
           {
-            let             rpc;
-
             // If the form was cancelled...
             if (! result)
             {
@@ -584,8 +579,7 @@ qx.Mixin.define("bcp.client.MDistribution",
             // Ensure the start date is included in the data to be saved
             result.start_date = startDate;
 
-            rpc = new qx.io.jsonrpc.Client(new qx.io.transport.Xhr("/rpc"));
-            return rpc.sendRequest("saveDistribution", [ result, ! dist ])
+            return this.rpc("saveDistribution", [ result, ! dist ])
               .catch(
                 (e) =>
                 {

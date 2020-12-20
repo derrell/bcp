@@ -288,13 +288,12 @@ console.warn("Throwing error: time is outside of allowed range. day=", day, ", t
      */
     _onAppear()
     {
-      let             client;
       const           tree = this._tree;
       const           dm = this._dm;
       const           bShowScheduledToo = this.getShowScheduled();
 
-      client = new qx.io.jsonrpc.Client(new qx.io.transport.Xhr("/rpc"));
-      client.sendRequest("getAppointments", [ bShowScheduledToo ])
+      qx.core.Init.getApplication().rpc(
+        "getAppointments", [ bShowScheduledToo ])
         .then(
           (result) =>
           {
@@ -482,7 +481,7 @@ console.warn("Throwing error: time is outside of allowed range. day=", day, ", t
             {
               for (timestamp = new Date("2020-01-01T08:00"),
                      numNodes = 0;
-                   numNodes < 4 * 14; // 4x per hour, many hours
+                   numNodes < 4 * 15; // 4x per hour, many hours
                    timestamp = new Date(timestamp.getTime() + fifteenMin),
                      numNodes++)
               {
@@ -495,7 +494,7 @@ console.warn("Throwing error: time is outside of allowed range. day=", day, ", t
                 // If no time node (outside of scheduled times), we're done
                 if (! timeNode)
                 {
-                  return;
+                  continue;
                 }
 
                 // Get the formatted time for this timestamp

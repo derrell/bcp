@@ -114,13 +114,10 @@ qx.Mixin.define("bcp.client.MReports",
 
     _onReportListAppear : function()
     {
-      let             rpc;
-
       this._reports.removeAll();
 
       // Recreate the list of reports
-      rpc = new qx.io.jsonrpc.Client(new qx.io.transport.Xhr("/rpc"));
-      rpc.sendRequest("getReportList", [])
+      this.rpc("getReportList", [])
         .catch(
           (e) =>
           {
@@ -231,8 +228,6 @@ qx.Mixin.define("bcp.client.MReports",
         .then(
           (result) =>
           {
-            let             rpc;
-
             // ... then just reset the selection, ...
             this._reports.resetSelection();
 
@@ -246,8 +241,7 @@ qx.Mixin.define("bcp.client.MReports",
               return Promise.resolve();
             }
 
-            rpc = new qx.io.jsonrpc.Client(new qx.io.transport.Xhr("/rpc"));
-            return rpc.sendRequest("generateReport", [ result ])
+            return this.rpc("generateReport", [ result ])
               .catch(
                 (e) =>
                 {

@@ -327,14 +327,11 @@ qx.Mixin.define("bcp.client.MFulfillment",
 
     _handleFulfillmentForm : function(familyName, distributionStart)
     {
-      let             rpc;
       let             formData;
       let             client;
 
-      rpc = new qx.io.jsonrpc.Client(new qx.io.transport.Xhr("/rpc"));
-
       // Concurrently, retrieve the distribution list and this fulfillment
-      rpc.sendRequest(
+      this.rpc(
         "getAppointments",
         [
           distributionStart || true,
@@ -537,8 +534,6 @@ qx.Mixin.define("bcp.client.MFulfillment",
               .then(
                 (result) =>
                 {
-                  let             rpc;
-
                   // If the form was cancelled...
                   if (! result)
                   {
@@ -552,10 +547,7 @@ qx.Mixin.define("bcp.client.MFulfillment",
                   // Ensure the start date is included in the data to be saved
                   result.family_name = familyName;
 
-                  rpc = new qx.io.jsonrpc.Client(
-                    new qx.io.transport.Xhr("/rpc"));
-
-                  return rpc.sendRequest("saveFulfillment", [ result ])
+                  return this.rpc("saveFulfillment", [ result ])
                     .catch(
                       (e) =>
                       {

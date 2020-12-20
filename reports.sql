@@ -97,7 +97,7 @@ INSERT INTO Report
   '{ "$distribution" : { "type" : "SelectBox", "label" : "Distribution Date" } }',
   '$distribution',
   'Time',
-  'SELECT f.appt_day as Day, f.appt_time AS Time, c.family_name as "Family name", c.count_senior + c.count_adult + c.count_child AS "Family size", COALESCE(pet_types, "") AS Pets FROM Fulfillment f, Client c WHERE f.distribution = $distribution AND f.method = "Pick-up" AND c.family_name = f.family_name ORDER BY Day, Time, "Family name";'
+  'SELECT f.appt_day as Day, f.appt_time AS Time, c.family_name as "Family name", c.count_senior + c.count_adult + c.count_child AS "Family size", COALESCE(pet_types, "") AS Pets FROM Fulfillment f, Client c WHERE f.distribution = $distribution AND length(COALESCE(f.appt_time, "")) > 0 AND f.method = "Pick-up" AND c.family_name = f.family_name ORDER BY Day, Time, "Family name";'
 );
 
 INSERT INTO Report
