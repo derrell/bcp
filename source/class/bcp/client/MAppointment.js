@@ -11,22 +11,23 @@
  * Authors:
  *   * Derrell Lipman (derrell)
  */
-qx.Mixin.define("bcp.client.MFulfillment",
+qx.Mixin.define("bcp.client.MAppointment",
 {
   members :
   {
-    _fulfillmentClients        : null,
-    _fulfillmentForm           : null,
-    _fulfillmentLabelToListMap : null,
+    _appointmentClients        : null,
+    _appointmentForm           : null,
+    _appointmentLabelToListMap : null,
     _butNewClient              : null,
+    _tabLabel                  : "Upcoming Appointments",
 
     /**
-     * Create the fulfillment page
+     * Create the appointment page
      *
      * @param tabView {qx.ui.tabview.TabView}
      *   The tabview in which to add the page being created
      */
-    _createFulfillmentTab(tabView)
+    _createAppointmentTab(tabView)
     {
       let             page;
       let             vBox;
@@ -35,36 +36,36 @@ qx.Mixin.define("bcp.client.MFulfillment",
       let             formData;
       const           _this = this;
 
-      page = new qx.ui.tabview.Page("Fulfillment");
+      page = new qx.ui.tabview.Page(this._tabLabel);
       page.setLayout(new qx.ui.layout.HBox(12));
       tabView.add(page);
 
       button = page.getChildControl("button");
-      button.setLabel(this.underlineChar("Fulfillment", 1));
+      button.setLabel(this.underlineChar(this._tabLabel));
       button.setRich(true);
 
       command = new qx.ui.command.Command("Alt+U");
       command.addListener("execute", () => tabView.setSelection( [ page ] ));
 
       // Initialize the label to list map
-      this._fulfillmentLabelToListMap = {};
+      this._appointmentLabelToListMap = {};
 
       // Create a vbox for the client list and New Client button
       vBox = new qx.ui.container.Composite(new qx.ui.layout.VBox(10));
       page.add(vBox);
 
       // Add the list of client family-names
-      this._fulfillmentClients = new qx.ui.form.List();
-      this._fulfillmentClients.set(
+      this._appointmentClients = new qx.ui.form.List();
+      this._appointmentClients.set(
         {
           width : 240
         });
-      vBox.add(this._fulfillmentClients, { flex : 1 });
+      vBox.add(this._appointmentClients, { flex : 1 });
 
-      this._fulfillmentClients.addListener(
-        "appear", this._onFulfillmentListAppear, this);
-      this._fulfillmentClients.addListener(
-        "changeSelection", this._onFulfillmentListChangeSelection, this);
+      this._appointmentClients.addListener(
+        "appear", this._onAppointmentListAppear, this);
+      this._appointmentClients.addListener(
+        "changeSelection", this._onAppointmentListChangeSelection, this);
 
       // Allow creating a new client right from here
       this._butNewClient = new qx.ui.form.Button("New Client");
@@ -92,30 +93,30 @@ qx.Mixin.define("bcp.client.MFulfillment",
           let             selection;
 
           // The purpose of this is so that New Client on the
-          // Fulfillment tab pre-selects the just-added client. We
+          // Appointment tab pre-selects the just-added client. We
           // don't want to pre-select anything if we're not on the
-          // Fulfillment tab, e.g., a client is edited from the
+          // Appointment tab, e.g., a client is edited from the
           // Clients page)
           selection = this._tabView.getSelection();
-          if (selection[0].getLabel() != "Fulfillment")
+          if (selection[0].getLabel() != this._tabLabel)
           {
             return;
           }
 
           // Refresh the list
-          this._onFulfillmentListAppear();
+          this._onAppointmentListAppear();
 
           // If one is provided, select the given family name
           data = e.getData();
           if (data && data.family_name)
           {
-            this._fulfillmentClients.setSelection(
-              [ this._fulfillmentLabelToListMap[data.family_name] ] );
+            this._appointmentClients.setSelection(
+              [ this._appointmentLabelToListMap[data.family_name] ] );
           }
         });
 
-      // Create the form for adding/editing a fulfillment record
-      this._fulfillmentForm = new qxl.dialog.FormEmbed(
+      // Create the form for adding/editing a appointment record
+      this._appointmentForm = new qxl.dialog.FormEmbed(
         {
           callback         : function(result)
           {
@@ -140,7 +141,7 @@ qx.Mixin.define("bcp.client.MFulfillment",
               {
                 let             day;
                 let             time;
-                const           form = _this._fulfillmentForm;
+                const           form = _this._appointmentForm;
                 const           formElements = form._formElements;
 
                 day = formElements.appt_day_default.getValue();
@@ -181,7 +182,7 @@ qx.Mixin.define("bcp.client.MFulfillment",
               "execute",
               function(e)
               {
-                const           form = _this._fulfillmentForm;
+                const           form = _this._appointmentForm;
                 const           formElements = form._formElements;
                 formElements.appointments.set(
                   {
@@ -242,15 +243,15 @@ qx.Mixin.define("bcp.client.MFulfillment",
         });
 
       // Initially hide form
-      this._fulfillmentForm.hide();
+      this._appointmentForm.hide();
 
       // When the form is OK'ed or Canceled, remove list-box selection
-      this._fulfillmentForm.addListener(
-        "ok", this._onFulfillmentOkOrCancel, this);
-      this._fulfillmentForm.addListener(
-        "cancel", this._onFulfillmentOkOrCancel, this);
+      this._appointmentForm.addListener(
+        "ok", this._onAppointmentOkOrCancel, this);
+      this._appointmentForm.addListener(
+        "cancel", this._onAppointmentOkOrCancel, this);
 
-      page.add(this._fulfillmentForm);
+      page.add(this._appointmentForm);
       page.add(new qx.ui.core.Spacer(), { flex : 1 });
     },
 
@@ -263,16 +264,16 @@ qx.Mixin.define("bcp.client.MFulfillment",
      *   true to disable them (called when form is shwon)
      *   false to re-enable all of the buttons (called by Ok/Cancel handlers);
      */
-    _disableAllForFulfillment : function(bDisable)
+    _disableAllForAppointment : function(bDisable)
     {
-      this._fulfillmentClients.setEnabled(! bDisable);
+      this._appointmentClients.setEnabled(! bDisable);
       this._butNewClient.setEnabled(! bDisable);
 
-      // Disable/Enable all tabs other than "Fulfillment"
+      // Disable/Enable all tabs other than "Appointment"
       this._tabView.getChildren().forEach(
         (child) =>
         {
-          if (child.getLabel() != "Fulfillment")
+          if (child.getLabel() != this._tabLabel)
           {
             child.getChildControl("button").setEnabled(! bDisable);
           }
@@ -283,18 +284,18 @@ qx.Mixin.define("bcp.client.MFulfillment",
      * Remove the selection in the client list when Ok or Cancel is
      * selected in the detail form
      */
-    _onFulfillmentOkOrCancel : function()
+    _onAppointmentOkOrCancel : function()
     {
       // Re-enable access to the rest of the gui
-      this._disableAllForFulfillment(false);
+      this._disableAllForAppointment(false);
 
-      // Remove the selection. We're ready for the next fulfillment
-      this._fulfillmentClients.resetSelection();
+      // Remove the selection. We're ready for the next appointment
+      this._appointmentClients.resetSelection();
     },
 
-    _onFulfillmentListAppear : function()
+    _onAppointmentListAppear : function()
     {
-      this._fulfillmentClients.removeAll();
+      this._appointmentClients.removeAll();
 
       // Recreate the list of clients
       this._tm.getDataAsMapArray()
@@ -311,12 +312,12 @@ qx.Mixin.define("bcp.client.MFulfillment",
             let             listItem;
 
             listItem = new qx.ui.form.ListItem(entry.family_name);
-            this._fulfillmentLabelToListMap[entry.family_name] = listItem;
-            this._fulfillmentClients.add(listItem);
+            this._appointmentLabelToListMap[entry.family_name] = listItem;
+            this._appointmentClients.add(listItem);
           });
     },
 
-    _onFulfillmentListChangeSelection : function(e)
+    _onAppointmentListChangeSelection : function(e)
     {
       let             familyName;
       const           eData = e.getData();
@@ -330,16 +331,16 @@ qx.Mixin.define("bcp.client.MFulfillment",
       // Retrieve the family name selected in the client list
       familyName = eData[0].getLabel();
 
-      // Fill in the fulfillment form and process its result
-      this._handleFulfillmentForm(familyName);
+      // Fill in the appointment form and process its result
+      this._handleAppointmentForm(familyName);
     },
 
-    _handleFulfillmentForm : function(familyName, distributionStart)
+    _handleAppointmentForm : function(familyName, distributionStart)
     {
       let             formData;
       let             client;
 
-      // Concurrently, retrieve the distribution list and this fulfillment
+      // Concurrently, retrieve the distribution list and this appointment
       this.rpc(
         "getAppointments",
         [
@@ -356,7 +357,7 @@ qx.Mixin.define("bcp.client.MFulfillment",
 
             // Disable access to the rest of the gui while working
             // with the form
-            this._disableAllForFulfillment(true);
+            this._disableAllForAppointment(true);
 
             // Get the information for the selected distribution
             if (! distributionStart)
@@ -530,21 +531,21 @@ qx.Mixin.define("bcp.client.MFulfillment",
                 }
               };
 
-            this._fulfillmentForm.set(
+            this._appointmentForm.set(
               {
                 message          : this.bold(familyName || ""),
                 labelColumnWidth : 150,
                 formData         : formData
               });
 
-            this._fulfillmentForm._okButton.set(
+            this._appointmentForm._okButton.set(
               {
                 rich    : true,
                 label   : this.underlineChar("Save"),
                 command : new qx.ui.command.Command("Alt+S")
               });
 
-            this._fulfillmentForm.promise()
+            this._appointmentForm.promise()
               .then(
                 (result) =>
                 {
@@ -552,7 +553,7 @@ qx.Mixin.define("bcp.client.MFulfillment",
                   if (! result)
                   {
                     // ... then just reset the selection, ...
-                    this._fulfillmentClients.resetSelection();
+                    this._appointmentClients.resetSelection();
 
                     // ... and get outta Dodge!
                     return Promise.resolve();
@@ -570,7 +571,7 @@ qx.Mixin.define("bcp.client.MFulfillment",
                       });
                 });
 
-            this._fulfillmentForm.show();
+            this._appointmentForm.show();
           })
         .catch(
           (e) =>

@@ -40,10 +40,10 @@ qx.Mixin.define("bcp.client.MDistribution",
       tabView.add(page);
 
       button = page.getChildControl("button");
-      button.setLabel(this.underlineChar("Distributions"));
+      button.setLabel(this.underlineChar("Distributions", 1));
       button.setRich(true);
 
-      command = new qx.ui.command.Command("Alt+D");
+      command = new qx.ui.command.Command("Alt+I");
       command.addListener("execute", () => tabView.setSelection( [ page ] ));
 
       // Initialize the label to list map

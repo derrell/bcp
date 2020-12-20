@@ -177,7 +177,6 @@ qx.Class.define("bcp.client.Appointment",
 
         if (! this._dayTimeNodes[day][time])
         {
-console.warn("Throwing error: time is outside of allowed range. day=", day, ", time=", time, ", dayTimeNodes=", this._dayTimeNodes);
           throw new Error("Time is outside of allowed range");
         }
       }
@@ -270,14 +269,6 @@ console.warn("Throwing error: time is outside of allowed range. day=", day, ", t
 
       // Get the tree data model
       this._dm = dm = tree.getDataModel();
-
-/*
-      var te1 = dm.addBranch(null, "Desktop", true);
-      tree.nodeSetLabelStyle(te1,
-                             "background-color: red; " +
-                             "color: white;" +
-                             "font-weight: bold;");
-*/      
 
       // Handle selection of an appointment time
       tree.addListener("changeSelection", this._onChangeSelection, this);
