@@ -149,6 +149,117 @@ qx.Class.define("bcp.client.Client",
           s,
           "</span>"
         ].join(""));
+    },
+
+    /**
+     * Issue a Remote Procedure Call
+     *
+     * The RPC always goes to url /rpc, and the specified function is called
+     * with the specified arguments.
+     *
+     * If the request results in an authentication failure, the login popup is
+     * presented.
+     *
+     * @param functionName {String}
+     *   The name of the remote procedure
+     *
+     * @param args {Array}
+     *   Array of arguments to the function
+     *
+     * @return {Promise}
+     *   Promise that resolves with the RPC result. */
+    rpc : function(functionName, args)
+    {
+      let             client;
+
+      client = new qx.io.jsonrpc.Client(new qx.io.transport.Xhr("/rpc"));
+      return client.sendRequest(functionName, args)
+        .catch(
+          (e) =>
+          {
+            // Is this an authentication or authorization failure?
+            if (e.code == 7 && e.message.includes(": 403:"))
+            {
+              console.log("Not authorized");
+              this._createLogin();
+              return;
+            }
+
+            throw e;
+          });
+    },
+
+    /**
+     * Creates a sample login widget
+     */
+    _createLogin: function()
+    {
+      let             loginWidget;
+
+      loginWidget = new qxl.dialog.Login(
+        {
+          image                  : "dialog/logo.gif",
+          text                   : "Login",
+          checkCredentials       : this.checkCredentials,
+          callback               : this.finalCallback.bind(this),
+          showForgotPassword     : false
+      });
+
+      loginWidget.show();
+    },
+
+    /**
+     * Check credentials. The callback is called with the result,
+     * which should be undefined or null if successful, and the error
+     * message if the authentication failed. If the problem was not
+     * the authentication, but some other exception, you could pass an
+     * error object.
+     *
+     * @param username {String}
+     *   The entered username
+     *
+     * @param password {String}
+     *   The entered pasword
+     *
+     * @param callback {Function}
+     *   The callback function that needs to be called with (err, data)
+     *   as arguments
+     */
+    checkCredentials: function(username, password, callback)
+    {
+      let             xhr = new qx.io.request.Xhr();
+
+      xhr.set(
+        {
+          url         : "/login",
+          method      : "POST",
+          requestData : { username, password }
+        });
+
+      xhr.addListener("success", () => callback(null));
+      xhr.addListenerOnce("fail", e => callback("Login failed"));
+
+      xhr.send();
+    },
+
+    /**
+     * Show failure alert if authentication failed
+     *
+     * @param err {String|Error|undefined|null}
+     * @param data
+     */
+    finalCallback: function(e, data)
+    {
+      if (e)
+      {
+        qxl.dialog.Dialog.alert(e)
+          .set({ caption: "Login Error" });
+      }
+      else
+      {
+        // Reload the page now that we're logged in
+        location.reload();
+      }
     }
   }
 });

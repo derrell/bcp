@@ -10,7 +10,10 @@ qx.Class.define("bcp.server.Rpc",
    */
   construct(app)
   {
+    let             entry;
     let             server;
+    let             requests;
+    let             serverEntries = {};
     const           sqlite3 = require("sqlite3");
     const           { open } = require("sqlite");
     const           jayson = require("jayson");
@@ -19,20 +22,66 @@ qx.Class.define("bcp.server.Rpc",
 
     this.info("Rpc: starting");
 
-    server = jayson.server(
+    // Each of the available requests
+    requests =
       {
-        getClientList       : this._getClientList.bind(this),
-        saveClient          : this._saveClient.bind(this),
+        getClientList       :
+        {
+          handler             : this._getClientList.bind(this),
+          permission_level    : 10
+        },
 
-        getAppointments     : this._getAppointments.bind(this),
-        saveFulfillment     : this._saveFulfillment.bind(this),
+        saveClient          :
+        {
+          handler             : this._saveClient.bind(this),
+          permission_level    : 10
+        },
 
-        getDistributionList : this._getDistributionList.bind(this),
-        saveDistribution    : this._saveDistribution.bind(this),
+        getAppointments     :
+        {
+          handler             : this._getAppointments.bind(this),
+          permission_level    : 10
+        },
 
-        getReportList       : this._getReportList.bind(this),
-        generateReport      : this._generateReport.bind(this)
-      });
+        saveFulfillment     :
+        {
+          handler             : this._saveFulfillment.bind(this),
+          permission_level    : 10
+        },
+
+        getDistributionList :
+        {
+          handler             : this._getDistributionList.bind(this),
+          permission_level    : 10
+        },
+
+        saveDistribution    :
+        {
+          handler             : this._saveDistribution.bind(this),
+          permission_level    : 10
+        },
+
+        getReportList       :
+        {
+          handler             : this._getReportList.bind(this),
+          permission_level    : 10
+        },
+
+        generateReport      :
+        {
+          handler             : this._generateReport.bind(this),
+          permission_level    : 10
+        }
+      };
+
+    // Create the rpcName:handler map needed for jayson.server()
+    for (entry in requests)
+    {
+      serverEntries[entry] = requests[entry].handler;
+    }
+
+    // Create the JSON-RPC server
+    server = jayson.server(serverEntries);
 
     // Open the database
     open(

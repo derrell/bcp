@@ -10,9 +10,25 @@ qx.Class.define("bcp.server.Auth",
    */
   construct(app)
   {
+    const           sqlite3 = require("sqlite3");
+    const           { open } = require("sqlite");
+
     this.base(arguments);
 
     this.info("Auth: starting");
+
+    // Open the database
+    open(
+      {
+        filename : `${process.cwd()}/pantry.db`,
+        driver   : sqlite3.Database
+      })
+      .then(
+        (db) =>
+        {
+          this._db = db;
+        });
+
 
     // Create routes
     [
@@ -28,6 +44,8 @@ qx.Class.define("bcp.server.Auth",
 
   members :
   {
+    _db    : null,
+
    /**
      * Ensure that all requests are authenticated.
      *
@@ -65,10 +83,13 @@ console.log("Allowed");
             return;
           }
 
+/*
 // TODO: REMOVE THIS CODE
 console.log("ALLOWING DISALLOWED METHOD !!!!!");
 next();
 return;
+*/
+
 
           // Tell them to log in
 console.log("Disallowed");
@@ -130,30 +151,52 @@ console.log("Disallowed");
             .update(password)
             .digest("hex");
 
-/* TODO
-          // Does the hash match what's in the database?
-          if (hash != users[username].passwordHash)
-          {
-            this.debug(
-              "User " + username + " failed authentication");
-            res.status(401).send("Authentication failed");
-            return;
-          }
-*/
+          Promise.resolve()
+            .then(
+              () =>
+              {
+                return this._db.prepare(
+                    [
+                      "SELECT password, permission_level",
+                      "  FROM User",
+                      "  WHERE username = $username;"
+                    ].join(" "));
+              })
+            .then(
+              (stmt) =>
+              {
+                return stmt.all( { $username : username } );
+              })
+            .then(
+              (result) =>
+              {
+                // Did we find this username?
+                if (result.length < 1)
+                {
+                  // Nope. Fail authentication
+                  this.debug(
+                    "User " + username + " not found");
+                  res.status(401).send("Authentication failed");
+                  return;
+                }
 
-          // TODO: do proper authentication
-          if (username != "bcp" || password != process.env["BCP_PASSWORD"])
-          {
-            this.debug(`User ${username} failed authentication`);
-            res.status(401).send("Authentication failed");
-            return;
-          }
+                // Does the password match?
+                if (result[0].password != hash)
+                {
+                  // Nope. Fail authentication
+                  this.debug(
+                    "User " + username + " password didn't match");
+                  res.status(401).send("Authentication failed");
+                  return;
+                }
 
-          // The user authenticates.
-          this.info(`Authenticated user ${username}`);
-          req.bcpSession.authenticated = true;
-          req.bcpSession.username = username;
-          res.status(200).send("Authentication successful");
+                // The user authenticates.
+                this.info(`Authenticated user ${username}`);
+                req.bcpSession.authenticated = true;
+                req.bcpSession.username = username;
+                req.bcpSession.permissionLevel = result.permission_level;
+                res.status(200).send("Authentication successful");
+              });
         });
     },
 
@@ -173,6 +216,8 @@ console.log("Disallowed");
           this.info("/logout called: username=" +
                     req.bcpSession.username);
 
+          delete req.bpcSession.username;
+          delete req.bpcSession.permissionLevel;
           req.bcpSession.reset();
           res.redirect("/");
         });

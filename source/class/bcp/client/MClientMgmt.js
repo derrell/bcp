@@ -44,7 +44,6 @@ qx.Mixin.define("bcp.client.MClientMgmt",
       let             data;
       let             custom;
       let             behavior;
-      let             client;
       let             cellRenderer;
 
       page = new qx.ui.tabview.Page("Clients");
@@ -95,43 +94,39 @@ qx.Mixin.define("bcp.client.MClientMgmt",
         ]);
 
       // TODO
-      if (false)
-      {
-        data = bcp.client.MClientMgmt.DATA;
-        tm.setDataAsMapArray(data);
-      }
-      else
-      {
-        client = new qx.io.jsonrpc.Client(new qx.io.transport.Xhr("/rpc"));
-        client.sendRequest("getClientList", [])
-          .then(
-            (result) =>
+      this.rpc("getClientList", [])
+        .then(
+          (result) =>
+          {
+            if (! result)
             {
-              result = result.map(
-                (entry) =>
+              return;
+            }
+
+            result = result.map(
+              (entry) =>
+              {
+                if (entry.verified === 1)
                 {
-                  if (entry.verified === 1)
-                  {
-                    entry.verified = true;
-                  }
-                  else if (entry.verified === 0)
-                  {
-                    entry.verified = null;
-                  }
+                  entry.verified = true;
+                }
+                else if (entry.verified === 0)
+                {
+                  entry.verified = null;
+                }
 
-                  return entry;
-                });
-              tm.setDataAsMapArray(result);
+                return entry;
+              });
+            tm.setDataAsMapArray(result);
 
-              // Sort initially by the Family column
-              tm.sortByColumn(tm.getColumnIndexById("family_name"), true);
-            })
-          .catch(
-            (e) =>
-            {
-              console.error("getClientList:", e);
-            });
-      }
+            // Sort initially by the Family column
+            tm.sortByColumn(tm.getColumnIndexById("family_name"), true);
+          })
+        .catch(
+          (e) =>
+          {
+            console.warn("getClientList:", e);
+          });
 
       // Prepare to use the Resize column model, for better column widths
       custom =
@@ -617,8 +612,8 @@ qx.Mixin.define("bcp.client.MClientMgmt",
             manager.bind(
               "valid",
               formDialog._okButton,
-              "enabled",
-              {
+              "enabled", 
+             {
                 converter: function(value)
                 {
                   return value || false;
