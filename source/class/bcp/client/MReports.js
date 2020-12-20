@@ -31,12 +31,21 @@ qx.Mixin.define("bcp.client.MReports",
     {
       let             page;
       let             vBox;
+      let             button;
+      let             command;
       let             formData;
       const           _this = this;
 
       page = new qx.ui.tabview.Page("Reports");
       page.setLayout(new qx.ui.layout.HBox(12));
       tabView.add(page);
+
+      button = page.getChildControl("button");
+      button.setLabel(this.underlineChar("Reports"));
+      button.setRich(true);
+
+      command = new qx.ui.command.Command("Alt+R");
+      command.addListener("execute", () => tabView.setSelection( [ page ] ));
 
       // Initialize the label to list map
       this._reportLabelToListMap = {};
@@ -222,7 +231,12 @@ qx.Mixin.define("bcp.client.MReports",
           formData         : formData
         });
 
-      this._reportForm._okButton.setLabel("Generate Report");
+      this._reportForm._okButton.set(
+        {
+          rich    : true,
+          label   : this.underlineChar("Generate Report"),
+          command : new qx.ui.command.Command("Alt+G")
+        });
 
       this._reportForm.promise()
         .then(

@@ -40,6 +40,8 @@ qx.Mixin.define("bcp.client.MClientMgmt",
       let             table;
       let             tcm;
       let             hBox;
+      let             button;
+      let             command;
       let             butNewClient;
       let             data;
       let             custom;
@@ -49,6 +51,13 @@ qx.Mixin.define("bcp.client.MClientMgmt",
       page = new qx.ui.tabview.Page("Clients");
       page.setLayout(new qx.ui.layout.VBox());
       tabView.add(page);
+
+      button = page.getChildControl("button");
+      button.setLabel(this.underlineChar("Clients"));
+      button.setRich(true);
+
+      command = new qx.ui.command.Command("Alt+C");
+      command.addListener("execute", () => tabView.setSelection( [ page ] ));
 
       this._tm = tm = new qx.ui.table.model.Simple();
       tm.setColumns(

@@ -30,12 +30,21 @@ qx.Mixin.define("bcp.client.MFulfillment",
     {
       let             page;
       let             vBox;
+      let             button;
+      let             command;
       let             formData;
       const           _this = this;
 
       page = new qx.ui.tabview.Page("Fulfillment");
       page.setLayout(new qx.ui.layout.HBox(12));
       tabView.add(page);
+
+      button = page.getChildControl("button");
+      button.setLabel(this.underlineChar("Fulfillment", 1));
+      button.setRich(true);
+
+      command = new qx.ui.command.Command("Alt+U");
+      command.addListener("execute", () => tabView.setSelection( [ page ] ));
 
       // Initialize the label to list map
       this._fulfillmentLabelToListMap = {};
@@ -528,7 +537,12 @@ qx.Mixin.define("bcp.client.MFulfillment",
                 formData         : formData
               });
 
-            this._fulfillmentForm._okButton.setLabel("Save");
+            this._fulfillmentForm._okButton.set(
+              {
+                rich    : true,
+                label   : this.underlineChar("Save"),
+                command : new qx.ui.command.Command("Alt+S")
+              });
 
             this._fulfillmentForm.promise()
               .then(

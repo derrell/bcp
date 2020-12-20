@@ -170,6 +170,48 @@ qx.Class.define("bcp.client.Client",
     },
 
     /**
+     * Convert the given text to an HTML span with text-decoration: underline
+     * for the nth character
+     *
+     * @param s {String}
+     *   The string to have a character underlined
+     *
+     * @param n {Number}
+     *   Which character (0-relative) is to be underlined
+     *
+     * @return {String}
+     *   The original string with a single character underlined
+     */
+    underlineChar : function bold(s, n = 0)
+    {
+      let             result = [];
+
+      // Split the string into its constituent characters
+      s = s.split("");
+
+      // Add the part of the string that precedes the nth character
+      while (n > 0)
+      {
+        result.push(s.shift());
+        --n;
+      }
+
+      // Underline the current character
+      result.push.apply(
+        result,
+        [
+          "<span style='text-decoration: underline'>",
+          s.shift(),
+          "</span>"
+        ]);
+
+      // Add the remainder of the string
+      result.push(s.join(""));
+
+      // Give 'em the whole thing, put back together
+      return result.join("");
+    },
+    /**
      * Issue a Remote Procedure Call
      *
      * The RPC always goes to url /rpc, and the specified function is called

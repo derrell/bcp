@@ -30,12 +30,21 @@ qx.Mixin.define("bcp.client.MDistribution",
     {
       let             page;
       let             vBox;
+      let             button;
+      let             command;
       let             formData;
       const           _this = this;
 
       page = new qx.ui.tabview.Page("Distributions");
       page.setLayout(new qx.ui.layout.HBox(12));
       tabView.add(page);
+
+      button = page.getChildControl("button");
+      button.setLabel(this.underlineChar("Distributions"));
+      button.setRich(true);
+
+      command = new qx.ui.command.Command("Alt+D");
+      command.addListener("execute", () => tabView.setSelection( [ page ] ));
 
       // Initialize the label to list map
       this._distributionLabelToListMap = {};
@@ -560,7 +569,12 @@ qx.Mixin.define("bcp.client.MDistribution",
           formData         : formData
         });
 
-      this._distributionForm._okButton.setLabel("Save");
+      this._distributionForm._okButton.set(
+        {
+          rich    : true,
+          label   : this.underlineChar("Save"),
+          command : new qx.ui.command.Command("Alt+S")
+        });
 
       this._distributionForm.promise()
         .then(
