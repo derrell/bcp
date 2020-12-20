@@ -126,6 +126,8 @@ qx.Mixin.define("bcp.client.MClientMgmt",
           (e) =>
           {
             console.warn("getClientList:", e);
+            qxl.dialog.Dialog.alert(
+              `Could not retrieve client list: ${e.message}`);
           });
 
       // Prepare to use the Resize column model, for better column widths

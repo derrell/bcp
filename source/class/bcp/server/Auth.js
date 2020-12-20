@@ -194,7 +194,7 @@ console.log("Disallowed");
                 this.info(`Authenticated user ${username}`);
                 req.bcpSession.authenticated = true;
                 req.bcpSession.username = username;
-                req.bcpSession.permissionLevel = result.permission_level;
+                req.bcpSession.permissionLevel = result[0].permission_level;
                 res.status(200).send("Authentication successful");
               });
         });
@@ -216,8 +216,6 @@ console.log("Disallowed");
           this.info("/logout called: username=" +
                     req.bcpSession.username);
 
-          delete req.bpcSession.username;
-          delete req.bpcSession.permissionLevel;
           req.bcpSession.reset();
           res.redirect("/");
         });

@@ -104,6 +104,24 @@ qx.Class.define("bcp.client.Client",
         });
       header.add(butLogout);
 
+      butLogout.addListener(
+        "execute",
+        () =>
+        {
+          let             xhr = new qx.io.request.Xhr();
+
+          xhr.set(
+            {
+              url         : "/logout",
+              method      : "GET",
+            });
+
+          xhr.addListenerOnce("success", () => location.reload());
+          xhr.addListenerOnce("fail", e => location.reload());
+
+          xhr.send();
+        });
+
       //
       // Build the main view
       //

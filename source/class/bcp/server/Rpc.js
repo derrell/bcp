@@ -28,49 +28,49 @@ qx.Class.define("bcp.server.Rpc",
         getClientList       :
         {
           handler             : this._getClientList.bind(this),
-          permission_level    : 10
+          permission_level    : 50
         },
 
         saveClient          :
         {
           handler             : this._saveClient.bind(this),
-          permission_level    : 10
+          permission_level    : 50
         },
 
         getAppointments     :
         {
           handler             : this._getAppointments.bind(this),
-          permission_level    : 10
+          permission_level    : 50
         },
 
         saveFulfillment     :
         {
           handler             : this._saveFulfillment.bind(this),
-          permission_level    : 10
+          permission_level    : 50
         },
 
         getDistributionList :
         {
           handler             : this._getDistributionList.bind(this),
-          permission_level    : 10
+          permission_level    : 50
         },
 
         saveDistribution    :
         {
           handler             : this._saveDistribution.bind(this),
-          permission_level    : 10
+          permission_level    : 50
         },
 
         getReportList       :
         {
           handler             : this._getReportList.bind(this),
-          permission_level    : 10
+          permission_level    : 50
         },
 
         generateReport      :
         {
           handler             : this._generateReport.bind(this),
-          permission_level    : 10
+          permission_level    : 50
         }
       };
 
@@ -99,7 +99,30 @@ qx.Class.define("bcp.server.Rpc",
       "/rpc",
       (req, res, next) =>
       {
+        const           { username, permissionLevel } = req.bcpSession;
+
         console.log("Got RPC request: body=", req.body);
+
+        // Ensure basic components of the request are available
+        if (! req.body || 
+            ! req.body.method ||
+           typeof req.bcpSession.permissionLevel != "number")
+        {
+          res.status(401).send("Authentication failed");
+        }
+
+        // Look at the method and ensure this user is allowed to access it
+        if (! requests[req.body.method] ||
+            typeof requests[req.body.method].permission_level != "number" ||
+            requests[req.body.method].permission_level >= permissionLevel)
+        {
+          // They're not allowed access. Redirect them to a non-existent method
+          console.log(
+            `User ${username} does not have permission ` +
+              `for method ${req.body.method}`);
+          req.body.method = "MethodDoesNotExist";
+        }
+
         server.middleware()(req, res, next);
       });
   },
