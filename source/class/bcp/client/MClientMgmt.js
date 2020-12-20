@@ -338,6 +338,10 @@ qx.Mixin.define("bcp.client.MClientMgmt",
             validation :
             {
               required   : true
+            },
+            properties :
+            {
+              tabIndex   : 1
             }
           },
           address_default :
@@ -349,19 +353,31 @@ qx.Mixin.define("bcp.client.MClientMgmt",
             userdata   :
             {
               rowspan    : 2
+            },
+            properties :
+            {
+              tabIndex   : 2
             }
           },
           phone :
           {
             type       : "TextField",
             label      : "Phone",
-            value      : clientInfo.phone || ""
+            value      : clientInfo.phone || "",
+            properties :
+            {
+              tabIndex   : 3
+            }
           },
           email :
           {
             type       : "TextField",
             label      : "Email",
-            value      : clientInfo.email || ""
+            value      : clientInfo.email || "",
+            properties :
+            {
+              tabIndex   : 4
+            }
           },
           ethnicity :
           {
@@ -376,31 +392,51 @@ qx.Mixin.define("bcp.client.MClientMgmt",
               { label : "Asian",            value : "Asian" },
               { label : "Hispanic",         value : "Hispanic" },
               { label : "White",            value : "White" }
-            ]
+            ],
+            properties :
+            {
+              tabIndex   : 5
+            }
           },
           income_source :
           {
             type       : "TextField",
             label      : "Income source",
-            value      : clientInfo.income_source || ""
+            value      : clientInfo.income_source || "",
+            properties :
+            {
+              tabIndex   : 6
+            }
           },
           income_amount :
           {
             type       : "TextField",
             label      : "Income amount",
-            value      : clientInfo.income_amount || ""
+            value      : clientInfo.income_amount || "",
+            properties :
+            {
+              tabIndex   : 7
+            }
           },
           pet_types :
           {
             type       : "TextField",
             label      : "Pet types",
-            value      : clientInfo.pet_types || ""
+            value      : clientInfo.pet_types || "",
+            properties :
+            {
+              tabIndex   : 8
+            }
           },
           verified :
           {
             type       : "Checkbox",
             label      : "Verified",
-            value      : clientInfo.verified || false
+            value      : clientInfo.verified || false,
+            properties :
+            {
+              tabIndex   : null
+            }
           },
           count_senior :
           {
@@ -413,6 +449,10 @@ qx.Mixin.define("bcp.client.MClientMgmt",
             {
               row       : 0,
               column    : 2
+            },
+            properties :
+            {
+              tabIndex   : 10
             }
           },
           count_adult :
@@ -421,7 +461,11 @@ qx.Mixin.define("bcp.client.MClientMgmt",
             label     : "# of adults (age 18-64)",
             value     : clientInfo.count_adult || 0,
             min       : 0,
-            step      : 1
+            step      : 1,
+            properties :
+            {
+              tabIndex   : 11
+            }
           },
           count_child :
           {
@@ -429,7 +473,11 @@ qx.Mixin.define("bcp.client.MClientMgmt",
             label     : "# of children (age 0-17)",
             value     : clientInfo.count_child || 0,
             min       : 0,
-            step      : 1
+            step      : 1,
+            properties :
+            {
+              tabIndex   : 12
+            }
           },
           count_sex_male :
           {
@@ -441,6 +489,10 @@ qx.Mixin.define("bcp.client.MClientMgmt",
             userdata  :
             {
               row       : 4
+            },
+            properties :
+            {
+              tabIndex   : 13
             }
           },
           count_sex_female :
@@ -449,7 +501,11 @@ qx.Mixin.define("bcp.client.MClientMgmt",
             label     : "# of females",
             value     : clientInfo.count_sex_female || 0,
             min       : 0,
-            step      : 1
+            step      : 1,
+            properties :
+            {
+              tabIndex   : 14
+            }
           },
           count_sex_other :
           {
@@ -457,7 +513,11 @@ qx.Mixin.define("bcp.client.MClientMgmt",
             label     : "# of other genders",
             value     : clientInfo.count_sex_other || 0,
             min       : 0,
-            step      : 1
+            step      : 1,
+            properties :
+            {
+              tabIndex   : 15
+            }
           },
           count_veteran :
           {
@@ -469,6 +529,10 @@ qx.Mixin.define("bcp.client.MClientMgmt",
             userdata  :
             {
               row       : 8
+            },
+            properties :
+            {
+              tabIndex   : 16
             }
           },
           default_appointment :
@@ -484,7 +548,8 @@ qx.Mixin.define("bcp.client.MClientMgmt",
               : null),
             properties :
             {
-              showScheduled : false
+              showScheduled : false,
+              tabIndex      : null
             },
             userdata   :
             {
@@ -690,6 +755,26 @@ qx.Mixin.define("bcp.client.MClientMgmt",
           label   : "Save"
         });
       form.show();
+
+
+      // Focus the first field upon appear
+      form.addListener(
+        "appear",
+        () =>
+        {
+          // If the family name field is enabled...
+          if (form._formElements["family_name"].getEnabled())
+          {
+            // ... then focus it
+            form._formElements["family_name"].focus();
+          }
+          else
+          {
+            // Otherwise, focus the default delivery address field
+            form._formElements["address_default"].focus();
+          }
+        },
+        this);
 
       p = form.promise();
 

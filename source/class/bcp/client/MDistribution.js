@@ -310,6 +310,7 @@ qx.Mixin.define("bcp.client.MDistribution",
       let             first = [];
       let             last = [];
       let             times = [];
+      const           form = this._distributionForm;
       const           fifteenMin = (1000 * 60 * 15);
 
       // If the selection is being cleared, we have nothing to do.
@@ -392,7 +393,11 @@ qx.Mixin.define("bcp.client.MDistribution",
             type       : "SelectBox",
             label      : "First appointment",
             options    : times.slice(),
-            value      : first[1]
+            value      : first[1],
+            properties :
+            {
+              tabIndex   : 1
+            }
           },
 
           day_1_last_appt :
@@ -400,7 +405,11 @@ qx.Mixin.define("bcp.client.MDistribution",
             type       : "SelectBox",
             label      : "Last appointment",
             options    : times.slice(),
-            value      : last[1]
+            value      : last[1],
+            properties :
+            {
+              tabIndex   : 2
+            }
           },
 
           day_2_label :
@@ -418,7 +427,11 @@ qx.Mixin.define("bcp.client.MDistribution",
             type       : "SelectBox",
             label      : "First appointment",
             options    : times.slice(),
-            value      : first[2]
+            value      : first[2],
+            properties :
+            {
+              tabIndex   : 3
+            }
           },
 
           day_2_last_appt :
@@ -426,7 +439,11 @@ qx.Mixin.define("bcp.client.MDistribution",
             type       : "SelectBox",
             label      : "Last appointment",
             options    : times.slice(),
-            value      : last[2]
+            value      : last[2],
+            properties :
+            {
+              tabIndex   : 4
+            }
           },
 
           day_3_label :
@@ -444,7 +461,11 @@ qx.Mixin.define("bcp.client.MDistribution",
             type       : "SelectBox",
             label      : "First appointment",
             options    : times.slice(),
-            value      : first[3]
+            value      : first[3],
+            properties :
+            {
+              tabIndex   : 5
+            }
           },
 
           day_3_last_appt :
@@ -452,7 +473,11 @@ qx.Mixin.define("bcp.client.MDistribution",
             type       : "SelectBox",
             label      : "Last appointment",
             options    : times.slice(),
-            value      : last[3]
+            value      : last[3],
+            properties :
+            {
+              tabIndex   : 6
+            }
           },
 
           day_4_label :
@@ -471,7 +496,11 @@ qx.Mixin.define("bcp.client.MDistribution",
             type       : "SelectBox",
             label      : "First appointment",
             options    : times.slice(),
-            value      : first[4]
+            value      : first[4],
+            properties :
+            {
+              tabIndex   : 7
+            }
           },
 
           day_4_last_appt :
@@ -479,7 +508,11 @@ qx.Mixin.define("bcp.client.MDistribution",
             type       : "SelectBox",
             label      : "Last appointment",
             options    : times.slice(),
-            value      : last[4]
+            value      : last[4],
+            properties :
+            {
+              tabIndex   : 8
+            }
           },
 
           day_5_label :
@@ -497,7 +530,11 @@ qx.Mixin.define("bcp.client.MDistribution",
             type       : "SelectBox",
             label      : "First appointment",
             options    : times.slice(),
-            value      : first[5]
+            value      : first[5],
+            properties :
+            {
+              tabIndex   : 9
+            }
           },
 
           day_5_last_appt :
@@ -505,7 +542,11 @@ qx.Mixin.define("bcp.client.MDistribution",
             type       : "SelectBox",
             label      : "Last appointment",
             options    : times.slice(),
-            value      : last[5]
+            value      : last[5],
+            properties :
+            {
+              tabIndex   : 10
+            }
           },
 
           day_6_label :
@@ -523,7 +564,11 @@ qx.Mixin.define("bcp.client.MDistribution",
             type       : "SelectBox",
             label      : "First appointment",
             options    : times.slice(),
-            value      : first[6]
+            value      : first[6],
+            properties :
+            {
+              tabIndex   : 11
+            }
           },
 
           day_6_last_appt :
@@ -531,7 +576,11 @@ qx.Mixin.define("bcp.client.MDistribution",
             type       : "SelectBox",
             label      : "Last appointment",
             options    : times.slice(),
-            value      : last[6]
+            value      : last[6],
+            properties :
+            {
+              tabIndex   : 12
+            }
           },
 
           day_7_label :
@@ -550,7 +599,11 @@ qx.Mixin.define("bcp.client.MDistribution",
             type       : "SelectBox",
             label      : "First appointment",
             options    : times.slice(),
-            value      : first[7]
+            value      : first[7],
+            properties :
+            {
+              tabIndex   : 13
+            }
           },
 
           day_7_last_appt :
@@ -558,25 +611,29 @@ qx.Mixin.define("bcp.client.MDistribution",
             type       : "SelectBox",
             label      : "Last appointment",
             options    : times.slice(),
-            value      : last[7]
+            value      : last[7],
+            properties :
+            {
+              tabIndex   : 14
+            }
           },
         };
 
-      this._distributionForm.set(
+      form.set(
         {
           message          : this.bold(startDate),
           labelColumnWidth : 150,
           formData         : formData
         });
 
-      this._distributionForm._okButton.set(
+      form._okButton.set(
         {
           rich    : true,
           label   : this.underlineChar("Save"),
           command : new qx.ui.command.Command("Alt+S")
         });
 
-      this._distributionForm.promise()
+      form.promise()
         .then(
           (result) =>
           {
@@ -617,7 +674,16 @@ qx.Mixin.define("bcp.client.MDistribution",
                 });
           });
 
-      this._distributionForm.show();
+      form.show();
+
+      // Focus the first field upon appear
+      form.addListener(
+        "appear",
+        () =>
+        {
+          form._formElements["day_1_first_appt"].focus();
+        },
+        this);
     }
   }
 });

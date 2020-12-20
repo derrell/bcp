@@ -38,13 +38,14 @@ qx.Class.define("bcp.client.Client",
     main()
     {
       let             mainContainer;
+      let             vBox;
       let             logo;
       let             header;
       let             font;
       let             label;
       let             butLogin;
       let             butLogout;
-
+      let             passwordChange;
 
       this.base(arguments);
 
@@ -96,13 +97,33 @@ qx.Class.define("bcp.client.Client",
       // Right-justify the buttons
       header.add(new qx.ui.core.Spacer(), { flex : 1 });
 
+      // Display the buttons vertically
+      vBox = new qx.ui.container.Composite(new qx.ui.layout.VBox());
+      header.add(vBox);
+
+      passwordChange = new qx.ui.basic.Label("");
+      passwordChange.set(
+        {
+          rich       : true,
+          textAlign  : "center",
+          allowGrowX : true
+        });
+      vBox.add(passwordChange);
+      passwordChange.addListener(
+        "tap",
+        () =>
+        {
+          qxl.dialog.Dialog.alert(
+            "To change your password, speak with Derrell");
+        });
+
       butLogout = new qx.ui.form.Button("Logout");
       butLogout.set(
         {
           maxHeight : 28,
           marginTop : 10
         });
-      header.add(butLogout);
+      vBox.add(butLogout);
 
       butLogout.addListener(
         "execute",
@@ -133,11 +154,29 @@ qx.Class.define("bcp.client.Client",
       // Make sure all of our local form elements are registered
       bcp.client.RegisterFormElements.register();
 
-      // Create each of the tabview pages
-      this._createClientListTab(this._tabView);
-      this._createFulfillmentTab(this._tabView);
-      this._createDistributionTab(this._tabView);
-      this._createReportsTab(this._tabView);
+      this.rpc("whoAmI", [])
+        .then(
+          (me) =>
+          {
+            console.log("me:", me);
+
+            // No result if authentication failed (handled by this.rpc())
+            if (! me)
+            {
+              return;
+            }
+
+            passwordChange.setValue(
+              "<span style='text-decoration: underline;'>" +
+                this.bold(me.username) +
+              "</span>");
+
+            // Create each of the tabview pages
+            this._createClientListTab(this._tabView);
+            this._createFulfillmentTab(this._tabView);
+            this._createDistributionTab(this._tabView);
+            this._createReportsTab(this._tabView);
+          });
     },
 
     close : function()
@@ -240,17 +279,19 @@ qx.Class.define("bcp.client.Client",
             // Is this an authentication or authorization failure?
             if (e.code == 7 && e.message.includes(": 403:"))
             {
+              // Yup. Present the login form.
               console.log("Not authorized");
               this._createLogin();
               return;
             }
 
+            // It's not an error we handle. Rethrow for user to handle it.
             throw e;
           });
     },
 
     /**
-     * Creates a sample login widget
+     * Creates the login widget
      */
     _createLogin: function()
     {

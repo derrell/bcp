@@ -25,6 +25,12 @@ qx.Class.define("bcp.server.Rpc",
     // Each of the available requests
     requests =
       {
+        whoAmI       :
+        {
+          handler             : this._whoAmI.bind(this),
+          permission_level    : 0
+        },
+
         getClientList       :
         {
           handler             : this._getClientList.bind(this),
@@ -123,6 +129,10 @@ qx.Class.define("bcp.server.Rpc",
           req.body.method = "MethodDoesNotExist";
         }
 
+        // Save req locally so it's accessible in RPC.
+        // SAVE IT AS FIRST STEP IN RPC. It may change due to other RPC calls.
+        this._req = req;
+
         server.middleware()(req, res, next);
       });
   },
@@ -146,7 +156,29 @@ qx.Class.define("bcp.server.Rpc",
   members :
   {
     /** The database handle */
-    _db : null,
+    _db   : null,
+
+    /** Temporary storage of the request object of a call */
+    _req  : null,
+
+    /**
+     * Return the logged-in user and permissions
+     *
+     * @param args {Array}
+     *   There are no arguments to this method. The array is unused.
+     *
+     * @param callback {Function}
+     *   @signature(err, result)
+     */
+    _whoAmI(args, callback)
+    {
+      callback(
+        null,
+        {
+          username        : this._req.bcpSession.username,
+          permissionLevel : this._req.bcpSession.permissionLevel
+        });
+    },
 
     /**
      * Retrieve the full client list
