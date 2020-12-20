@@ -5,7 +5,7 @@
       "type": "source",
       "outputPath": "output/source",
       "bundle": {
-        "include": "qx.*"
+                                                                             "include": "qx.*"
       },
       "addCreatedAt": true,
       "environment": {
@@ -52,6 +52,7 @@
   ],
   "libraries": [
     "../../qxl.dialog.git",
+    "../../incubator.qx.io.jsonrpc.git",
     "."
   ]
 }

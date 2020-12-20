@@ -1,14 +1,6 @@
 {
   "libraries": [
     {
-      "library_name": "incubator.qx.io.jsonrpc",
-      "library_version": "2.0.0",
-      "path": "qx_packages/qooxdoo_incubator_qx_io_jsonrpc_v2_0_0",
-      "uri": "qooxdoo/incubator.qx.io.jsonrpc",
-      "repo_name": "qooxdoo/incubator.qx.io.jsonrpc",
-      "repo_tag": "v2.0.0"
-    },
-    {
       "library_name": "Qooxdoo API Viewer",
       "library_version": "1.0.14",
       "path": "qx_packages/qooxdoo_qxl_apiviewer_v1_0_14",
