@@ -13,9 +13,19 @@
  */
 qx.Mixin.define("bcp.client.MDeliveryDay",
 {
+  statics :
+  {
+    _appointmentRowColor    :
+    [
+      "table-row-background-odd", // first appointment of a new time
+      "table-row-background-even"
+    ]
+  },
+
   members :
   {
-    _tabLabelDeliveryDay : null,
+    _nextAppointmentRowColor : 0,
+    _tabLabelDeliveryDay     : null,
 
     /**
      * Create the delivery day page
@@ -91,7 +101,13 @@ console.log("getDeliveryDay data:", result);
 
       tree = new qx.ui.tree.Tree().set(
         {
-          width: 800
+          width: 1000
+        });
+      tree.addListener(
+        "changeSelection",
+        () =>
+        {
+          tree.resetSelection();
         });
       container.add(tree, { flex : 1 });
 
@@ -157,50 +173,17 @@ console.log("getDeliveryDay data:", result);
     {
       let             label;
       let             checkbox;
+      const           MDeliveryDay = bcp.client.MDeliveryDay;
 
       // We don't want any icons on branches or leaves
       treeItem.setIcon(null);
+      treeItem.setHeight(40);
 
       // Add an open/close button to any branch
       if (treeItem instanceof qx.ui.tree.TreeFolder)
       {
         treeItem.addOpenButton();
       }
-      else
-      {
-        // On leaves, add a checkbox for indicating it's been Fulfilled
-        checkbox = new qx.ui.form.CheckBox("");
-        checkbox.set(
-          {
-            focusable : false,
-            value     : !! data.fulfilled
-          });
-        treeItem.addWidget(checkbox);
-
-        // When this checkbox is tapped, mark as fulfilled
-        checkbox.addListener(
-          "tap",
-          () =>
-          {
-            this.rpc(
-              "updateFulfilled",
-              [ distribution, data.family_name, checkbox.getValue() ])
-              .then(
-                () =>
-                {
-                  console.log(`Updated fulfillment for ${data.family_name}`);
-                })
-              .catch(
-                (e) =>
-                {
-                  console.warn("updateFulfilled:", e);
-                  qxl.dialog.Dialog.alert(
-                    "Could not update fulfilled status for " +
-                      `${data.family_name}: ${e.message}`);
-                });
-          });
-      }
-
       // Add the label. Branches are given strings; leaves, appointment map.
       treeItem.addLabel(typeof data == "string" ? data : data.family_name);
 
@@ -213,13 +196,82 @@ console.log("getDeliveryDay data:", result);
       // Right-justify the rest
       treeItem.addWidget(new qx.ui.core.Spacer(), { flex: 1 });
 
+      // On leaves, add a checkbox for indicating it's been Fulfilled
+      checkbox = new qx.ui.form.ToggleButton(
+        "Unfulfilled", "qxl.dialog.icon.warning");
+      checkbox.set(
+        {
+          focusable   : false,
+          value       : !! data.fulfilled,
+          height      : 18,
+          width       : 100,
+          marginRight : 12,
+          paddingTop  : 2
+        });
+      if (data.fulfilled)
+      {
+//        checkbox.getChildControl("icon").exclude();
+        checkbox.setIcon("qxl.dialog.icon.ok");
+        checkbox.setLabel("Fulfilled");
+      }
+
+      // Keep the button label synchronized with the button's state
+      checkbox.addListener(
+        "changeValue",
+        () =>
+        {
+          if (! checkbox.getValue())
+          {
+//            checkbox.getChildControl("icon").show();
+            checkbox.setIcon("qxl.dialog.icon.warning");
+            checkbox.setLabel("Unfulfilled");
+          }
+          else
+          {
+//            checkbox.getChildControl("icon").exclude();
+            checkbox.setIcon("qxl.dialog.icon.ok");
+            checkbox.setLabel("Fulfilled");
+          }
+        });
+
+      // When this checkbox is tapped, mark as fulfilled
+      checkbox.addListener(
+        "tap",
+        () =>
+        {
+          this.rpc(
+            "updateFulfilled",
+            [ distribution, data.family_name, checkbox.getValue() ])
+            .then(
+              () =>
+              {
+                console.log(`Updated fulfillment for ${data.family_name}`);
+              })
+            .catch(
+              (e) =>
+              {
+                console.warn("updateFulfilled:", e);
+                qxl.dialog.Dialog.alert(
+                  "Could not update fulfilled status for " +
+                    `${data.family_name}: ${e.message}`);
+              });
+        });
+
+      treeItem.addWidget(checkbox);
+
+      label = new qx.ui.basic.Label(`Family size: ${data.family_size}`);
+      label.setWidth(100);
+      treeItem.addWidget(label);
+
+      label = new qx.ui.basic.Label(
+        data.pet_types ? `Pets: ${data.pet_types}` : "");
+      label.setWidth(150);
+      treeItem.addWidget(label);
+
+
       // If this is a pick-up...
       if (data.method == "Pick-up")
       {
-        label = new qx.ui.basic.Label(`Family size: ${data.family_size}`);
-        label.setWidth(100);
-        treeItem.addWidget(label);
-
         // Add filler so pick-up entries align similarly to delivery ones
         label = new qx.ui.basic.Label("");
         label.setWidth(300);
@@ -232,10 +284,6 @@ console.log("getDeliveryDay data:", result);
       else
       {
         // It's a delivery
-        label = new qx.ui.basic.Label(`Family size: ${data.family_size}`);
-        label.setWidth(100);
-        treeItem.addWidget(label);
-
         label = new qx.ui.basic.Label(`${data.delivery_address}`);
         label.setWidth(300);
         treeItem.addWidget(label);
@@ -244,6 +292,11 @@ console.log("getDeliveryDay data:", result);
         label.setWidth(100);
         treeItem.addWidget(label);
       }
+
+      // Set the row's background color
+      treeItem.setBackgroundColor(
+        MDeliveryDay._appointmentRowColor[this._nextAppointmentRowColor]);
+      this._nextAppointmentRowColor = (this._nextAppointmentRowColor + 1) % 2;
 
       return treeItem;
     }
