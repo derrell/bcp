@@ -22,10 +22,13 @@ qx.Mixin.define("bcp.client.MClientMgmt",
   members :
   {
     /** The client table */
-    _clientTable : null,
+    _clientTable     : null,
 
     /** The client table model */
-    _tm          : null,
+    _tm              : null,
+
+    /** This tab's label */
+    _tabLabelClient  : null,
 
     /**
      * Create the client list page
@@ -48,12 +51,14 @@ qx.Mixin.define("bcp.client.MClientMgmt",
       let             behavior;
       let             cellRenderer;
 
-      page = new qx.ui.tabview.Page("Clients");
+      // Generate the label for this tab
+      this._tabLabelClient = this.underlineChar("Clients");
+
+      page = new qx.ui.tabview.Page(this._tabLabelClient);
       page.setLayout(new qx.ui.layout.VBox());
       tabView.add(page);
 
       button = page.getChildControl("button");
-      button.setLabel(this.underlineChar("Clients"));
       button.setRich(true);
 
       command = new qx.ui.command.Command("Alt+C");

@@ -20,6 +20,7 @@ qx.Mixin.define("bcp.client.MReports",
     _reportWin            : null,
     _reportLabelToListMap : null,
     _reportDistributions  : null,
+    _tabLabelReport       : null,
 
     /**
      * Create the report page
@@ -36,12 +37,14 @@ qx.Mixin.define("bcp.client.MReports",
       let             formData;
       const           _this = this;
 
-      page = new qx.ui.tabview.Page("Reports");
+      // Generate the label for this tab
+      this._tabLabelReport = this.underlineChar("Reports");
+
+      page = new qx.ui.tabview.Page(this._tabLabelReport);
       page.setLayout(new qx.ui.layout.HBox(12));
       tabView.add(page);
 
       button = page.getChildControl("button");
-      button.setLabel(this.underlineChar("Reports"));
       button.setRich(true);
 
       command = new qx.ui.command.Command("Alt+R");
@@ -104,7 +107,7 @@ qx.Mixin.define("bcp.client.MReports",
       this._tabView.getChildren().forEach(
         (child) =>
         {
-          if (child.getLabel() != "Reports")
+          if (child.getLabel() != this._tabLabelReport)
           {
             child.getChildControl("button").setEnabled(! bDisable);
           }

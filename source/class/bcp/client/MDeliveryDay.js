@@ -15,6 +15,8 @@ qx.Mixin.define("bcp.client.MDeliveryDay",
 {
   members :
   {
+    _tabLabelDeliveryDay : null,
+
     /**
      * Create the delivery day page
      *
@@ -27,12 +29,14 @@ qx.Mixin.define("bcp.client.MDeliveryDay",
       let             button;
       let             command;
 
-      page = new qx.ui.tabview.Page(this._tabLabel);
+      // Generate the label for this tab
+      this._tabLabelDeliveryDay = this.underlineChar("Delivery Day");
+
+      page = new qx.ui.tabview.Page(this._tabLabelDeliveryDay);
       page.setLayout(new qx.ui.layout.VBox());
       tabView.add(page);
 
       button = page.getChildControl("button");
-      button.setLabel(this.underlineChar("Delivery Day"));
       button.setRich(true);
 
       command = new qx.ui.command.Command("Alt+D");
@@ -50,7 +54,13 @@ qx.Mixin.define("bcp.client.MDeliveryDay",
               (result) =>
               {
 console.log("getDeliveryDay data:", result);
-                this._buildDeliveryDayTree(page);
+                if (! result || result.appointments.length === 0)
+                {
+                  qxl.dialog.Dialog.alert("No appoitments scheduled");
+                  return;
+                }
+
+                this._buildDeliveryDayTree(page, result);
               })
             .catch(
               (e) =>
@@ -62,14 +72,15 @@ console.log("getDeliveryDay data:", result);
         });
     },
 
-    _buildDeliveryDayTree : function(page)
+    _buildDeliveryDayTree : function(page, deliveryInfo)
     {
       let             vBox;
       let             tree;
       let             scroller;
       let             container;
-      let             distribution = "2020-12-13";
       let             root;
+      let             nodes = {};
+      const           { distribution, appointments } = deliveryInfo;
 
       scroller = new qx.ui.container.Scroll();
       container = new qx.ui.container.Composite(new qx.ui.layout.VBox());
@@ -80,7 +91,7 @@ console.log("getDeliveryDay data:", result);
 
       tree = new qx.ui.tree.Tree().set(
         {
-          width: 600
+          width: 800
         });
       container.add(tree, { flex : 1 });
 
@@ -88,105 +99,151 @@ console.log("getDeliveryDay data:", result);
       root.setOpen(true);
       tree.setRoot(root);
 
-      // One icon for selected and one for unselected states
-      var te1 = this.configureTreeItem(new qx.ui.tree.TreeFolder(), "Desktop");
-      root.add(te1);
+      appointments.forEach(
+        (appointment) =>
+        {
+          let             node;
+          let             parent;
+          let             label;
+          const           day = appointment.appt_day;
+          const           time = appointment.appt_time;
+          const           Branch = qx.ui.tree.TreeFolder;
+          const           Leaf = qx.ui.tree.TreeFile;
 
-      var te1_1 = this.configureTreeItem(new qx.ui.tree.TreeFolder(), "Files");
-      var te1_2 = this.configureTreeItem(new qx.ui.tree.TreeFolder(), "Workspace");
-      var te1_3 = this.configureTreeItem(new qx.ui.tree.TreeFolder(), "Network");
-      var te1_4 = this.configureTreeItem(new qx.ui.tree.TreeFolder(), "Trash");
-      te1.add(te1_1, te1_2, te1_3, te1_4);
+          // Have we not yet created a node for this day?
+          if (! nodes[day])
+          {
+            // We haven't. Create it.
+            label =
+              appointment.method == "Delivery" ? "Delivery" : `Day ${day}`;
+            nodes[day] = this.configureTreeItem(new Branch(), label);
+            root.add(nodes[day]);
 
-      // One icon specified, and used for both selected unselected states
-      var te1_2_1 = this.configureTreeItem(new qx.ui.tree.TreeFile(), "Windows (C:)", "icon/16/devices/drive-harddisk.png");
-      var te1_2_2 = this.configureTreeItem(new qx.ui.tree.TreeFile(), "Documents (D:)", "icon/16/devices/drive-harddisk.png");
-      te1_2.add(te1_2_1, te1_2_2);
+            // If this is a delivery, we'll attach the leaf node here.
+            if (appointment.method == "Delivery")
+            {
+              parent = nodes[day];
+            }
 
-      var te2 = this.configureTreeItem(new qx.ui.tree.TreeFolder(), "Inbox");
-      var te2_1 = this.configureTreeItem(new qx.ui.tree.TreeFolder(), "Presets");
-      var te2_2 = this.configureTreeItem(new qx.ui.tree.TreeFolder(), "Sent");
-      var te2_3 = this.configureTreeItem(new qx.ui.tree.TreeFolder(), "Trash", "icon/16/places/user-trash.png");
-      var te2_4 = this.configureTreeItem(new qx.ui.tree.TreeFolder(), "Data");
-      var te2_5 = this.configureTreeItem(new qx.ui.tree.TreeFolder(), "Edit");
-      var te2_5_1 = this.configureTreeItem(new qx.ui.tree.TreeFolder(), "Chat");
-      var te2_5_2 = this.configureTreeItem(new qx.ui.tree.TreeFolder(), "Pustefix");
-      var te2_5_3 = this.configureTreeItem(new qx.ui.tree.TreeFolder(), "TINC");
-      var te2_5_3_1 = this.configureTreeItem(new qx.ui.tree.TreeFolder(), "Announce");
-      var te2_5_3_2 = this.configureTreeItem(new qx.ui.tree.TreeFolder(), "Devel");
-      te2_5_3.add(te2_5_3_1, te2_5_3_2);
-      te2_5.add(te2_5_1, te2_5_2, te2_5_3);
+            // Open day and delivery nodes
+            nodes[day].setOpen(true);
+          }
 
-      var te2_6 = this.configureTreeItem(new qx.ui.tree.TreeFolder(), "Lists");
-      var te2_6_1 = this.configureTreeItem(new qx.ui.tree.TreeFolder(), "Relations");
-      var te2_6_2 = this.configureTreeItem(new qx.ui.tree.TreeFolder(), "Company");
-      var te2_6_3 = this.configureTreeItem(new qx.ui.tree.TreeFolder(), "Questions");
-      var te2_6_4 = this.configureTreeItem(new qx.ui.tree.TreeFolder(), "Internal");
-      var te2_6_5 = this.configureTreeItem(new qx.ui.tree.TreeFolder(), "Products");
-      var te2_6_6 = this.configureTreeItem(new qx.ui.tree.TreeFolder(), "Press");
-      var te2_6_7 = this.configureTreeItem(new qx.ui.tree.TreeFolder(), "Development");
-      var te2_6_8 = this.configureTreeItem(new qx.ui.tree.TreeFolder(), "Competition");
-      te2_6.add(te2_6_1, te2_6_2, te2_6_3, te2_6_4, te2_6_5, te2_6_6, te2_6_7, te2_6_8);
+          // If we don't yet have a parent...
+          if (! parent)
+          {
+            // Have we not yet created a node for this time?
+            if (! nodes[day][time])
+            {
+              // We haven't. Create it.
+              nodes[day][time] = this.configureTreeItem(new Branch(), time);
+              nodes[day].add(nodes[day][time]);
+            }
 
-      var te2_7 = this.configureTreeItem(new qx.ui.tree.TreeFolder(), "Personal");
-      var te2_7_1 = this.configureTreeItem(new qx.ui.tree.TreeFolder(), "Bugs");
-      var te2_7_2 = this.configureTreeItem(new qx.ui.tree.TreeFolder(), "Family");
-      var te2_7_3 = this.configureTreeItem(new qx.ui.tree.TreeFolder(), "Projects");
-      var te2_7_4 = this.configureTreeItem(new qx.ui.tree.TreeFolder(), "Holiday");
-      te2_7.add(te2_7_1, te2_7_2, te2_7_3, te2_7_4);
+            // Open time nodes
+            nodes[day][time].setOpen(true);
 
-      var te2_8 = this.configureTreeItem(new qx.ui.tree.TreeFolder(), "Big");
-      for (var i=0;i<50; i++) {
-        te2_8.add(this.configureTreeItem(new qx.ui.tree.TreeFolder(), "Item " + i));
-      };
+            // Get the parent to which we'll attach this appointment
+            parent = nodes[day][time];
+          }
 
-      var te2_9 = this.configureTreeItem(new qx.ui.tree.TreeFolder(), "Spam");
-
-      te2.add(te2_1, te2_2, te2_3, te2_4, te2_5, te2_6, te2_7, te2_8, te2_9);
-      root.add(te2);
-      
+          // Create this apppointment
+          node = this.configureTreeItem(new Leaf(), appointment, distribution);
+          parent.add(node);
+        });
     },
 
-    configureTreeItem : function(treeItem, label)
+    configureTreeItem : function(treeItem, data, distribution)
     {
+      let             label;
+      let             checkbox;
+
       // We don't want any icons on branches or leaves
       treeItem.setIcon(null);
 
+      // Add an open/close button to any branch
       if (treeItem instanceof qx.ui.tree.TreeFolder)
       {
         treeItem.addOpenButton();
       }
       else
       {
-        // A checkbox comes right after the tree icon
-        var checkbox = new qx.ui.form.CheckBox("");
-        checkbox.setFocusable(false);
+        // On leaves, add a checkbox for indicating it's been Fulfilled
+        checkbox = new qx.ui.form.CheckBox("");
+        checkbox.set(
+          {
+            focusable : false,
+            value     : !! data.fulfilled
+          });
         treeItem.addWidget(checkbox);
+
+        // When this checkbox is tapped, mark as fulfilled
+        checkbox.addListener(
+          "tap",
+          () =>
+          {
+            this.rpc(
+              "updateFulfilled",
+              [ distribution, data.family_name, checkbox.getValue() ])
+              .then(
+                () =>
+                {
+                  console.log(`Updated fulfillment for ${data.family_name}`);
+                })
+              .catch(
+                (e) =>
+                {
+                  console.warn("updateFulfilled:", e);
+                  qxl.dialog.Dialog.alert(
+                    "Could not update fulfilled status for " +
+                      `${data.family_name}: ${e.message}`);
+                });
+          });
       }
 
-      // The label
-      treeItem.addLabel(label);
+      // Add the label. Branches are given strings; leaves, appointment map.
+      treeItem.addLabel(typeof data == "string" ? data : data.family_name);
 
+      // There's no additional information on branches
       if (treeItem instanceof qx.ui.tree.TreeFolder)
       {
         return treeItem;
       }
 
-      // All else should be right justified
-      treeItem.addWidget(new qx.ui.core.Spacer(), {flex: 1});
+      // Right-justify the rest
+      treeItem.addWidget(new qx.ui.core.Spacer(), { flex: 1 });
 
-      // Add a file size, date and mode
-      var text = new qx.ui.basic.Label(Math.round(Math.random() * 100) + "kb");
-      text.setWidth(50);
-      treeItem.addWidget(text);
+      // If this is a pick-up...
+      if (data.method == "Pick-up")
+      {
+        label = new qx.ui.basic.Label(`Family size: ${data.family_size}`);
+        label.setWidth(100);
+        treeItem.addWidget(label);
 
-      text = new qx.ui.basic.Label("May " + Math.round(Math.random() * 30 + 1) + " 2005");
-      text.setWidth(150);
-      treeItem.addWidget(text);
+        // Add filler so pick-up entries align similarly to delivery ones
+        label = new qx.ui.basic.Label("");
+        label.setWidth(300);
+        treeItem.addWidget(label);
 
-      text = new qx.ui.basic.Label("-rw-r--r--");
-      text.setWidth(80);
-      treeItem.addWidget(text);
+        label = new qx.ui.basic.Label("");
+        label.setWidth(100);
+        treeItem.addWidget(label);
+      }
+      else
+      {
+        // It's a delivery
+        label = new qx.ui.basic.Label(`Family size: ${data.family_size}`);
+        label.setWidth(100);
+        treeItem.addWidget(label);
+
+        label = new qx.ui.basic.Label(`${data.delivery_address}`);
+        label.setWidth(300);
+        treeItem.addWidget(label);
+
+        label = new qx.ui.basic.Label(`${data.phone}`);
+        label.setWidth(100);
+        treeItem.addWidget(label);
+      }
 
       return treeItem;
     }

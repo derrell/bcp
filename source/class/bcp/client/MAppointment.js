@@ -19,7 +19,7 @@ qx.Mixin.define("bcp.client.MAppointment",
     _appointmentForm           : null,
     _appointmentLabelToListMap : null,
     _butNewClient              : null,
-    _tabLabel                  : "Upcoming Appointments",
+    _tabLabelAppointment       : null,
 
     /**
      * Create the appointment page
@@ -36,12 +36,14 @@ qx.Mixin.define("bcp.client.MAppointment",
       let             formData;
       const           _this = this;
 
-      page = new qx.ui.tabview.Page(this._tabLabel);
+      // Generate the label for this tab
+      this._tabLabelAppointment = this.underlineChar("Upcoming Appointments");
+
+      page = new qx.ui.tabview.Page(this._tabLabelAppointment);
       page.setLayout(new qx.ui.layout.HBox(12));
       tabView.add(page);
 
       button = page.getChildControl("button");
-      button.setLabel(this.underlineChar(this._tabLabel));
       button.setRich(true);
 
       command = new qx.ui.command.Command("Alt+U");
@@ -98,7 +100,7 @@ qx.Mixin.define("bcp.client.MAppointment",
           // Appointment tab, e.g., a client is edited from the
           // Clients page)
           selection = this._tabView.getSelection();
-          if (selection[0].getLabel() != this._tabLabel)
+          if (selection[0].getLabel() != this._tabLabelAppointment)
           {
             return;
           }
@@ -353,11 +355,11 @@ qx.Mixin.define("bcp.client.MAppointment",
       this._appointmentClients.setEnabled(! bDisable);
       this._butNewClient.setEnabled(! bDisable);
 
-      // Disable/Enable all tabs other than "Appointment"
+      // Disable/Enable all tabs other than the current one
       this._tabView.getChildren().forEach(
         (child) =>
         {
-          if (child.getLabel() != this._tabLabel)
+          if (child.getLabel() != this._tabLabelAppointment)
           {
             child.getChildControl("button").setEnabled(! bDisable);
           }

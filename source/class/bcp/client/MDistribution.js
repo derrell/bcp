@@ -19,6 +19,7 @@ qx.Mixin.define("bcp.client.MDistribution",
     _distributionForm           : null,
     _distributionLabelToListMap : null,
     _butNewDistribution         : null,
+    _tabLabelDistribution       : null,
 
     /**
      * Create the distribution page
@@ -35,12 +36,14 @@ qx.Mixin.define("bcp.client.MDistribution",
       let             formData;
       const           _this = this;
 
-      page = new qx.ui.tabview.Page("Distributions");
+      // Generate the label for this tab
+      this._tabLabelDistribution = this.underlineChar("Distributions", 1);
+
+      page = new qx.ui.tabview.Page(this._tabLabelDistribution);
       page.setLayout(new qx.ui.layout.HBox(12));
       tabView.add(page);
 
       button = page.getChildControl("button");
-      button.setLabel(this.underlineChar("Distributions", 1));
       button.setRich(true);
 
       command = new qx.ui.command.Command("Alt+I");
@@ -231,7 +234,7 @@ qx.Mixin.define("bcp.client.MDistribution",
       this._tabView.getChildren().forEach(
         (child) =>
         {
-          if (child.getLabel() != "Distributions")
+          if (child.getLabel() != this._tabLabelDistribution)
           {
             child.getChildControl("button").setEnabled(! bDisable);
           }
