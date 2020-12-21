@@ -120,3 +120,24 @@ INSERT INTO Report
   '',
   'SELECT c.family_name as "Family name", f.delivery_address AS delivery_address, c.count_senior + c.count_adult + c.count_child AS "Family size", COALESCE(pet_types, "") AS Pets FROM Fulfillment f, Client c WHERE f.distribution = $distribution AND f.method = "Delivery" AND c.family_name = f.family_name ORDER BY "Family name";'
 );
+
+INSERT INTO Report
+(
+  name,
+  description,
+  landscape,
+  input_fields,
+  subtitle_field,
+  separate_by,
+  query
+)
+ VALUES
+(
+  'Distributions unfulfilled',
+  'Appointments and deliveries that were scheduled but are yet unfulfilled',
+  0,
+  '{ "$distribution" : { "type" : "SelectBox", "label" : "Distribution Date" } }',
+  '$distribution',
+  '',
+  'SELECT c.family_name as "Family name", f.method AS "Fulfillment method", COALESCE(f.delivery_address, "") AS "Delivery address", c.count_senior + c.count_adult + c.count_child AS "Family size", COALESCE(pet_types, "") AS Pets FROM Fulfillment f, Client c WHERE f.distribution = $distribution AND f.fulfilled = 0 AND c.family_name = f.family_name ORDER BY "Fulfillment method" DESC, "Family name";'
+);
