@@ -83,6 +83,12 @@ qx.Class.define("bcp.server.Rpc",
         {
           handler             : this._getDeliveryDay.bind(this),
           permission_level    : 20
+        },
+
+        updateFulfilled    :
+        {
+          handler             : this._updateFulfilled.bind(this),
+          permission_level    : 20
         }
       };
 
@@ -963,8 +969,7 @@ qx.Class.define("bcp.server.Rpc",
      * Get delivery day data, for fulfillment check-off
      *
      * @param args {Array}
-     *   args[0] {name}
-     *     The name of the report to be generated
+     *   There are no arguments to this method
      *
      * @param callback {Function}
      *   @signature(err, result)
@@ -1015,14 +1020,18 @@ qx.Class.define("bcp.server.Rpc",
             return this._db.prepare(
               [
                 "SELECT ",
-                "    family_name,",
-                "    appt_day,",
-                "    appt_time,",
-                "    method,",
-                "    delivery_address,",
-                "    fulfilled",
-                "  FROM Fulfillment",
+                "    f.family_name AS family_name,",
+                "    f.appt_day AS appt_day,",
+                "    f.appt_time AS appt_time,",
+                "    f.method AS method,",
+                "    f.delivery_address AS delivery_address,",
+                "    c.phone AS phone,",
+                "    f.fulfilled AS fulfilled,",
+                "    c.count_senior + c.count_adult + c.count_child ",
+                "      AS family_size",
+                "  FROM Fulfillment f, Client c",
                 "  WHERE distribution = $distribution",
+                "    AND c.family_name = f.family_name",
                 "  ORDER BY ",
                 "    CASE WHEN method = 'Pick-up' THEN 0 ELSE 1 END,",
                 "    appt_day, appt_time, family_name"
@@ -1047,6 +1056,61 @@ qx.Class.define("bcp.server.Rpc",
 
             // Give 'em what they came for
             callback(null, results);
+          })
+        .catch((e) =>
+          {
+            console.warn("Error in getDeliveryDay", e);
+            callback( { message : e.toString() } );
+          });
+    },
+
+    /**
+     * Update fulfillment status
+     *
+     * @param args {Array}
+     *   args[0] {distribution}
+     *     The start date of the distribution period
+     *
+     *   args[1] {family_name}
+     *     The name of the family whose fulfillment status is to be updated
+     *
+     *   args[2] {bFulfilled}
+     *     The new fulfillment status
+     *
+     * @param callback {Function}
+     *   @signature(err, result)
+     */
+    _updateFulfilled(args, callback)
+    {
+      // TODO: move prepared statements to constructor
+      return Promise.resolve()
+        .then(
+          () =>
+          {
+            // First, retrieve the most recent distribution start date
+            return this._db.prepare(
+              [
+                "UPDATE Fulfillment",
+                "  SET fulfilled = $fulfilled",
+                "  WHERE distribution = $distribution",
+                "    AND family_name = $family_name;"
+              ].join(" "));
+          })
+        .then(
+          (stmt) =>
+          {
+            return stmt.all(
+              {
+                $distribution : args[0],
+                $family_name  : args[1],
+                $fulfilled    : args[2] ? 1 : 0
+              });
+          })
+        .then(
+          (result) =>
+          {
+            // Give 'em what they came for
+            callback(null, null);
           })
         .catch((e) =>
           {
