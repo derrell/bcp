@@ -276,6 +276,22 @@ qx.Mixin.define("bcp.client.MClientMgmt",
         });
       tcm.setDataCellRenderer(tm.getColumnIndexById("verified"), cellRenderer);
 
+      // Users requested that numeric columns be centered
+      [
+        "count_senior",
+        "count_adult",
+        "count_child",
+        "count_sex_male",
+        "count_sex_female",
+        "count_sex_other",
+        "count_veteran"
+      ].forEach(
+        (id) =>
+        {
+          cellRenderer = new bcp.client.CenterCellRenderer();
+          tcm.setDataCellRenderer(tm.getColumnIndexById(id), cellRenderer);
+        });
+
       // Create an hbox for the buttons at the bottom. Force some
       // space above it
       hBox = new qx.ui.container.Composite(new qx.ui.layout.HBox());
