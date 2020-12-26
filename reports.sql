@@ -27,52 +27,17 @@ REPLACE INTO Report
        f.appt_day as Day,
        f.appt_time AS Time,
        c.family_name as "Family name",
-       c.count_senior + c.count_adult + c.count_child AS "Family size",
+       (c.count_senior + c.count_adult + c.count_child) ||
+         CASE WHEN c.count_senior + c.count_adult + c.count_child >= 4
+           THEN " (Large)"
+           ELSE " (Small)"
+         END AS "Family size",
        COALESCE(pet_types, "") AS Pets
      FROM Fulfillment f, Client c
      WHERE f.distribution = $distribution
        AND length(COALESCE(f.appt_time, "")) > 0
-       AND f.method = "Pick-up"
        AND c.family_name = f.family_name
      ORDER BY Day, Time, "Family name";
-  '
-);
-
-REPLACE INTO Report
-(
-  name,
-  description,
-  landscape,
-  input_fields,
-  subtitle_field,
-  separate_by,
-  query
-)
- VALUES
-(
-  'Distribution deliveries',
-  'Required deliveries for a specified distribution',
-  0,
-  '{
-     "$distribution" :
-     {
-       "type"  : "SelectBox",
-       "label" : "Distribution Date"
-     }
-   }',
-  '$distribution',
-  '',
-  '
-   SELECT
-       c.family_name as "Family name",
-       f.delivery_address AS delivery_address,
-       c.count_senior + c.count_adult + c.count_child AS "Family size", 
-       COALESCE(pet_types, "") AS Pets
-     FROM Fulfillment f, Client c
-     WHERE f.distribution = $distribution
-       AND f.method = "Delivery"
-       AND c.family_name = f.family_name
-     ORDER BY "Family name";
   '
 );
 
@@ -179,7 +144,6 @@ REPLACE INTO Report
   '
    SELECT
        c.family_name as "Family name",
-       f.method AS "Fulfillment method",
        COALESCE(f.delivery_address, "") AS "Delivery address",
        c.count_senior + c.count_adult + c.count_child AS "Family size",
         COALESCE(pet_types, "") AS Pets
@@ -187,7 +151,7 @@ REPLACE INTO Report
       WHERE f.distribution = $distribution
         AND f.fulfilled = 0
         AND c.family_name = f.family_name
-      ORDER BY "Fulfillment method" DESC, "Family name";
+      ORDER BY "Family name";
    '
 );
 
