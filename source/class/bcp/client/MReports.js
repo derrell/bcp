@@ -224,6 +224,29 @@ qx.Mixin.define("bcp.client.MReports",
           formData.$distribution.value =
             this._reportDistributions[0].start_date;
         }
+
+        // Similarly, for family_name
+        if ("$family_name" in formData)
+        {
+          formData.$family_name.options =
+            this._tm.getDataAsMapArray()
+              .sort(
+                (a, b) =>
+                {
+                  a = a.family_name;
+                  b = b.family_name;
+                  return a < b ? -1 : a > b ? 1 : 0;
+                })
+              .map(
+                (entry) =>
+                {
+                  return (
+                    {
+                      label : entry.family_name,
+                      value : entry.family_name
+                    });
+                });
+        }
       }
 
       this._reportForm.set(
