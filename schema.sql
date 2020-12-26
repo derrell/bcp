@@ -43,10 +43,9 @@ CREATE TABLE Fulfillment
                             ON UPDATE CASCADE,
   appt_day          INTEGER,    -- 0-relative to distribution
   appt_time         VARCHAR,    -- %H:%M; null if fullfilled w/out appointment
-  method            VARCHAR,    -- one of "Pick-up" or "Delivery"
-  delivery_address  VARCHAR,
   fulfilled         BOOLEAN DEFAULT FALSE,  -- has been picked up or delivered
   fulfillment_time  VARCHAR,                -- %Y-%m-%d %H:%M:%S
+  notes             VARCHAR,
   PRIMARY KEY (distribution, family_name)
 );
 
