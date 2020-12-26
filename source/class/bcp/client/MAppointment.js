@@ -203,16 +203,6 @@ qx.Mixin.define("bcp.client.MAppointment",
             container.add(_this._requireAppointment);
             _this._requireAppointment.setRich(true);
             _this._requireAppointment.exclude();
-
-            _this._elideAppointment = new qx.ui.basic.Label(
-              [
-                "<span style='color: red;'>",
-                "Cancel the appointment time, for Delivery",
-                "</span>"
-              ].join(""));
-            container.add(_this._elideAppointment);
-            _this._elideAppointment.setRich(true);
-            _this._elideAppointment.exclude();
           },
           setupFormRendererFunction : function(form)
           {
@@ -236,40 +226,8 @@ qx.Mixin.define("bcp.client.MAppointment",
           {
             let             f;
             let             manager;
-            const           method =
-                  formDialog._formElements["method"];
             const           appointments =
                   formDialog._formElements["appointments"];
-            const           deliveryAddress =
-                  formDialog._formElements["delivery_address"];
-
-
-            // Show the delivery address if method is Delivery
-            method.bind(
-              "value",
-              formDialog._formElements["delivery_address"],
-              "enabled",
-              {
-                converter: function(value)
-                {
-                  return value.getLabel() == "Delivery" || false;
-                }
-              });
-
-            // Set a background color if method is Delivery
-            method.bind(
-              "value",
-              deliveryAddress,
-              "backgroundColor",
-              {
-                converter: function(value)
-                {
-                  return (
-                    value.getLabel() == "Delivery"
-                      ? undefined
-                      : "gray");
-                }
-              });
 
             //
             // Use a validation manager. Ensure that the entered data is
@@ -300,22 +258,14 @@ qx.Mixin.define("bcp.client.MAppointment",
 
               // Reset warnings
               _this._requireAppointment.exclude();
-              _this._elideAppointment.exclude();
 
               // Retrieve the current method selection
               methodLabel = method.getValue().getLabel();
 
-              // Pick-up requires an appointment time
-              if (methodLabel == "Pick-up" && ! appointments.getValue())
+              // An appointment time is required
+              if (! appointments.getValue())
               {
                 _this._requireAppointment.show();
-                return false;
-              }
-
-              // Delivery requires no specified appointment time
-              if (methodLabel == "Delivery" && appointments.getValue())
-              {
-                _this._elideAppointment.show();
                 return false;
               }
 
@@ -533,12 +483,12 @@ qx.Mixin.define("bcp.client.MAppointment",
                   enabled    : false
                 },
 
-                delivery_address :
+                notes :
                 {
                   type       : "TextArea",
-                  label      : "Delivery address",
+                  label      : "Notes",
                   lines      : 3,
-                  value      : fulfillment.delivery_address || "",
+                  value      : fulfillment.notes || "",
                   userdata   :
                   {
                     rowspan    : 3
@@ -600,31 +550,6 @@ qx.Mixin.define("bcp.client.MAppointment",
                     row      : 0,
                     column   : 4,
                     rowspan  : 20
-                  }
-                },
-
-                method :
-                {
-                  type      : "SelectBox",
-                  label     : "Fulfilment method",
-                  value     : fulfillment.method || "Pick-up",
-                  options   :
-                  [
-                    { label : "Pick-up",  value : "Pick-up" },
-                    { label : "Delivery", value : "Delivery" },
-                  ],
-                  events    :
-                  {
-                    changeSelection : function(e)
-                    {
-                      setTimeout(
-                        () => _this._appointmentForm.getForm().validate(),
-                        100);
-                    }
-                  },
-                  userdata  :
-                  {
-                    row       : 22
                   }
                 },
 
