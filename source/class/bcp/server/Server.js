@@ -6,53 +6,58 @@ qx.Class.define("bcp.server.Server",
   {
     main()
     {
-      let             app;
-      let             portPrimary;
-      let             portAlternate;
-      let             server;
-      let             options;
-      let             privateKey;
-      let             certificate;
-      const           fs = require("fs");
-      const           http = require("http"); // TODO: remove
-      const           https = require("https");
-      const           express = require("express");
-      const           bodyParser = require("body-parser");
-
-      // TODO: switch to https
-      const           PROTOCOL = http;
+      let           app;
+      let           portPrimary;
+      let           portAlternate;
+      let           server;
+      let           options;
+      let           privateKey;
+      let           certificate;
+      let           protocol;
+      const         fs = require("fs");
+      const         http = require("http"); // TODO: remove
+      const         https = require("https");
+      const         express = require("express");
+      const         bodyParser = require("body-parser");
+      const         CERTDIR = "/etc/letsencrypt/live/bcp.unwireduniverse.com";
+      const         PRIVATE_KEY_FILE = `${CERTDIR}/privkey.pem`;
+      const         CERTIFICATE_FILE = `${CERTDIR}/fullchain.pem`;
 
       qx.log.Logger.register(qx.log.appender.NodeConsole);
       this.debug("Starting up");
 
-      if (PROTOCOL === https)
+      if (qx.core.Environment.get("qx.debug"))
       {
+        // In debug mode, we'll use HTTP only
+        protocol = http;
+        portPrimary = portAlternate = 3000;
+      }
+      else
+      {
+        // We'll use HTTPS
         // Read the private key and certificate
         // TODO: specify proper key, cert file names
-        privateKey = fs.readFileSync("PRIVATE_KEY_FILE");
-        certificate = fs.reqdFileSync("CERTIFICATE_FILE");
+        protocol = https;
+        privateKey = fs.readFileSync(PRIVATE_KEY_FILE);
+        certificate = fs.readFileSync(CERTIFICATE_FILE);
         options =
           {
             key  : privateKey,
             cert : certificate
           };
 
-        // We'll listen on both HTTPS and HTTP ports
+        // We'll listen on both HTTPS for the app and HTTP as redirector
         portPrimary = 3000;
         portAlternate = 3001;
-      }
-      else
-      {
-        portPrimary = portAlternate = 3000;
       }
       
       // Create the Express app
       app = express();
 
       // Create the web server
-      if (PROTOCOL === https)
+      if (protocol === https)
       {
-        server = PROTOCOL.createServer(options);
+        server = https.createServer(options, app);
       }
 
       app.use(
@@ -84,16 +89,16 @@ qx.Class.define("bcp.server.Server",
         });
 
       // Create the session
-      new bcp.server.Session(app, PROTOCOL === https);
+      new bcp.server.Session(app, protocol === https);
 
       // Create the routes for logging in, authentication, logging out
-      new bcp.server.Auth(app, PROTOCOL === https);
+      new bcp.server.Auth(app, protocol === https);
 
       // Create the user interface
-      new bcp.server.Gui(app, PROTOCOL === https);
+      new bcp.server.Gui(app, protocol === https);
 
       // Create the remote procedure calls
-      new bcp.server.Rpc(app, PROTOCOL === https);
+      new bcp.server.Rpc(app, protocol === https);
 
       app.use(
         (err, req, res, next) =>
@@ -110,17 +115,15 @@ qx.Class.define("bcp.server.Server",
           res.status(404).send("Requested page not found");
         });
 
-      if (PROTOCOL === https)
+      if (protocol === https)
       {
         // Start the server
         server.listen(
           portPrimary,            // Port designated for HTTPS
           () =>
           {
-            const protocol = PROTOCOL === https ? "HTTPS" : "HTTP";
-            
             this.debug(
-              `Listening for ${protocol} ` +
+              `Listening for HTTPS ` +
                 `on port ${portPrimary} (primary access)`);
           });
 
@@ -132,8 +135,13 @@ qx.Class.define("bcp.server.Server",
           "*",
           (req, res) =>
             {
+              let             redirectTo;
+
               // Redirect to the same location, but use HTTPS instead of HTTP
-              res.redirect("https://" + req.get("host") + req.originalUrl);
+              redirectTo =
+                `https://${req.hostname}:${portPrimary}/index.html`;
+              console.log(`Got HTTP request; redirecting to ${redirectTo}`);
+              res.redirect(redirectTo);
             });
         app.listen(
           portAlternate,        // Port designated for HTTP
@@ -150,7 +158,7 @@ qx.Class.define("bcp.server.Server",
           () =>
           {
             this.debug(
-              `Listening for HTTP  on port ${portPrimary} (redirector)`);
+              `Listening for HTTP  on port ${portPrimary}`);
           });
       }
     }
