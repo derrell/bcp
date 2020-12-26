@@ -317,6 +317,45 @@ REPLACE INTO Report
 )
  VALUES
 (
+  'Distribution large/small meals required',
+  'Number of meals for small (1-3) and large (4+) families',
+  0,
+  '{
+     "$distribution" :
+     {
+       "type"  : "SelectBox",
+       "label" : "Distribution Date"
+     }
+   }',
+  '$distribution',
+  '',
+  '
+    SELECT "Large" as size, COUNT(*) AS count
+      FROM Fulfillment f, Client c
+      WHERE f.distribution = $distribution
+        AND c.family_name = f.family_name
+        AND (c.count_senior + c.count_adult + c.count_child >= 4)
+    UNION ALL
+    SELECT "Small" as size, COUNT(*) AS count
+      FROM Fulfillment f, Client c
+      WHERE f.distribution = $distribution
+        AND c.family_name = f.family_name
+        AND (c.count_senior + c.count_adult + c.count_child < 4)
+  '
+);
+
+REPLACE INTO Report
+(
+  name,
+  description,
+  landscape,
+  input_fields,
+  subtitle_field,
+  separate_by,
+  query
+)
+ VALUES
+(
   'Distributions fullfilled for a family',
   'Total attendance during year (with breakdown)',
   0,
