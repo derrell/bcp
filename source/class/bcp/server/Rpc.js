@@ -132,12 +132,14 @@ qx.Class.define("bcp.server.Rpc",
         // Look at the method and ensure this user is allowed to access it
         if (! requests[req.body.method] ||
             typeof requests[req.body.method].permission_level != "number" ||
-            requests[req.body.method].permission_level >= permissionLevel)
+            requests[req.body.method].permission_level > permissionLevel)
         {
           // They're not allowed access. Redirect them to a non-existent method
           console.log(
             `User ${username} does not have permission ` +
-              `for method ${req.body.method}`);
+              `for method ${req.body.method} ` +
+              `(requires ${requests[req.body.method].permission_level}; ` +
+              `user has ${permissionLevel}`);
           req.body.method = "MethodDoesNotExist";
         }
 
