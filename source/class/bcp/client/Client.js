@@ -173,11 +173,35 @@ qx.Class.define("bcp.client.Client",
               "</span>");
 
             // Create each of the tabview pages
-            this._createClientListTab(this._tabView);
-            this._createAppointmentTab(this._tabView);
-            this._createDeliveryDayTab(this._tabView);
-            this._createDistributionTab(this._tabView);
-            this._createReportsTab(this._tabView);
+            [
+              {
+                requiredPermission : 50,
+                implementation     : this._createClientListTab
+              },
+              {
+                requiredPermission : 50,
+                implementation     : this._createAppointmentTab
+              },
+              {
+                requiredPermission : 30,
+                implementation     : this._createDeliveryDayTab
+              },
+              {
+                requiredPermission : 50,
+                implementation     : this._createDistributionTab
+              },
+              {
+                requiredPermission : 50,
+                implementation     : this._createReportsTab
+              },
+            ].forEach(
+              (pageInfo) =>
+              {
+                if (me.permissionLevel >= pageInfo.requiredPermission)
+                {
+                  pageInfo.implementation.bind(this)(this._tabView);
+                }
+              });
           });
     },
 
@@ -301,7 +325,6 @@ qx.Class.define("bcp.client.Client",
 
       loginWidget = new qxl.dialog.Login(
         {
-          image                  : "dialog/logo.gif",
           text                   : "Login",
           checkCredentials       : this.checkCredentials,
           callback               : this.finalCallback.bind(this),
