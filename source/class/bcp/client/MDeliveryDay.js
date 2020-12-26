@@ -152,7 +152,10 @@ console.log("getDeliveryDay data:", result);
             if (! nodes[day][time])
             {
               // We haven't. Create it.
-              nodes[day][time] = this.configureTreeItem(new Branch(), time);
+              nodes[day][time] =
+                this.configureTreeItem(
+                  new Branch(),
+                  this.convert24to12(time));
               nodes[day].add(nodes[day][time]);
             }
 

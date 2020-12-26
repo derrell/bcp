@@ -180,7 +180,7 @@ qx.Mixin.define("bcp.client.MClientMgmt",
       behavior.setWidth(tm.getColumnIndexById("pet_types"), 100);
       behavior.setWidth(tm.getColumnIndexById("address_default"), 100);
       behavior.setWidth(tm.getColumnIndexById("appt_day_default"), 60);
-      behavior.setWidth(tm.getColumnIndexById("appt_time_default"), 60);
+      behavior.setWidth(tm.getColumnIndexById("appt_time_default"), 80);
 
       // Sort family name case insensitive
       tm.setSortMethods(
@@ -291,6 +291,13 @@ qx.Mixin.define("bcp.client.MClientMgmt",
           cellRenderer = new bcp.client.CenterCellRenderer();
           tcm.setDataCellRenderer(tm.getColumnIndexById(id), cellRenderer);
         });
+
+      // Appointment time gets a renderer that converts from 24 to 12-hour time
+      cellRenderer = new bcp.client.TimeCellRenderer();
+      tcm.setDataCellRenderer(
+        tm.getColumnIndexById("appt_time_default"),
+        cellRenderer);
+
 
       // Create an hbox for the buttons at the bottom. Force some
       // space above it

@@ -347,6 +347,12 @@ qx.Mixin.define("bcp.client.MReports",
                       Object.keys(report[0]).forEach(
                         (heading) =>
                         {
+                          // Convert times to 12-hour format
+                          if (heading == "Time")
+                          {
+                            row[heading] = this.convert24to12(row[heading]);
+                          }
+
                           this._reportWin.document.write(
                             `<td>${row[heading]}</td>`);
                         });

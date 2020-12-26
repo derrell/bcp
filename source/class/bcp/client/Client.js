@@ -276,6 +276,47 @@ qx.Class.define("bcp.client.Client",
       // Give 'em the whole thing, put back together
       return result.join("");
     },
+
+    /**
+     * Convert a 24-hour time to its 12-hour equivalent. Handle null, "" input
+     * too.
+     *
+     * @param {String|null}
+     *   A 24-hour time string, in format HH:MM, or an empty string or null
+     *
+     * @return {String}
+     *   The 24-hour time converted to a 12-hour time with am/pm suffix if a
+     *   valid 24-hour time was provided; an empty string, otherwise.
+     */
+    convert24to12(time24)
+    {
+      let             time12;
+
+      if (time24 === null ||
+          (typeof time24 == "string" && time24.length === 0))
+      {
+        return "";
+      }
+
+      time12 = time24.toString().split(":");
+
+      // If no time, just leave blank
+      if (time12.length === 0)
+      {
+        return "";
+      }
+
+      // Times before noon remain as is, with an "am" suffix
+      if (time12[0] <= 12)
+      {
+        return time24 + " am";
+      }
+
+      // Times after noon are converted to 12-hour format and get "pm" suffix
+      time12[0] -= 12;
+      return time12.join(":") + " pm";
+    },
+
     /**
      * Issue a Remote Procedure Call
      *
@@ -328,6 +369,8 @@ qx.Class.define("bcp.client.Client",
           text                   : "Login",
           checkCredentials       : this.checkCredentials,
           callback               : this.finalCallback.bind(this),
+          allowCancel            : false,
+          cancelOnEscape         : false,
           showForgotPassword     : false
       });
 

@@ -529,7 +529,7 @@ qx.Mixin.define("bcp.client.MAppointment",
                 {
                   type       : "TextField",
                   label      : "Time",
-                  value      : "" + (client.appt_time_default || ""),
+                  value      : this.convert24to12(client.appt_time_default),
                   enabled    : false
                 },
 

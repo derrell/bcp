@@ -299,7 +299,8 @@ qx.Class.define("bcp.client.Appointment",
             let         numDefaults;
             let         numScheduled;
             let         timestamp;
-            let         formatted;
+            let         time12;
+            let         time24;
             let         startTime;
             let         endTime;
             let         value = this.getValue();
@@ -338,36 +339,40 @@ qx.Class.define("bcp.client.Appointment",
                    timestamp = new Date(timestamp.getTime() + fifteenMin),
                      numNodes++)
               {
-                // Get the formatted time for this timestamp
-                formatted = this.constructor.formatTime(timestamp);
+                // Get the 12- and 24-hour times for this timestamp
+                time12 = this.constructor.formatTime12(timestamp);
+                time24 = this.constructor.formatTime24(timestamp);
 
                 // If there is a start time specified for this day, elide
                 // any times that preceed the start time
                 startTime = this.getStartTimes()[dayNum - 1];
-                if (typeof startTime == "string" && formatted < startTime)
+                if (typeof startTime == "string" && time24 < startTime)
                 {
                   continue;
                 }
 
                 // Similarly, for end time
                 endTime = this.getEndTimes()[dayNum - 1];
-                if (typeof endTime == "string" && formatted > endTime)
+                if (typeof endTime == "string" && time24 > endTime)
                 {
                   break; // If this one is too large, others will be too
                 }
 
                 // Create the node for this time
-                timeNode = dm.addBranch(dayNode, formatted);
+                timeNode = dm.addBranch(dayNode, time12);
 
                 // Save it for adding entries from returned data
-                nodes[dayNum][formatted] = timeNode;
+                nodes[dayNum][time24] = timeNode;
 
                 // Flag this node as one that is allowed to get selected
                 node = tree.nodeGet(timeNode);
                 node._bTimeNode = true;
 
+                // Save the 24-hour time (vs the 12-hour time that's displayed)
+                node._time24 = time24;
+
                 // If this node has the time of the Appointment's value...
-                if (value && day == dayNum && time == formatted)
+                if (value && day == dayNum && time == time24)
                 {
                   // ... then mark this node as selected
                   tree.nodeSetSelected(timeNode, true);
@@ -476,11 +481,11 @@ qx.Class.define("bcp.client.Appointment",
                    timestamp = new Date(timestamp.getTime() + fifteenMin),
                      numNodes++)
               {
-                // Get the formatted time for this timestamp
-                formatted = this.constructor.formatTime(timestamp);
+                // Get the 24-hour time for this timestamp
+                time24 = this.constructor.formatTime24(timestamp);
 
                 // Retrieve the time node
-                timeNode = nodes[dayNum][formatted];
+                timeNode = nodes[dayNum][time24];
 
                 // If no time node (outside of scheduled times), we're done
                 if (! timeNode)
@@ -488,14 +493,11 @@ qx.Class.define("bcp.client.Appointment",
                   continue;
                 }
 
-                // Get the formatted time for this timestamp
-                formatted = this.constructor.formatTime(timestamp);
-
                 // Show the number of default appointments for each timeslot
                 dm.setColumnData(
                   timeNode,
                   1,
-                  "" + (numDefaults[dayNum][formatted] || 0));
+                  "" + (numDefaults[dayNum][time24] || 0));
 
                 // If we're showing scheduled apointments too, add the
                 // number for each timeslot
@@ -505,7 +507,7 @@ qx.Class.define("bcp.client.Appointment",
                   dm.setColumnData(
                     timeNode,
                     2,
-                    "" + (numScheduled[dayNum][formatted] || 0));
+                    "" + (numScheduled[dayNum][time24] || 0));
                 }
               }
             }
@@ -566,7 +568,7 @@ qx.Class.define("bcp.client.Appointment",
             value :
             {
               day  : day,
-              time : nodeInfo.label
+              time : nodeInfo._time24
             }
           });
       }
@@ -576,7 +578,7 @@ qx.Class.define("bcp.client.Appointment",
   statics :
   {
     /**
-     * Provide a consistently formatted time
+     * Provide a consistently formatted 24-hour time
      *
      * @param timestamp {Date}
      *  The timestamp to be formatted
@@ -584,12 +586,40 @@ qx.Class.define("bcp.client.Appointment",
      * @return {String}
      *  The time, formatted as HH:MM
      */
-    formatTime(timestamp)
+    formatTime24(timestamp)
     {
       return (
         ("0" + timestamp.getHours()).substr(-2) +
           ":" +
           ("0" + timestamp.getMinutes()).substr(-2));
+    },
+
+    /**
+     * Provide a consistently formatted 12-hour time
+     *
+     * @param timestamp {Date}
+     *  The timestamp to be formatted
+     *
+     * @return {String}
+     *  The time, formatted as H:MM ap
+     */
+    formatTime12(timestamp)
+    {
+      let             suffix;
+      let             hours = timestamp.getHours();
+
+      if (hours <= 12)
+      {
+        suffix = "am";
+      }
+      else
+      {
+        hours -= 12;
+        suffix = "pm";
+      }
+
+      return (
+        hours + ":" + ("0" + timestamp.getMinutes()).substr(-2) + suffix);
     }
   }
 });
