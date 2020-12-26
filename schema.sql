@@ -83,6 +83,7 @@ CREATE TABLE Report
   description       VARCHAR NOT NULL,
   query             VARCHAR NOT NULL,
   input_fields      VARCHAR,
+  subtitle_field    VARCHAR,
   separate_by       VARCHAR,
   landscape         BOOLEAN DEFAULT 0,
   UNIQUE (name COLLATE NOCASE)
