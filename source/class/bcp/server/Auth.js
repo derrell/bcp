@@ -57,7 +57,6 @@ qx.Class.define("bcp.server.Auth",
       app.use(
         (req, res, next) =>
         {
-console.log("__routeEnsureLoggedIn");
           // Are they already logged in?
           if (req.bcpSession && req.bcpSession.authenticated)
           {
@@ -66,7 +65,6 @@ console.log("__routeEnsureLoggedIn");
             return;
           }
 
-console.log("Not logged in. Checking for allowed unauthenticated");
           // Only allow unauthenticated requests for specific pages and
           // folders
           if (req.path == "/" ||
@@ -79,20 +77,10 @@ console.log("Not logged in. Checking for allowed unauthenticated");
               req.path == "/logout")
           {
             next();
-console.log("Allowed");
             return;
           }
 
-/*
-// TODO: REMOVE THIS CODE
-console.log("ALLOWING DISALLOWED METHOD !!!!!");
-next();
-return;
-*/
-
-
           // Tell them to log in
-console.log("Disallowed");
           res.status(403).send("Authentication required");
         });
     },

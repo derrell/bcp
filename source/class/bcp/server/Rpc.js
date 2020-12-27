@@ -119,7 +119,7 @@ qx.Class.define("bcp.server.Rpc",
       {
         const           { username, permissionLevel } = req.bcpSession;
 
-        console.log("Got RPC request: body=", req.body);
+        console.log(`Got RPC request from ${username}: body=`, req.body);
 
         // Ensure basic components of the request are available
         if (! req.body || 

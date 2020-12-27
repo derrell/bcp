@@ -60,12 +60,14 @@ qx.Class.define("bcp.server.Server",
         server = https.createServer(options, app);
       }
 
+/*
       app.use(
         (req, res, next) =>
         {
           console.log("Got request for: " + req.path);
           next();
         });
+*/
 
       // our RPC requests have a content-type that looks like
       // "application/x-www-form-urlencoded, application/json" so
@@ -81,12 +83,14 @@ qx.Class.define("bcp.server.Server",
       // Also check for url-encoded content
       app.use(bodyParser.urlencoded( { extended : true } ));
 
+/*
       app.use(
         (req, res, next) =>
         {
           console.log("Request body: ", req.body);
           next();
         });
+*/
 
       // Create the session
       new bcp.server.Session(app, protocol === https);
