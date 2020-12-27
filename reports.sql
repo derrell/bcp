@@ -102,14 +102,15 @@ REPLACE INTO Report
   '',
   '
    SELECT
-       (SUM(count_senior) + SUM(count_adult) + SUM(count_child)) AS "Total",
-       SUM(count_senior) AS Senior,
-       SUM(count_adult) AS Adult,
-       SUM(count_child) AS Child,
-       SUM(count_sex_male) AS Male,
-       SUM(count_sex_female) AS Female,
-       SUM(count_sex_other) AS Other,
-       SUM(count_veteran) AS Veteran
+       COALESCE((SUM(count_senior) + SUM(count_adult) + SUM(count_child)), 0)
+         AS "Total",
+       COALESCE(SUM(count_senior), 0) AS Senior,
+       COALESCE(SUM(count_adult), 0) AS Adult,
+       COALESCE(SUM(count_child), 0) AS Child,
+       COALESCE(SUM(count_sex_male), 0) AS Male,
+       COALESCE(SUM(count_sex_female), 0) AS Female,
+       COALESCE(SUM(count_sex_other), 0) AS Other,
+       COALESCE(SUM(count_veteran), 0) AS Veteran
      FROM Fulfillment f, Client c
      WHERE f.fulfilled
        AND f.distribution = $distribution
@@ -144,7 +145,6 @@ REPLACE INTO Report
   '
    SELECT
        c.family_name as "Family name",
-       COALESCE(f.delivery_address, "") AS "Delivery address",
        c.count_senior + c.count_adult + c.count_child AS "Family size",
         COALESCE(pet_types, "") AS Pets
       FROM Fulfillment f, Client c
@@ -185,14 +185,14 @@ REPLACE INTO Report
   '',
   '
     SELECT
-        SUM(Total) AS Total,
-        SUM(Senior) AS Senior,
-        SUM(Adult) AS Adult,
-        SUM(Child) AS Child,
-        SUM(Male) AS Male,
-        SUM(Female) AS Female,
-        SUM(Other) AS Other,
-        SUM(Veteran) AS Veteran
+        COALESCE(SUM(Total), 0) AS Total,
+        COALESCE(SUM(Senior), 0) AS Senior,
+        COALESCE(SUM(Adult), 0) AS Adult,
+        COALESCE(SUM(Child), 0) AS Child,
+        COALESCE(SUM(Male), 0) AS Male,
+        COALESCE(SUM(Female), 0) AS Female,
+        COALESCE(SUM(Other), 0) AS Other,
+        COALESCE(SUM(Veteran), 0) AS Veteran
       FROM
        (SELECT DISTINCT
           c.family_name AS "Family name",
@@ -242,14 +242,14 @@ REPLACE INTO Report
   '',
   '
     SELECT
-        SUM(Total) AS Total,
-        SUM(Senior) AS Senior,
-        SUM(Adult) AS Adult,
-        SUM(Child) AS Child,
-        SUM(Male) AS Male,
-        SUM(Female) AS Female,
-        SUM(Other) AS Other,
-        SUM(Veteran) AS Veteran
+        COALESCE(SUM(Total), 0) AS Total,
+        COALESCE(SUM(Senior), 0) AS Senior,
+        COALESCE(SUM(Adult), 0) AS Adult,
+        COALESCE(SUM(Child), 0) AS Child,
+        COALESCE(SUM(Male), 0) AS Male,
+        COALESCE(SUM(Female), 0) AS Female,
+        COALESCE(SUM(Other), 0) AS Other,
+        COALESCE(SUM(Veteran), 0) AS Veteran
       FROM
        (SELECT
           c.family_name AS "Family name",
