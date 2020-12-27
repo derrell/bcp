@@ -147,7 +147,7 @@ qx.Mixin.define("bcp.client.MAppointment",
                 const           formElements = form._formElements;
 
                 day = formElements.appt_day_default.getValue();
-                time = formElements.appt_time_default.getValue();
+                time = formElements.appt_time_default.getUserData("time24");
                 if (time && time.length > 0)
                 {
                   try
@@ -242,8 +242,6 @@ qx.Mixin.define("bcp.client.MAppointment",
             // Prepare a validation function
             f = function()
             {
-              let             methodLabel;
-
               // Enable the Save button if the form validates
               manager.bind(
                 "valid",
@@ -258,9 +256,6 @@ qx.Mixin.define("bcp.client.MAppointment",
 
               // Reset warnings
               _this._requireAppointment.exclude();
-
-              // Retrieve the current method selection
-              methodLabel = method.getValue().getLabel();
 
               // An appointment time is required
               if (! appointments.getValue())
@@ -480,7 +475,11 @@ qx.Mixin.define("bcp.client.MAppointment",
                   type       : "TextField",
                   label      : "Time",
                   value      : this.convert24to12(client.appt_time_default),
-                  enabled    : false
+                  enabled    : false,
+                  userdata   :
+                  {
+                    time24     : client.appt_time_default
+                  }
                 },
 
                 notes :

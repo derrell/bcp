@@ -174,13 +174,17 @@ console.log("getDeliveryDay data:", result);
 
     configureTreeItem : function(treeItem, data, distribution)
     {
-      let             label;
+      let             o;
       let             checkbox;
       const           MDeliveryDay = bcp.client.MDeliveryDay;
 
       // We don't want any icons on branches or leaves
-      treeItem.setIcon(null);
-      treeItem.setHeight(40);
+      treeItem.set(
+        {
+          icon    : null,
+          height  : 40,
+          alignY  : "middle"
+        });
 
       // Add an open/close button to any branch
       if (treeItem instanceof qx.ui.tree.TreeFolder)
@@ -193,6 +197,11 @@ console.log("getDeliveryDay data:", result);
       // There's no additional information on branches
       if (treeItem instanceof qx.ui.tree.TreeFolder)
       {
+        // Reset the first color for this new time so all first colors
+        // are consistent.
+        this._nextAppointmentRowColor = 0;
+
+        // All done here, for a branch.
         return treeItem;
       }
 
@@ -262,39 +271,39 @@ console.log("getDeliveryDay data:", result);
 
       treeItem.addWidget(checkbox);
 
-      label = new qx.ui.basic.Label(`Family size: ${data.family_size}`);
-      label.setWidth(100);
-      treeItem.addWidget(label);
+      o = new qx.ui.basic.Label(`Family size: ${data.family_size}`);
+      o.set(
+        {
+          width  : 100,
+          alignY : "middle"
+        });
+      treeItem.addWidget(o);
 
-      label = new qx.ui.basic.Label(
+      o = new qx.ui.basic.Label(
         data.pet_types ? `Pets: ${data.pet_types}` : "");
-      label.setWidth(150);
-      treeItem.addWidget(label);
+      o.set(
+        {
+          width  : 150,
+          alignY : "middle"
+        });
+      treeItem.addWidget(o);
 
-
-      // If this is a pick-up...
-      if (data.method == "Pick-up")
-      {
-        // Add filler so pick-up entries align similarly to delivery ones
-        label = new qx.ui.basic.Label("");
-        label.setWidth(300);
-        treeItem.addWidget(label);
-
-        label = new qx.ui.basic.Label("");
-        label.setWidth(100);
-        treeItem.addWidget(label);
-      }
-      else
-      {
-        // It's a delivery
-        label = new qx.ui.basic.Label(`${data.delivery_address}`);
-        label.setWidth(300);
-        treeItem.addWidget(label);
-
-        label = new qx.ui.basic.Label(`${data.phone}`);
-        label.setWidth(100);
-        treeItem.addWidget(label);
-      }
+      o = new qx.ui.form.TextArea(data.notes ? `Notes: ${data.notes}` : "");
+      o.set(
+        {
+          singleStep        : 5,
+          width             : 300,
+          alignY            : "middle",
+          readOnly          : true,
+          appearance        : "label"
+        });
+      o.addListener(
+        "appear",
+        () =>
+        {
+          o.getContentElement().setStyles( { "line-height": 1 } );
+        });
+      treeItem.addWidget(o);
 
       // Set the row's background color
       treeItem.setBackgroundColor(

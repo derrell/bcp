@@ -330,7 +330,7 @@ qx.Mixin.define("bcp.client.MDistribution",
              periods++)
       {
         // Get the formatted time for this timestamp
-        formatted = bcp.client.Appointment.formatTime(timestamp);
+        formatted = bcp.client.Appointment.formatTime24(timestamp);
 
         // Create an options entry for this time
         times.push( { label : formatted, value : formatted } );

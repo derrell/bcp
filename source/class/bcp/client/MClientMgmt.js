@@ -375,7 +375,7 @@ qx.Mixin.define("bcp.client.MClientMgmt",
           address_default :
           {
             type       : "TextArea",
-            label      : "Default delivery address",
+            label      : "Address",
             lines      : 3,
             value      : clientInfo.address_default || "",
             userdata   :
