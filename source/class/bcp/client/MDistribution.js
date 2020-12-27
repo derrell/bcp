@@ -306,7 +306,8 @@ qx.Mixin.define("bcp.client.MDistribution",
       let             distributions;
       let             timestamp;
       let             periods;
-      let             formatted;
+      let             time12;
+      let             time24;
       let             maxTime;
       let             startDate;
       let             eData = e.getData();
@@ -330,13 +331,14 @@ qx.Mixin.define("bcp.client.MDistribution",
              periods++)
       {
         // Get the formatted time for this timestamp
-        formatted = bcp.client.Appointment.formatTime24(timestamp);
+        time12 = bcp.client.Appointment.formatTime12(timestamp);
+        time24 = bcp.client.Appointment.formatTime24(timestamp);
 
         // Create an options entry for this time
-        times.push( { label : formatted, value : formatted } );
+        times.push( { label : time12, value : time24 } );
 
         // Save the maximum timestamp
-        maxTime = formatted;
+        maxTime = time24;
       }
 
       // Disable access to the rest of the gui while working
@@ -348,7 +350,7 @@ qx.Mixin.define("bcp.client.MDistribution",
 
       if (! dist)
       {
-        startDate = this._distributions.getSelection()[0].getLabel();
+        startDate = this._distributions.getSelection()[0].getValue();
         for (i = 1; i <= 7; i++)
         {
           first[i] = times[0].value;
