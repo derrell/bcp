@@ -7,3 +7,5 @@ readme.txt
 .package-cache.json
 clientlist.json
 pantry.db
+pantry.db.old
+users.sql

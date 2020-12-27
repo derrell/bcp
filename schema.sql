@@ -26,7 +26,7 @@ CREATE TABLE Client
   income_amount     REAL,
   pet_types         VARCHAR,
   address_default   VARCHAR, -- default address for delivery
-  appt_day_default  INTEGER, -- default appt day, 0-relative to Distr start
+  appt_day_default  INTEGER, -- default appt day, 1-relative to Distr start
   appt_time_default VARCHAR, -- default appt time HH:MM,
   verified          BOOLEAN DEFAULT FALSE,
   archived          BOOLEAN DEFAULT FALSE,
@@ -41,7 +41,7 @@ CREATE TABLE Fulfillment
   family_name       VARCHAR REFERENCES Client
                             ON DELETE CASCADE
                             ON UPDATE CASCADE,
-  appt_day          INTEGER,    -- 0-relative to distribution
+  appt_day          INTEGER,    -- 1-relative to distribution
   appt_time         VARCHAR,    -- %H:%M; null if fullfilled w/out appointment
   fulfilled         BOOLEAN DEFAULT FALSE,  -- has been picked up or delivered
   fulfillment_time  VARCHAR,                -- %Y-%m-%d %H:%M:%S
