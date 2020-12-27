@@ -610,12 +610,12 @@ qx.Class.define("bcp.client.Appointment",
 
       if (hours <= 12)
       {
-        suffix = "am";
+        suffix = " am";
       }
       else
       {
         hours -= 12;
-        suffix = "pm";
+        suffix = " pm";
       }
 
       return (
