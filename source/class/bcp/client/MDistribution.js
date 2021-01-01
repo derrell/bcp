@@ -350,7 +350,7 @@ qx.Mixin.define("bcp.client.MDistribution",
 
       if (! dist)
       {
-        startDate = this._distributions.getSelection()[0].getValue();
+        startDate = this._distributions.getSelection()[0].getLabel();
         for (i = 1; i <= 7; i++)
         {
           first[i] = times[0].value;
