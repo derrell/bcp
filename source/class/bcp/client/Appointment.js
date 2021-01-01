@@ -608,9 +608,13 @@ qx.Class.define("bcp.client.Appointment",
       let             suffix;
       let             hours = timestamp.getHours();
 
-      if (hours <= 12)
+      if (hours < 12)
       {
         suffix = " am";
+      }
+      else if (hours == 12)
+      {
+        suffix = " pm";
       }
       else
       {
