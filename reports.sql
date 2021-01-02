@@ -347,6 +347,45 @@ REPLACE INTO Report
   description,
   landscape,
   input_fields,
+  subtitle_field,
+  separate_by,
+  query
+)
+ VALUES
+(
+  'Yearly appointments missed',
+  'List of all families who missed appointments during the year',
+  0,
+  '{
+     "$year" :
+     {
+       "type" : "TextField",
+       "label" : "Year",
+       "validation" :
+        {
+          "required"  : true
+        }
+     }
+   }',
+  '$year',
+  'family_name',
+  '
+    SELECT
+        family_name, distribution
+      FROM Fulfillment f
+        WHERE f.distribution >= $year
+          AND f.distribution < ($year + 1)
+          AND NOT f.fulfilled
+        ORDER BY family_name, distribution;
+  '
+);
+
+REPLACE INTO Report
+(
+  name,
+  description,
+  landscape,
+  input_fields,
   separate_by,
   query
 )
