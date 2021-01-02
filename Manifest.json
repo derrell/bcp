@@ -24,5 +24,13 @@
   "requires": {
     "@qooxdoo/framework": "^6.0.0-beta-20201127-1243",
     "@qooxdoo/compiler": "^1.0.0-beta-20201127-1243"
+  },
+  "externalResources": {
+    "script": [
+      // To update, from top-level:
+      // `npm i --save trie-search`, then
+      // `browserify -r trie-search > source/resource/script/triesearch.js`
+      "script/triesearch.js"
+    ]
   }
 }

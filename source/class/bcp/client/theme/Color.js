@@ -23,6 +23,8 @@ qx.Theme.define("bcp.client.theme.Color",
   colors :
   {
     "table-row-background-even" : "white",
-    "table-row-background-odd" : [ 245, 245, 245 ]
+    "table-row-background-odd" : [ 245, 245, 245 ],
+
+    "search-failure" : [ 255, 175, 175 ]
   }
 });

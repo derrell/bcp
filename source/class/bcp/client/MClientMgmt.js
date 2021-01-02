@@ -30,6 +30,9 @@ qx.Mixin.define("bcp.client.MClientMgmt",
     /** This tab's label */
     _tabLabelClient  : null,
 
+    /** Trie Search for clients */
+    _trieSearch      : null,
+
     /**
      * Create the client list page
      *
@@ -46,6 +49,8 @@ qx.Mixin.define("bcp.client.MClientMgmt",
       let             button;
       let             command;
       let             butNewClient;
+      let             label;
+      let             txtSearch;
       let             data;
       let             custom;
       let             behavior;
@@ -112,13 +117,15 @@ qx.Mixin.define("bcp.client.MClientMgmt",
         .then(
           (result) =>
           {
+            const           TrieSearch = require("trie-search");
+
             if (! result)
             {
               return;
             }
 
             result = result.map(
-              (entry) =>
+              (entry, i) =>
               {
                 if (entry.verified === 1)
                 {
@@ -129,12 +136,19 @@ qx.Mixin.define("bcp.client.MClientMgmt",
                   entry.verified = null;
                 }
 
+                // While we're in here, add an index field for faster search
+                entry.index = i;
+
                 return entry;
               });
             tm.setDataAsMapArray(result);
 
             // Sort initially by the Family column
             tm.sortByColumn(tm.getColumnIndexById("family_name"), true);
+
+            // Prepare for type-ahead search of family name
+            this._trieSearch = new TrieSearch("family_name");
+            this._trieSearch.addAll(result);
           })
         .catch(
           (e) =>
@@ -301,7 +315,7 @@ qx.Mixin.define("bcp.client.MClientMgmt",
 
       // Create an hbox for the buttons at the bottom. Force some
       // space above it
-      hBox = new qx.ui.container.Composite(new qx.ui.layout.HBox());
+      hBox = new qx.ui.container.Composite(new qx.ui.layout.HBox(4));
       hBox.set(
         {
           marginTop : 20
@@ -329,6 +343,48 @@ qx.Mixin.define("bcp.client.MClientMgmt",
           this._buildClientForm();
         },
         this);
+
+      hBox.add(new qx.ui.core.Spacer(20, 20));
+
+      label = new qx.ui.basic.Label("Search:");
+      label.set(
+        {
+          alignY : "middle",
+          font   : "bold"
+        });
+      hBox.add(label);
+
+      txtSearch = new qx.ui.form.TextField();
+      txtSearch.set(
+        {
+          width      : 250,
+          liveUpdate : true
+        });
+      hBox.add(txtSearch);
+
+      txtSearch.addListener(
+        "changeValue",
+        (e) =>
+        {
+          const           text = e.getData();
+          const           firstMatch = this._trieSearch.get(text)[0];
+
+          if (firstMatch)
+          {
+            txtSearch.setBackgroundColor(null);
+            table.scrollCellVisible(0, firstMatch.index);
+          }
+          else if (text.length == 0)
+          {
+            // Remove no-match coloring when search is cleared
+            txtSearch.setBackgroundColor(null);
+          }
+          else
+          {
+            // Indicate no match
+            txtSearch.setBackgroundColor("search-failure");
+          }
+        });
     },
 
     /**
