@@ -519,6 +519,11 @@ qx.Class.define("bcp.client.Appointment",
             if (value)
             {
               this.setValue( { day, time } );
+
+              // Scroll the selection into view
+              node = tree.nodeGet(nodes[day][time]);
+              this._tree.scrollCellVisible(
+                0, this._dm.getRowFromNodeId(node.nodeId));
             }
           })
         .catch(
@@ -556,9 +561,6 @@ qx.Class.define("bcp.client.Appointment",
       // Get the parent, which has text like "Day n". Extract the day number.
       parentNodeInfo = this._tree.nodeGet(nodeInfo.parentNodeId);
       day = parentNodeInfo.label.split(" ")[1];
-
-      // Scroll the selection ito view
-      this._tree.scrollCellVisible(0, nodeInfo.nodeId);
 
       // If we're not already here as a result of a value change, set value.
       if (! this.__bInternalChange)
