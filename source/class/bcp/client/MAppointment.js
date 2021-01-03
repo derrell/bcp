@@ -333,8 +333,8 @@ qx.Mixin.define("bcp.client.MAppointment",
         .sort(
           (a, b) =>
           {
-            a = a.family_name;
-            b = b.family_name;
+            a = a.family_name.toLowerCase();
+            b = b.family_name.toLowerCase();
             return a < b ? -1 : a > b ? 1 : 0;
           })
         .forEach(
