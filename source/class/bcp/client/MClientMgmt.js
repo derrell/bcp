@@ -89,7 +89,7 @@ qx.Mixin.define("bcp.client.MClientMgmt",
           "Income source",
           "Income amount",
           "Pet types",
-          "Delivery address",
+          "Address",
           "Appt day",
           "Appt time"
         ],
