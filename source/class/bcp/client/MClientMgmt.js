@@ -50,6 +50,8 @@ qx.Mixin.define("bcp.client.MClientMgmt",
       let             command;
       let             butNewClient;
       let             label;
+      let             search;
+      let             listSearch;
       let             txtSearch;
       let             data;
       let             custom;
@@ -346,6 +348,7 @@ qx.Mixin.define("bcp.client.MClientMgmt",
 
       hBox.add(new qx.ui.core.Spacer(20, 20));
 
+      // Create a search box. First its label...
       label = new qx.ui.basic.Label("Search:");
       label.set(
         {
@@ -354,36 +357,112 @@ qx.Mixin.define("bcp.client.MClientMgmt",
         });
       hBox.add(label);
 
-      txtSearch = new qx.ui.form.TextField();
-      txtSearch.set(
+      // ... and then the search box itself.
+      search = new qx.ui.form.ComboBox();
+      txtSearch = search.getChildControl("textfield");
+      listSearch = search.getChildControl("list");
+      search.set(
         {
           width      : 250,
+        });
+      txtSearch.set(
+        {
           liveUpdate : true
         });
-      hBox.add(txtSearch);
+      hBox.add(search);
 
+      // Each time a character is typed, build a list of all families
+      // with the text in the search box within the name
       txtSearch.addListener(
         "changeValue",
         (e) =>
         {
           const           text = e.getData();
-          const           firstMatch = this._trieSearch.get(text)[0];
+          const           matches = this._trieSearch.get(text);
 
-          if (firstMatch)
+          if (matches.length > 0)
           {
             txtSearch.setBackgroundColor(null);
-            table.scrollCellVisible(0, firstMatch.index);
+            search.open();
+            search.removeAll();
+            matches.forEach(
+              (entry) =>
+              {
+                let listItem = new qx.ui.form.ListItem(entry.family_name);
+                listItem.setUserData("index", entry.index);
+                search.add(listItem);
+              });
           }
           else if (text.length == 0)
           {
             // Remove no-match coloring when search is cleared
+            search.close();
             txtSearch.setBackgroundColor(null);
           }
           else
           {
             // Indicate no match
             txtSearch.setBackgroundColor("search-failure");
+            search.close();
+            search.clearTextSelection();
+            search.setTextSelection(text.length);
           }
+
+        });
+
+      listSearch.addListener(
+        "changeSelection",
+        (e) =>
+        {
+          let             foundIndex;
+          const           selection = e.getData();
+
+          // If selection was emptied, we have nothing to do
+          if (selection.length === 0)
+          {
+            // Just clear the found index
+            setTimeout(() => listSearch.setUserData("foundIndex", null), 1);
+            return;
+          }
+
+          // Scroll to this entry in the table
+          foundIndex = selection[0].getUserData("index");
+          table.scrollCellVisible(0, foundIndex);
+
+          // Save the found index
+          listSearch.setUserData("foundIndex", foundIndex);
+        });
+
+      listSearch.addListener(
+        "pointerdown",
+        (e) =>
+        {
+          let             row;
+
+          // Ensure that the table is sorted by Family when searching
+          tm.sortByColumn(tm.getColumnIndexById("family_name"), 1);
+
+          // Get the selected row
+          row  = listSearch.getUserData("foundIndex");
+
+          // Clear the selected row to prevent mistakes on next search
+          listSearch.setUserData("foundIndex", null);
+
+          // If there's a selection in the list...
+          if (row !== null)
+          {
+            // ... then open that row
+            this._buildClientForm(tm.getDataAsMapArray()[row], row);
+          }
+          else
+          {
+            // Close the search box and remove all items from the list
+            search.close();
+          }
+
+          // Clear the search box
+          txtSearch.setValue("");
+          search.removeAll();
         });
     },
 
