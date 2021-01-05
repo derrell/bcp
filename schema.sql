@@ -87,3 +87,10 @@ CREATE TABLE Report
   landscape         BOOLEAN DEFAULT 0,
   UNIQUE (name COLLATE NOCASE)
 );
+
+
+CREATE TABLE KeyValueStore
+(
+  key               VARCHAR PRIMARY KEY NOT NULL,
+  value             VARCHAR
+);
