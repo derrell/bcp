@@ -1,50 +1,49 @@
 qx.Class.define("bcp.server.Auth",
 {
+  type   : "singleton",
   extend : qx.core.Object,
-
-  /**
-   * Create the login and logout routes
-   *
-   * @param app {Express}
-   *   The Express app object
-   */
-  construct(app)
-  {
-    const           sqlite3 = require("sqlite3");
-    const           { open } = require("sqlite");
-
-    this.base(arguments);
-
-    this.info("Auth: starting");
-
-    // Open the database
-    open(
-      {
-        filename : `${process.cwd()}/pantry.db`,
-        driver   : sqlite3.Database
-      })
-      .then(
-        (db) =>
-        {
-          this._db = db;
-        });
-
-
-    // Create routes
-    [
-      this.__routeEnsureLoggedIn,
-      this.__routeLogin,
-      this.__routeLogout
-    ].forEach(
-      (f) =>
-      {
-        f.call(this, app);
-      });
-  },
 
   members :
   {
     _db    : null,
+
+    /**
+     * Create the login and logout routes
+     *
+     * @param app {Express}
+     *   The Express app object
+     */
+    init(app)
+    {
+      const           sqlite3 = require("sqlite3");
+      const           { open } = require("sqlite");
+
+      this.info("Auth: starting");
+
+      // Open the database
+      open(
+        {
+          filename : `${process.cwd()}/pantry.db`,
+          driver   : sqlite3.Database
+        })
+        .then(
+          (db) =>
+          {
+            this._db = db;
+          });
+
+
+      // Create routes
+      [
+        this.__routeEnsureLoggedIn,
+        this.__routeLogin,
+        this.__routeLogout
+      ].forEach(
+        (f) =>
+        {
+          f.call(this, app);
+        });
+    },
 
    /**
      * Ensure that all requests are authenticated.
@@ -58,7 +57,7 @@ qx.Class.define("bcp.server.Auth",
         (req, res, next) =>
         {
           // Are they already logged in?
-          if (req.bcpSession && req.bcpSession.authenticated)
+          if (req.session && req.session.authenticated)
           {
             // Yup. Move on.
             next();
@@ -114,7 +113,7 @@ qx.Class.define("bcp.server.Auth",
 
           this.info("/login called: username=" + req.body.username);
 
-          if (req.bcpSession.authenticated)
+          if (req.session.authenticated)
           {
             res.status(200).send("Already authenticated");
             return;
@@ -180,9 +179,9 @@ qx.Class.define("bcp.server.Auth",
 
                 // The user authenticates.
                 this.info(`Authenticated user ${username}`);
-                req.bcpSession.authenticated = true;
-                req.bcpSession.username = username;
-                req.bcpSession.permissionLevel = result[0].permission_level;
+                req.session.authenticated = true;
+                req.session.username = username;
+                req.session.permissionLevel = result[0].permission_level;
                 res.status(200).send("Authentication successful");
               });
         });
@@ -202,9 +201,9 @@ qx.Class.define("bcp.server.Auth",
         (req, res) =>
         {
           this.info("/logout called: username=" +
-                    req.bcpSession.username);
+                    req.session.username);
 
-          req.bcpSession.reset();
+          delete req.session;
           res.redirect("/");
         });
     }

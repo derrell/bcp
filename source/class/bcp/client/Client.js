@@ -47,6 +47,8 @@ qx.Class.define("bcp.client.Client",
       let             butLogin;
       let             butLogout;
       let             passwordChange;
+      let             ws;
+      let             wsTimer;
 
       this.base(arguments);
 
@@ -155,6 +157,41 @@ qx.Class.define("bcp.client.Client",
       // Make sure all of our local form elements are registered
       bcp.client.RegisterFormElements.register();
 
+      function createWebSocket()
+      {
+        // If a prior websocket open was attempted, close it
+        ws && ws.close();
+
+        // Create a websocket for async communication with the server
+        ws = new WebSocket("ws://localhost:3000");
+
+        ws.addEventListener(
+          "open",
+          () =>
+          {
+            console.log("Websocket connected");
+
+            clearInterval(wsTimer);
+            ws.send("Hello world, from client");
+          });
+
+        ws.addEventListener(
+          "message",
+          ({ data }) =>
+          {
+            console.log(data);
+          });
+
+        ws.addEventListener(
+          "close",
+          () =>
+          {
+            console.log("Websocket closed; reopening");
+            ws = null;
+            wsTimer = setInterval(createWebSocket, 5000);
+          });
+      }
+
       this.rpc("whoAmI", [])
         .then(
           (me) =>
@@ -166,6 +203,8 @@ qx.Class.define("bcp.client.Client",
             {
               return;
             }
+
+            createWebSocket();
 
             passwordChange.setValue(
               "<span style='text-decoration: underline;'>" +
