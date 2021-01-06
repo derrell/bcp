@@ -1,31 +1,30 @@
 qx.Class.define("bcp.server.Gui",
 {
+  type   : "singleton",
   extend : qx.core.Object,
-
-  /**
-   * Serve the GUI
-   *
-   * @param app {Express}
-   *   The Express app object
-   */
-  construct : function(app)
-  {
-    this.base(arguments);
-
-    this.info("Gui: starting");
-    
-    // Create routes
-    [
-      this.__routeGui
-    ].forEach(
-      (f) =>
-      {
-        f.call(this, app);
-      });
-  },
 
   members :
   {
+    /**
+     * Serve the GUI
+     *
+     * @param app {Express}
+     *   The Express app object
+     */
+    init : function(app)
+    {
+      this.info("Gui: starting");
+
+      // Create routes
+      [
+        this.__routeGui
+      ].forEach(
+        (f) =>
+        {
+          f.call(this, app);
+        });
+    },
+
     /**
      * Provide the GUI
      *

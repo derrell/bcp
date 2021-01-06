@@ -93,16 +93,16 @@ qx.Class.define("bcp.server.Server",
 */
 
       // Create the session
-      new bcp.server.Session(app, protocol === https);
+      bcp.server.Session.getInstance().init(app, protocol === https);
 
       // Create the routes for logging in, authentication, logging out
-      new bcp.server.Auth(app, protocol === https);
+      bcp.server.Auth.getInstance().init(app, protocol === https);
 
       // Create the user interface
-      new bcp.server.Gui(app, protocol === https);
+      bcp.server.Gui.getInstance().init(app, protocol === https);
 
       // Create the remote procedure calls
-      new bcp.server.Rpc(app, protocol === https);
+      bcp.server.Rpc.getInstance().init(app, protocol === https);
 
       app.use(
         (err, req, res, next) =>
@@ -147,6 +147,7 @@ qx.Class.define("bcp.server.Server",
               console.log(`Got HTTP request; redirecting to ${redirectTo}`);
               res.redirect(redirectTo);
             });
+
         app.listen(
           portAlternate,        // Port designated for HTTP
           () =>
@@ -157,7 +158,7 @@ qx.Class.define("bcp.server.Server",
       }
       else
       {
-        app.listen(
+        server = app.listen(
           portPrimary,
           () =>
           {
@@ -165,6 +166,9 @@ qx.Class.define("bcp.server.Server",
               `Listening for HTTP  on port ${portPrimary}`);
           });
       }
-    }
+
+      // Prepare to send/receive messages on websockets
+      bcp.server.WebSocket.getInstance().init(app, protocol === https, server);
+   }
   }
 });

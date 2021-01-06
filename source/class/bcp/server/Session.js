@@ -1,36 +1,53 @@
 qx.Class.define("bcp.server.Session",
 {
+  type   : "singleton",
   extend : qx.core.Object,
 
- /**
-   * Create a session.
-   *
-   * @param app {Express}
-   *   The Express app object
-   */
-  construct(app, bSecure)
+  members :
   {
-    let             sessions = require("client-sessions");
+    _session : null,
 
-    this.base(arguments);
+   /**
+     * Create a session.
+     *
+     * @param app {Express}
+     *   The Express app object
+     */
+    init(app, bSecure)
+    {
+      let             SQLiteStore;
+      const           connect = require("connect");
+      const           connectSQLite3 = require("connect-sqlite3");
+      const           session = require("express-session");
 
-    this.info("Session: starting");
+      this.info("Session: starting");
 
-    app.use(
-      sessions(
-        {
-          cookieName     : "bcp",
-          requestKey     : "bcpSession",
-          secret         : bcp.server.Session.__makeSecret(),
-          duration       : bcp.server.Session.DURATION,
-          activeDuration : bcp.server.Session.DURATION,
-          cookie         :
+      // Create the session
+      SQLiteStore = connectSQLite3(session);
+      this._session =
+        session(
           {
-            secure         : bSecure,
-            ephemeral      : true,
-            httpOnly       : true
-          }
-        }));
+            name              : "bcp",
+            store             : new SQLiteStore(),
+            cookie            :
+            {
+              secure : bSecure,
+              maxAge : this.constructor.DURATION
+            },
+            requestKey        : "bcpSession",
+            saveUninitialized : false,
+            secret            : bcp.server.Session.__makeSecret(),
+            resave            : false,
+            unset             : "destroy"
+          });
+
+      app.use(this._session);
+    },
+
+    getSession()
+    {
+      return this._session;
+    }
   },
 
   statics :

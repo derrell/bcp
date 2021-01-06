@@ -1,155 +1,7 @@
 qx.Class.define("bcp.server.Rpc",
 {
+  type   : "singleton",
   extend : qx.core.Object,
-
-  /**
-   * Create the login and logout routes
-   *
-   * @param app {Express}
-   *   The Express app object
-   */
-  construct(app)
-  {
-    let             entry;
-    let             server;
-    let             requests;
-    let             serverEntries = {};
-    const           sqlite3 = require("sqlite3");
-    const           { open } = require("sqlite");
-    const           jayson = require("jayson");
-
-    this.base(arguments);
-
-    this.info("Rpc: starting");
-
-    // Each of the available requests
-    requests =
-      {
-        whoAmI       :
-        {
-          handler             : this._whoAmI.bind(this),
-          permission_level    : 0
-        },
-
-        getClientList       :
-        {
-          handler             : this._getClientList.bind(this),
-          permission_level    : 50
-        },
-
-        saveClient          :
-        {
-          handler             : this._saveClient.bind(this),
-          permission_level    : 50
-        },
-
-        getAppointments     :
-        {
-          handler             : this._getAppointments.bind(this),
-          permission_level    : 50
-        },
-
-        saveFulfillment     :
-        {
-          handler             : this._saveFulfillment.bind(this),
-          permission_level    : 50
-        },
-
-        getDistributionList :
-        {
-          handler             : this._getDistributionList.bind(this),
-          permission_level    : 50
-        },
-
-        saveDistribution    :
-        {
-          handler             : this._saveDistribution.bind(this),
-          permission_level    : 50
-        },
-
-        getReportList       :
-        {
-          handler             : this._getReportList.bind(this),
-          permission_level    : 50
-        },
-
-        generateReport      :
-        {
-          handler             : this._generateReport.bind(this),
-          permission_level    : 50
-        },
-
-        getDeliveryDay      :
-        {
-          handler             : this._getDeliveryDay.bind(this),
-          permission_level    : 20
-        },
-
-        updateFulfilled    :
-        {
-          handler             : this._updateFulfilled.bind(this),
-          permission_level    : 20
-        }
-      };
-
-    // Create the rpcName:handler map needed for jayson.server()
-    for (entry in requests)
-    {
-      serverEntries[entry] = requests[entry].handler;
-    }
-
-    // Create the JSON-RPC server
-    server = jayson.server(serverEntries);
-
-    // Open the database
-    open(
-      {
-        filename : `${process.cwd()}/pantry.db`,
-        driver   : sqlite3.Database
-      })
-      .then(
-        (db) =>
-        {
-          this._db = db;
-        });
-
-    app.use(
-      "/rpc",
-      (req, res, next) =>
-      {
-        const           { username, permissionLevel } = req.bcpSession;
-
-        console.log(`Got RPC request from ${username}: body=`, req.body);
-
-        // Ensure basic components of the request are available
-        if (! req.body || 
-            ! req.body.method ||
-           typeof req.bcpSession.permissionLevel != "number")
-        {
-          res.status(401).send("Authentication failed");
-        }
-
-        // Look at the method and ensure this user is allowed to access it
-        if (! requests[req.body.method] ||
-            typeof requests[req.body.method].permission_level != "number" ||
-            requests[req.body.method].permission_level > permissionLevel)
-        {
-          // They're not allowed access. Redirect them to a non-existent method
-          console.log(
-            `User ${username} does not have permission ` +
-              `for method ${req.body.method} ` +
-              `(requires ${requests[req.body.method].permission_level}; ` +
-              `user has ${permissionLevel}`);
-          req.body.method = "MethodDoesNotExist";
-        }
-
-        // Save req locally so it's accessible in RPC.
-        // SAVE IT AS FIRST STEP IN RPC. It may change due to other RPC calls.
-        this._req = req;
-
-        server.middleware()(req, res, next);
-      });
-  },
 
   statics :
   {
@@ -176,6 +28,154 @@ qx.Class.define("bcp.server.Rpc",
     _req  : null,
 
     /**
+     * Create the login and logout routes
+     *
+     * @param app {Express}
+     *   The Express app object
+     */
+    init(app)
+    {
+      let             entry;
+      let             server;
+      let             requests;
+      let             serverEntries = {};
+      const           sqlite3 = require("sqlite3");
+      const           { open } = require("sqlite");
+      const           jayson = require("jayson");
+
+      this.info("Rpc: starting");
+
+      // Each of the available requests
+      requests =
+        {
+          whoAmI       :
+          {
+            handler             : this._whoAmI.bind(this),
+            permission_level    : 0
+          },
+
+          getClientList       :
+          {
+            handler             : this._getClientList.bind(this),
+            permission_level    : 50
+          },
+
+          saveClient          :
+          {
+            handler             : this._saveClient.bind(this),
+            permission_level    : 50
+          },
+
+          getAppointments     :
+          {
+            handler             : this._getAppointments.bind(this),
+            permission_level    : 50
+          },
+
+          saveFulfillment     :
+          {
+            handler             : this._saveFulfillment.bind(this),
+            permission_level    : 50
+          },
+
+          getDistributionList :
+          {
+            handler             : this._getDistributionList.bind(this),
+            permission_level    : 50
+          },
+
+          saveDistribution    :
+          {
+            handler             : this._saveDistribution.bind(this),
+            permission_level    : 50
+          },
+
+          getReportList       :
+          {
+            handler             : this._getReportList.bind(this),
+            permission_level    : 50
+          },
+
+          generateReport      :
+          {
+            handler             : this._generateReport.bind(this),
+            permission_level    : 50
+          },
+
+          getDeliveryDay      :
+          {
+            handler             : this._getDeliveryDay.bind(this),
+            permission_level    : 20
+          },
+
+          updateFulfilled    :
+          {
+            handler             : this._updateFulfilled.bind(this),
+            permission_level    : 20
+          }
+        };
+
+      // Create the rpcName:handler map needed for jayson.server()
+      for (entry in requests)
+      {
+        serverEntries[entry] = requests[entry].handler;
+      }
+
+      // Create the JSON-RPC server
+      server = jayson.server(serverEntries);
+
+      // Open the database
+      open(
+        {
+          filename : `${process.cwd()}/pantry.db`,
+          driver   : sqlite3.Database
+        })
+        .then(
+          (db) =>
+          {
+            this._db = db;
+          });
+
+      app.use(
+        "/rpc",
+        (req, res, next) =>
+        {
+          const           { username, permissionLevel } = req.session;
+
+          console.log(`Got RPC request from ${username}: body=`, req.body);
+
+          // Ensure basic components of the request are available
+          if (! req.body || 
+              ! req.body.method ||
+             typeof req.session.permissionLevel != "number")
+          {
+            res.status(401).send("Authentication failed");
+          }
+
+          // Look at the method and ensure this user is allowed to access it
+          if (! requests[req.body.method] ||
+              typeof requests[req.body.method].permission_level != "number" ||
+              requests[req.body.method].permission_level > permissionLevel)
+          {
+            // They're not allowed access. Redirect them to a
+            // non-existent method
+            console.log(
+              `User ${username} does not have permission ` +
+                `for method ${req.body.method} ` +
+                `(requires ${requests[req.body.method].permission_level}; ` +
+                `user has ${permissionLevel}`);
+            req.body.method = "MethodDoesNotExist";
+          }
+
+          // Save req locally so it's accessible in RPC.
+          // SAVE IT AS FIRST STEP IN RPC. It may change due to other RPC calls.
+          this._req = req;
+
+          server.middleware()(req, res, next);
+        });
+    },
+
+    /**
      * Return the logged-in user and permissions
      *
      * @param args {Array}
@@ -189,8 +189,8 @@ qx.Class.define("bcp.server.Rpc",
       callback(
         null,
         {
-          username        : this._req.bcpSession.username,
-          permissionLevel : this._req.bcpSession.permissionLevel
+          username        : this._req.session.username,
+          permissionLevel : this._req.session.permissionLevel
         });
     },
 
