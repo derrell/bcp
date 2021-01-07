@@ -47,8 +47,8 @@ qx.Class.define("bcp.client.Client",
       let             butLogin;
       let             butLogout;
       let             passwordChange;
+      let             messages;
       let             ws;
-      let             wsTimer;
 
       this.base(arguments);
 
@@ -83,7 +83,7 @@ qx.Class.define("bcp.client.Client",
         });
       header.add(logo);
 
-      // Center the title
+      // Spread out the title
       header.add(new qx.ui.core.Spacer(), { flex : 1 });
 
       label = new qx.ui.basic.Label(
@@ -96,6 +96,18 @@ qx.Class.define("bcp.client.Client",
           textAlign  : "center"
         });
       header.add(label);
+
+      // Spread out the message box
+      header.add(new qx.ui.core.Spacer(), { flex : 1 });
+
+      messages = new qx.ui.form.List();
+      messages.set(
+        {
+          marginTop : 20,
+          height    : 100,
+          width     : 350
+        });
+      header.add(messages);
 
       // Right-justify the buttons
       header.add(new qx.ui.core.Spacer(), { flex : 1 });
@@ -170,16 +182,27 @@ qx.Class.define("bcp.client.Client",
           () =>
           {
             console.log("Websocket connected");
-
-            clearInterval(wsTimer);
-            ws.send("Hello world, from client");
           });
 
         ws.addEventListener(
           "message",
-          ({ data }) =>
+          (e) =>
           {
-            console.log(data);
+            let             listItem;
+            let             wsMessage = JSON.parse(e.data);
+
+            console.log(JSON.stringify(wsMessage));
+
+            if (! ("messageType" in wsMessage))
+            {
+              return;
+            }
+
+            if (wsMessage.messageType == "message")
+            {
+              listItem = new qx.ui.form.ListItem(wsMessage.data);
+              messages.add(listItem);
+            }
           });
 
         ws.addEventListener(
@@ -188,7 +211,6 @@ qx.Class.define("bcp.client.Client",
           {
             console.log("Websocket closed; reopening");
             ws = null;
-            wsTimer = setInterval(createWebSocket, 5000);
           });
       }
 

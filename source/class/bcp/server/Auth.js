@@ -203,6 +203,7 @@ qx.Class.define("bcp.server.Auth",
           this.info("/logout called: username=" +
                     req.session.username);
 
+          bcp.server.WebSocket.getInstance().userLogout(req.session);
           delete req.session;
           res.redirect("/");
         });
