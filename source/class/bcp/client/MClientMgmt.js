@@ -22,16 +22,19 @@ qx.Mixin.define("bcp.client.MClientMgmt",
   members :
   {
     /** The client table */
-    _clientTable     : null,
+    _clientTable      : null,
 
     /** The client table model */
-    _tm              : null,
+    _tm               : null,
 
     /** This tab's label */
-    _tabLabelClient  : null,
+    _tabLabelClient   : null,
 
-    /** Trie Search for clients */
-    _trieSearch      : null,
+    /** Trie Search for clients by family name */
+    _trieSearchFamily : null,
+
+    /** Trie Search for clients by phone number */
+    _trieSearcPhone   : null,
 
     /**
      * Create the client list page
@@ -53,6 +56,7 @@ qx.Mixin.define("bcp.client.MClientMgmt",
       let             search;
       let             listSearch;
       let             txtSearch;
+      let             cbPhone;
       let             data;
       let             custom;
       let             behavior;
@@ -119,38 +123,26 @@ qx.Mixin.define("bcp.client.MClientMgmt",
         .then(
           (result) =>
           {
-            const           TrieSearch = require("trie-search");
-
             if (! result)
             {
               return;
             }
 
+            // Add the provided client list, munging column data as necessary
             result = result.map(
-              (entry, i) =>
+              (client, i) =>
               {
-                if (entry.verified === 1)
-                {
-                  entry.verified = true;
-                }
-                else if (entry.verified === 0)
-                {
-                  entry.verified = null;
-                }
-
-                // While we're in here, add an index field for faster search
-                entry.index = i;
-
-                return entry;
+                this._mungeClient(client, i);
+                return client;
               });
-            tm.setDataAsMapArray(result);
+            this._tm.setDataAsMapArray(result);
+
+            // Build the search trees
+            this._generateTrieSearch();
 
             // Sort initially by the Family column
-            tm.sortByColumn(tm.getColumnIndexById("family_name"), true);
-
-            // Prepare for type-ahead search of family name
-            this._trieSearch = new TrieSearch("family_name");
-            this._trieSearch.addAll(result);
+            this._tm.sortByColumn(
+              this._tm.getColumnIndexById("family_name"), true);
           })
         .catch(
           (e) =>
@@ -371,6 +363,9 @@ qx.Mixin.define("bcp.client.MClientMgmt",
         });
       hBox.add(search);
 
+      cbPhone = new qx.ui.form.CheckBox("by Phone (slow)");
+      hBox.add(cbPhone);
+
       // Each time a character is typed, build a list of all families
       // with the text in the search box within the name
       txtSearch.addListener(
@@ -378,7 +373,11 @@ qx.Mixin.define("bcp.client.MClientMgmt",
         (e) =>
         {
           const           text = e.getData();
-          const           matches = this._trieSearch.get(text);
+          const           byPhone = cbPhone.getValue();
+          const           matches =
+            byPhone
+              ? this._trieSearchPhone.get(text)
+              : this._trieSearchFamily.get(text);
 
           if (matches.length > 0)
           {
@@ -389,6 +388,8 @@ qx.Mixin.define("bcp.client.MClientMgmt",
               (entry) =>
               {
                 let listItem = new qx.ui.form.ListItem(entry.family_name);
+                listItem.getChildControl("label").setWidth(300);
+                listItem._add(new qx.ui.basic.Label(entry.phone));
                 listItem.setUserData("index", entry.index);
                 search.add(listItem);
               });
@@ -464,6 +465,58 @@ qx.Mixin.define("bcp.client.MClientMgmt",
           txtSearch.setValue("");
           search.removeAll();
         });
+    },
+
+    /**
+     * The database data isn't quite in the form that we want to display it.
+     * Alter some fields for display.
+     *
+     * @param client {Map}
+     *   The data for a single client
+     *
+     * @param index {Number}
+     *   The index in the table model, of this client
+     */
+    _mungeClient(client, index)
+    {
+      // Convert verified from numeric 0/1 to boolean false/true
+      if (client.verified === 1)
+      {
+        client.verified = true;
+      }
+      else if (client.verified === 0)
+      {
+        client.verified = null;
+      }
+
+      // Ensure phone numbers are in consistent form
+      if (client.phone && client.phone.trim())
+      {
+        client.phone = client.phone.trim().replace(/-/g, "");
+        client.phone = client.phone.replace(
+          /^(\d{3})(\d{3})(\d{4})$/gm,
+          "$1-$2-$3");
+      }
+
+      // While we're in here, add an index field for faster search
+      client.index = index;
+    },
+
+    /**
+     * Create the search trees for family and phone
+     */
+    _generateTrieSearch()
+    {
+      const           clients = this._tm.getDataAsMapArray();
+      const           TrieSearch = require("trie-search");
+
+      // Prepare for type-ahead search by family name
+      this._trieSearchFamily = new TrieSearch("family_name");
+      this._trieSearchFamily.addAll(clients);
+
+      // Prepare for type-ahead search by phone
+      this._trieSearchPhone = new TrieSearch("phone");
+      this._trieSearchPhone.addAll(clients);
     },
 
     /**
@@ -997,13 +1050,18 @@ qx.Mixin.define("bcp.client.MClientMgmt",
                 if (row >= 0)
                 {
                   // Yup. Replace the data for that row
+                  this._mungeClient(formValues, row);
                   this._tm.setRowsAsMapArray([formValues], row, false, false);
                 }
                 else
                 {
                   // It's new. Add it.
+                  this._mungeClient(formValues, this._tm.getData().length);
                   this._tm.addRowsAsMapArray([formValues], null, false, false);
                 }
+
+                // Recreate the search trees
+                this._generateTrieSearch();
 
                 // Resort  by the Family column
                 this._tm.sortByColumn(
