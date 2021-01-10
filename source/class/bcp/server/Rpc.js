@@ -145,9 +145,9 @@ qx.Class.define("bcp.server.Rpc",
           console.log(`Got RPC request from ${username}: body=`, req.body);
 
           // Ensure basic components of the request are available
-          if (! req.body || 
+          if (! req.body ||
               ! req.body.method ||
-             typeof req.session.permissionLevel != "number")
+              typeof req.session.permissionLevel != "number")
           {
             res.status(401).send("Authentication failed");
           }
