@@ -146,18 +146,18 @@ qx.Class.define("bcp.server.WebSocket",
             .join(", ");
           if (users)
           {
-            users = `Also working now: ${users}`;
+            users = `Also logged in: ${users}`;
           }
           else
           {
-            users = "You are the only user at present.";
+            users = "No other users currently logged in";
           }
 
           ws.send(
             JSON.stringify(
               {
                 messageType : "user",
-                data        : `Hi ${username}! ${users}`
+                data        : users
               }));
 
           // If there's a message of the day, send it

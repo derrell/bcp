@@ -40,6 +40,7 @@ qx.Class.define("bcp.client.Client",
     {
       let             mainContainer;
       let             vBox;
+      let             hBox;
       let             logo;
       let             header;
       let             font;
@@ -47,7 +48,10 @@ qx.Class.define("bcp.client.Client",
       let             butLogin;
       let             butLogout;
       let             passwordChange;
+      let             messageContainer;
       let             messages;
+      let             chatInput;
+      let             chatSend;
       let             ws;
 
       this.base(arguments);
@@ -100,15 +104,21 @@ qx.Class.define("bcp.client.Client",
       // Spread out the message box
       header.add(new qx.ui.core.Spacer(), { flex : 1 });
 
+      // place the chat list and chat input vertically
+      messageContainer =
+        new qx.ui.container.Composite(new qx.ui.layout.VBox(0));
+      messageContainer.hide();  // hidden during login
+      header.add(messageContainer);
+
+      // Add the chat messages list
       messages = new qx.ui.form.List();
       messages.set(
         {
           marginTop  : 20,
-          height     : 100,
-          width      : 350,
-          visibility : "hidden"
+          height     : 80,
+          width      : 500
         });
-      header.add(messages);
+      messageContainer.add(messages);
 
       messages.addListener(
         "changeSelection",
@@ -116,6 +126,53 @@ qx.Class.define("bcp.client.Client",
         {
           messages.resetSelection();
         });
+
+      // Label the chat input box
+      hBox = new qx.ui.container.Composite(new qx.ui.layout.HBox(10));
+      hBox.set(
+        {
+          width : 500
+        });
+      messageContainer.add(hBox);
+
+      // Add the chat input
+      label = new qx.ui.basic.Label("Chat:");
+      label.set(
+        {
+          alignY : "middle",
+          font   : "bold"
+        });
+      hBox.add(label);
+      chatInput = new qx.ui.form.TextField();
+      hBox.add(chatInput, { flex : 1  });
+
+      // Add the chat send button
+      chatSend = new qx.ui.form.Button("Send");
+      chatSend.set(
+        {
+          command : new qx.ui.command.Command("Enter")
+        });
+      hBox.add(chatSend);
+
+      chatSend.addListener(
+        "execute",
+        () =>
+        {
+          let             input = chatInput.getValue().trim();
+
+          // Clear the chat box
+          chatInput.setValue("");
+
+          // If there's no text, don't do anyting
+          if (input.length === 0)
+          {
+            return;
+          }
+
+          // Issue a request to send this chat message
+          this.rpc("sendChat", [ input ]);
+        });
+      hBox.add(chatSend);
 
       // Right-justify the buttons
       header.add(new qx.ui.core.Spacer(), { flex : 1 });
@@ -198,6 +255,7 @@ qx.Class.define("bcp.client.Client",
           {
             let             text;
             let             color;
+            let             children;
             let             listItem;
             let             wsMessage = JSON.parse(e.data);
 
@@ -212,7 +270,6 @@ qx.Class.define("bcp.client.Client",
             {
             case "motd" :
             case "user" :
-              messages.show();
               color = wsMessage.messageType == "motd" ? "red" : "blue";
               text =
                 [
@@ -233,11 +290,33 @@ qx.Class.define("bcp.client.Client",
               break;
 
             case "message" :
-              messages.show();
-              listItem = new qx.ui.form.ListItem(wsMessage.data);
+              text =
+                [
+                  "<span style='font-style: italic;'>",
+                  wsMessage.data.from,
+                  "</span>",
+                  ": ",
+                  qx.bom.String.escape(wsMessage.data.message),
+                ].join("");
+              listItem = new qx.ui.form.ListItem(text);
+              listItem.set(
+                {
+                  rich      : true,
+                  height    : 14,
+                  padding   : 0,
+                  decorator : "message-item"
+                });
               messages.add(listItem);
               messages.scrollChildIntoView(listItem, null, null, true);
               break;
+            }
+
+            // Prune the message list to keep it from ever-expanding
+            for (children = messages.getChildrenContainer()._getChildren();
+                 children.length > 100;
+                 children = messages.getChildrenContainer()._getChildren())
+            {
+              messages.remove(children[0]);
             }
           });
 
@@ -262,8 +341,13 @@ qx.Class.define("bcp.client.Client",
               return;
             }
 
+            // Make the chat area visible now
+            messageContainer.show();
+
+            // Create the websocket now
             createWebSocket();
 
+            // Show the logged-in user
             passwordChange.setValue(
               "<span style='text-decoration: underline;'>" +
                 this.bold(me.username) +

@@ -117,6 +117,12 @@ qx.Class.define("bcp.server.Rpc",
           {
             handler             : this._updateFulfilled.bind(this),
             permission_level    : 20
+          },
+
+          sendChat           :
+          {
+            handler             : this._sendChat.bind(this),
+            permission_level    : 30
           }
         };
 
@@ -1148,6 +1154,30 @@ qx.Class.define("bcp.server.Rpc",
             console.warn("Error in getDeliveryDay", e);
             callback( { message : e.toString() } );
           });
+    },
+
+    /**
+     * Send a chat message
+     *
+     * @param args {Array}
+     *   args[0] {message}
+     *     The chat message to send
+     *
+     * @param callback {Function}
+     *   @signature(err, result)
+     */
+    _sendChat(args, callback)
+    {
+      bcp.server.WebSocket.getInstance().sendToAll(
+        {
+          messageType : "message",
+          data        :
+          {
+            from        : this._req.session.username,
+            message     : args[0]
+          }
+        });
+      callback(null, null);
     }
   }
 });
