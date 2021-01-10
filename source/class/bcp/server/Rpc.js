@@ -447,6 +447,7 @@ qx.Class.define("bcp.server.Rpc",
                 "SELECT family_name, appt_day_default, appt_time_default",
                 "  FROM Client",
                 "  WHERE appt_time_default IS NOT NULL",
+                "    AND length(trim(appt_time_default)) > 0",
                 "  ORDER BY appt_day_default, appt_time_default, family_name;"
               ].join(" "));
           })

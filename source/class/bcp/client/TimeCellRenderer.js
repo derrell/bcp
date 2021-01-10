@@ -24,7 +24,9 @@ qx.Class.define("bcp.client.TimeCellRenderer",
       let             time = (cellInfo.value || "").split(":");
 
       // If no time, just leave blank
-      if (cellInfo.value === null || time.length === 0)
+      if (cellInfo.value === null ||
+          cellInfo.value === "" ||
+          time.length === 0)
       {
         return "";
       }
