@@ -117,7 +117,6 @@ qx.Class.define("bcp.client.Client",
           messages.resetSelection();
         });
 
-
       // Right-justify the buttons
       header.add(new qx.ui.core.Spacer(), { flex : 1 });
 
