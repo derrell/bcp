@@ -13,7 +13,7 @@ qx.Class.define("bcp.server.WebSocket",
      * @param app {Express}
      *   The Express app object
      */
-    init(app, bIsHttps, server)
+    init(app, bIsHttps, server, db)
     {
       let             wss;
       const           WebSocket = require("ws");
@@ -76,10 +76,13 @@ qx.Class.define("bcp.server.WebSocket",
         {
           let             users;
           let             session;
+          let             pingTimer;
           const           username = req.session.username;
+          const           stampedUsername =
+            username + "#" + (new Date()).getTime();
 
           // Keep track of this user and his websocket
-          this._userWsMap[username + "#" + (new Date()).getTime()] = ws;
+          this._userWsMap[stampedUsername] = ws;
 
           session = bcp.server.Session.getInstance().getSession();
           session(
@@ -106,6 +109,35 @@ qx.Class.define("bcp.server.WebSocket",
             `Welcome ${username}. Connected clients: ` +
               `${JSON.stringify(Object.keys(this._userWsMap))}`);
 
+          // We'll be pinging the connection periodically to ensure it's alive
+          ws.bAlive = true;
+          ws.on("pong", () => { ws.bAlive = true; });
+
+          pingTimer = setInterval(
+            () =>
+            {
+              if (! ws.bAlive)
+              {
+                console.log(`User ${username} has disappeared`);
+                ws.terminate();
+
+                // This user has gone away
+                delete this._userWsMap[stampedUsername];
+
+                // Let other users know this user was detected gone
+                this.sendToAll(
+                  {
+                    messageType : "user",
+                    data        : `${username} has gone away`
+                  });
+                return;
+              }
+
+              ws.bAlive = false;
+              ws.ping(() => {});
+            },
+            30000);
+
           // Let newly-logged in user who's logged in
           users =
             Object.keys(this._userWsMap)
@@ -120,18 +152,49 @@ qx.Class.define("bcp.server.WebSocket",
           {
             users = "You are the only user at present.";
           }
+
           ws.send(
             JSON.stringify(
               {
-                messageType : "message",
+                messageType : "user",
                 data        : `Hi ${username}! ${users}`
               }));
+
+          // If there's a message of the day, send it
+          db.prepare(
+            [
+              "SELECT value",
+              "  FROM KeyValueStore",
+              "  WHERE key = 'motd';"
+            ].join(" "))
+            .then(
+              (stmt) =>
+              {
+                return stmt.all({});
+              })
+            .then(
+              (result) =>
+              {
+                if (result.length > 0)
+                {
+                  ws.send(
+                    JSON.stringify(
+                      {
+                        messageType : "motd",
+                        data        : result[0].value
+                      }));
+                }
+              })
+            .catch((e) =>
+              {
+                console.warn("Error retrieving motd", e);
+              });
 
           // Let other users know this user just logged in
           this.sendToAllWithExceptions(
             {
-              messageType : "message",
-              data         : `${username} is now working too`
+              messageType : "user",
+              data        : `${username} has logged in`
             },
             ws);
 
@@ -165,7 +228,20 @@ qx.Class.define("bcp.server.WebSocket",
             "close",
             () =>
             {
-              delete this._userWsMap[username];
+              let             user;
+
+              // Stop the ping timer
+              clearInterval(pingTimer);
+
+              // This user is disconnected
+              delete this._userWsMap[stampedUsername];
+
+              // Let other users know this user has disconnected
+              this.sendToAll(
+                {
+                  messageType : "user",
+                  data        : `${username} has disconnected`
+                });
             });
         });
     },
@@ -173,9 +249,25 @@ qx.Class.define("bcp.server.WebSocket",
     userLogout(sessionData)
     {
       let             user;
-      const           { ws } = sessionData;
+      let             username;
+      let             { ws } = sessionData;
 
-      // If no websocket, we have nothing to do
+      // If we don't find the websocket in the session, ...
+      if (! ws)
+      {
+        // ... then search by username
+        for (user in this._userWsMap)
+        {
+          username = user.replace(/#.*/, "");
+          if (username == sessionData.username)
+          {
+            ws = this._userWsMap[user];
+            break;
+          }
+        }
+      }
+
+      // If still no websocket, we have nothing to do
       if (! ws)
       {
         console.warn(
@@ -189,6 +281,13 @@ qx.Class.define("bcp.server.WebSocket",
         if (this._userWsMap[user] == ws)
         {
           delete this._userWsMap[user];
+
+          // Let other users know this user just logged out
+          this.sendToAll(
+            {
+              messageType : "user",
+              data        : `${username} has logged out`
+            });
           break;
         }
       }
@@ -200,9 +299,10 @@ qx.Class.define("bcp.server.WebSocket",
     /**
      * Send to all users, with exceptions
      */
-    sendToAllWithExceptions(data, exceptWs)
+    sendToAllWithExceptions(message, exceptWs)
     {
       let             user;
+      let             messageString = JSON.stringify(message);
 
       // Make exceptions into an array, if not already one
       exceptWs = exceptWs || [];
@@ -222,8 +322,16 @@ qx.Class.define("bcp.server.WebSocket",
         }
 
         // Send the message to this user
-        this._userWsMap[user].send(JSON.stringify(data));
+        this._userWsMap[user].send(messageString);
       }
+    },
+
+    /**
+     * Send to all users
+     */
+    sendToAll(message)
+    {
+      this.sendToAllWithExceptions(message);
     }
   }
 });

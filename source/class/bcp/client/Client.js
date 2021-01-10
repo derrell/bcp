@@ -103,11 +103,20 @@ qx.Class.define("bcp.client.Client",
       messages = new qx.ui.form.List();
       messages.set(
         {
-          marginTop : 20,
-          height    : 100,
-          width     : 350
+          marginTop  : 20,
+          height     : 100,
+          width      : 350,
+          visibility : "hidden"
         });
       header.add(messages);
+
+      messages.addListener(
+        "changeSelection",
+        () =>
+        {
+          messages.resetSelection();
+        });
+
 
       // Right-justify the buttons
       header.add(new qx.ui.core.Spacer(), { flex : 1 });
@@ -188,6 +197,8 @@ qx.Class.define("bcp.client.Client",
           "message",
           (e) =>
           {
+            let             text;
+            let             color;
             let             listItem;
             let             wsMessage = JSON.parse(e.data);
 
@@ -198,10 +209,36 @@ qx.Class.define("bcp.client.Client",
               return;
             }
 
-            if (wsMessage.messageType == "message")
+            switch(wsMessage.messageType)
             {
+            case "motd" :
+            case "user" :
+              messages.show();
+              color = wsMessage.messageType == "motd" ? "red" : "blue";
+              text =
+                [
+                  `<span style='color: ${color}; font-weight: bold;'>`,
+                  qx.bom.String.escape(wsMessage.data),
+                  "</span>"
+                ].join("");
+              listItem = new qx.ui.form.ListItem(text);
+              listItem.set(
+                {
+                  rich      : true,
+                  height    : 14,
+                  padding   : 0,
+                  decorator : "message-item"
+                });
+              messages.add(listItem);
+              messages.scrollChildIntoView(listItem, null, null, true);
+              break;
+
+            case "message" :
+              messages.show();
               listItem = new qx.ui.form.ListItem(wsMessage.data);
               messages.add(listItem);
+              messages.scrollChildIntoView(listItem, null, null, true);
+              break;
             }
           });
 
@@ -209,8 +246,8 @@ qx.Class.define("bcp.client.Client",
           "close",
           () =>
           {
-            console.log("Websocket closed; reopening");
             ws = null;
+            setTimeout(() => location.reload(), 3000);
           });
       }
 

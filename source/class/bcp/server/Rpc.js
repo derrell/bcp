@@ -3,6 +3,11 @@ qx.Class.define("bcp.server.Rpc",
   type   : "singleton",
   extend : qx.core.Object,
 
+  events :
+  {
+    dbReady : "qx.event.type.Data"
+  },
+
   statics :
   {
     Error :
@@ -134,6 +139,7 @@ qx.Class.define("bcp.server.Rpc",
           (db) =>
           {
             this._db = db;
+            this.fireDataEvent("dbReady", db);
           });
 
       app.use(
@@ -172,6 +178,36 @@ qx.Class.define("bcp.server.Rpc",
           this._req = req;
 
           server.middleware()(req, res, next);
+        });
+    },
+
+    /**
+     * Get the database handle
+     *
+     * @return {Promise}
+     *   If the database handle is available, the promise is
+     *   immediately resolved with that handle. Otherwise, it is
+     *   resolved when the database is available.
+     */
+    getDB()
+    {
+      return new Promise(
+        (resolve, reject) =>
+        {
+          // If the database handle is already available...
+          if (this._db)
+          {
+            // ... then just give it to 'em.
+            resolve(this._db);
+          }
+
+          // Otherwise, await it
+          this.addListener(
+            "dbReady",
+            (e) =>
+            {
+              resolve(this._db);
+            });
         });
     },
 
