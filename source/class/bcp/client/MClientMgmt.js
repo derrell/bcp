@@ -130,19 +130,19 @@ qx.Mixin.define("bcp.client.MClientMgmt",
 
             // Add the provided client list, munging column data as necessary
             result = result.map(
-              (client, i) =>
+              (client) =>
               {
-                this._mungeClient(client, i);
+                this._mungeClient(client);
                 return client;
               });
-            this._tm.setDataAsMapArray(result);
-
-            // Build the search trees
-            this._generateTrieSearch();
+            this._tm.setDataAsMapArray(result, true);
 
             // Sort initially by the Family column
             this._tm.sortByColumn(
               this._tm.getColumnIndexById("family_name"), true);
+
+            // Build the search trees
+            this._generateTrieSearch();
           })
         .catch(
           (e) =>
@@ -473,11 +473,8 @@ qx.Mixin.define("bcp.client.MClientMgmt",
      *
      * @param client {Map}
      *   The data for a single client
-     *
-     * @param index {Number}
-     *   The index in the table model, of this client
      */
-    _mungeClient(client, index)
+    _mungeClient(client)
     {
       // Convert verified from numeric 0/1 to boolean false/true
       if (client.verified === 1)
@@ -497,9 +494,6 @@ qx.Mixin.define("bcp.client.MClientMgmt",
           /^(\d{3})(\d{3})(\d{4})$/gm,
           "$1-$2-$3");
       }
-
-      // While we're in here, add an index field for faster search
-      client.index = index;
     },
 
     /**
@@ -509,6 +503,13 @@ qx.Mixin.define("bcp.client.MClientMgmt",
     {
       const           clients = this._tm.getDataAsMapArray();
       const           TrieSearch = require("trie-search");
+
+      // Rebuild the index list, for fast retrieval
+      clients.forEach(
+        (client, index) =>
+        {
+          client.index = index;
+        });
 
       // Prepare for type-ahead search by family name
       this._trieSearchFamily = new TrieSearch("family_name");
@@ -1050,22 +1051,22 @@ qx.Mixin.define("bcp.client.MClientMgmt",
                 if (row >= 0)
                 {
                   // Yup. Replace the data for that row
-                  this._mungeClient(formValues, row);
-                  this._tm.setRowsAsMapArray([formValues], row, false, false);
+                  this._mungeClient(formValues);
+                  this._tm.setRowsAsMapArray([formValues], row, true, false);
                 }
                 else
                 {
                   // It's new. Add it.
-                  this._mungeClient(formValues, this._tm.getData().length);
-                  this._tm.addRowsAsMapArray([formValues], null, false, false);
+                  this._mungeClient(formValues);
+                  this._tm.addRowsAsMapArray([formValues], null, true, false);
                 }
-
-                // Recreate the search trees
-                this._generateTrieSearch();
 
                 // Resort  by the Family column
                 this._tm.sortByColumn(
                   this._tm.getSortColumnIndex(), true);
+
+                // Recreate the search trees
+                this._generateTrieSearch();
 
                 // Let listeners know the client list changed
                 this.fireDataEvent(
