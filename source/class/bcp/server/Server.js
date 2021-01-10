@@ -6,6 +6,7 @@ qx.Class.define("bcp.server.Server",
   {
     main()
     {
+      let           p;
       let           app;
       let           portPrimary;
       let           portAlternate;
@@ -167,8 +168,18 @@ qx.Class.define("bcp.server.Server",
           });
       }
 
-      // Prepare to send/receive messages on websockets
-      bcp.server.WebSocket.getInstance().init(app, protocol === https, server);
+      // Prepare to send/receive messages on websockets... but await
+      // the database to be ready
+      bcp.server.Rpc.getInstance().getDB()
+        .then(
+          (db) =>
+          {
+            bcp.server.WebSocket.getInstance().init(
+              app,
+              protocol === https,
+              server,
+              db);
+          });
    }
   }
 });

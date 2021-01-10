@@ -18,7 +18,7 @@ qx.Theme.define("bcp.client.theme.Theme",
   meta :
   {
     color : bcp.client.theme.Color,
-    decoration : qx.theme.indigo.Decoration,
+    decoration : bcp.client.theme.Decoration,
     font : bcp.client.theme.Font,
     appearance : bcp.client.theme.Appearance,
     icon : qxl.dialog.theme.icon.IcoMoonFree
