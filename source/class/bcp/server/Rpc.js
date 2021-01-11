@@ -123,6 +123,12 @@ qx.Class.define("bcp.server.Rpc",
           {
             handler             : this._sendChat.bind(this),
             permission_level    : 30
+          },
+
+          saveMotd           :
+          {
+            handler             : this._saveMotd.bind(this),
+            permission_level    : 70
           }
         };
 
@@ -1151,7 +1157,7 @@ qx.Class.define("bcp.server.Rpc",
           })
         .catch((e) =>
           {
-            console.warn("Error in getDeliveryDay", e);
+            console.warn("Error in updateFulfilled", e);
             callback( { message : e.toString() } );
           });
     },
@@ -1178,6 +1184,63 @@ qx.Class.define("bcp.server.Rpc",
           }
         });
       callback(null, null);
+    },
+
+    /**
+     * Save a new Message Of The Day
+     *
+     * @param args {Array}
+     *   args[0] {motd}
+     *     The new message
+     *
+     * @param callback {Function}
+     *   @signature(err, result)
+     */
+    _saveMotd(args, callback)
+    {
+      // TODO: move prepared statements to constructor
+      return Promise.resolve()
+        .then(
+          () =>
+          {
+            // First, retrieve the most recent distribution start date
+            return this._db.prepare(
+              [
+                "REPLACE INTO KeyValueStore",
+                "    (key, value)",
+                "  VALUES",
+                "    ('motd', $message);"
+              ].join(" "));
+          })
+        .then(
+          (stmt) =>
+          {
+            return stmt.all(
+              {
+                $message : args[0].motd
+              });
+          })
+        .then(
+          (result) =>
+          {
+            // Give 'em what they came for
+            callback(null, null);
+          })
+        .then(
+          () =>
+          {
+            // Send the new MOTD to everyone
+            bcp.server.WebSocket.getInstance().sendToAll(
+              {
+                messageType : "motd",
+                data        : args[0].motd
+              });
+          })
+        .catch((e) =>
+          {
+            console.warn("Error in saveMotd", e);
+            callback( { message : e.toString() } );
+          });
     }
   }
 });

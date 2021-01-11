@@ -127,8 +127,11 @@ qx.Class.define("bcp.server.WebSocket",
                 // Let other users know this user was detected gone
                 this.sendToAll(
                   {
-                    messageType : "user",
-                    data        : `${username} has gone away`
+                    messageType : "users",
+                    data        :
+                      Object.keys(this._userWsMap)
+                      .map(user => user.replace(/#.*/, ""))
+                      .sort()
                   });
                 return;
               }
@@ -137,28 +140,6 @@ qx.Class.define("bcp.server.WebSocket",
               ws.ping(() => {});
             },
             30000);
-
-          // Let newly-logged in user who's logged in
-          users =
-            Object.keys(this._userWsMap)
-            .map(user => user.replace(/#.*/, ""))
-            .filter((user) => user != username)
-            .join(", ");
-          if (users)
-          {
-            users = `Also logged in: ${users}`;
-          }
-          else
-          {
-            users = "No other users currently logged in";
-          }
-
-          ws.send(
-            JSON.stringify(
-              {
-                messageType : "user",
-                data        : users
-              }));
 
           // If there's a message of the day, send it
           db.prepare(
@@ -190,13 +171,15 @@ qx.Class.define("bcp.server.WebSocket",
                 console.warn("Error retrieving motd", e);
               });
 
-          // Let other users know this user just logged in
-          this.sendToAllWithExceptions(
+          // Let everyone know this user just logged in
+          this.sendToAll(
             {
-              messageType : "user",
-              data        : `${username} has logged in`
-            },
-            ws);
+              messageType : "users",
+              data        :
+                Object.keys(this._userWsMap)
+                .map(user => user.replace(/#.*/, ""))
+                .sort()
+            });
 
           ws.on(
             "message",
@@ -239,8 +222,11 @@ qx.Class.define("bcp.server.WebSocket",
               // Let other users know this user has disconnected
               this.sendToAll(
                 {
-                  messageType : "user",
-                  data        : `${username} has disconnected`
+                  messageType : "users",
+                  data        :
+                    Object.keys(this._userWsMap)
+                    .map(user => user.replace(/#.*/, ""))
+                    .sort()
                 });
             });
         });
@@ -285,8 +271,11 @@ qx.Class.define("bcp.server.WebSocket",
           // Let other users know this user just logged out
           this.sendToAll(
             {
-              messageType : "user",
-              data        : `${username} has logged out`
+              messageType : "users",
+              data        :
+                Object.keys(this._userWsMap)
+                .map(user => user.replace(/#.*/, ""))
+                .sort()
             });
           break;
         }

@@ -47,11 +47,14 @@ qx.Class.define("bcp.client.Client",
       let             label;
       let             butLogin;
       let             butLogout;
+      let             butMotd;
       let             passwordChange;
       let             messageContainer;
       let             messages;
       let             chatInput;
       let             chatSend;
+      let             userListContainer;
+      let             userList;
       let             ws;
 
       this.base(arguments);
@@ -144,6 +147,10 @@ qx.Class.define("bcp.client.Client",
         });
       hBox.add(label);
       chatInput = new qx.ui.form.TextField();
+      chatInput.set(
+        {
+          value : ""
+        });
       hBox.add(chatInput, { flex : 1  });
 
       // Add the chat send button
@@ -174,6 +181,34 @@ qx.Class.define("bcp.client.Client",
         });
       hBox.add(chatSend);
 
+      header.add(new qx.ui.core.Spacer(12, 12));
+
+      // Create a vbox for the label and user list
+      userListContainer =
+        new qx.ui.container.Composite(new qx.ui.layout.VBox());
+      userListContainer.hide();
+      header.add(userListContainer);
+
+      // Add the label
+      label = new qx.ui.basic.Label("Online");
+      label.set(
+        {
+          font : "bold",
+          margin : 0,
+          padding : 0
+        });
+      userListContainer.add(label);
+
+      // Add the user list
+      userList = new qx.ui.form.List();
+      userList.set(
+        {
+          marginTop  : -1,
+          height     : 110,
+          width      : 90
+        });
+      userListContainer.add(userList);
+
       // Right-justify the buttons
       header.add(new qx.ui.core.Spacer(), { flex : 1 });
 
@@ -201,7 +236,7 @@ qx.Class.define("bcp.client.Client",
       butLogout.set(
         {
           maxHeight : 28,
-          marginTop : 10
+          marginTop : 0
         });
       vBox.add(butLogout);
 
@@ -222,6 +257,16 @@ qx.Class.define("bcp.client.Client",
 
           xhr.send();
         });
+
+      butMotd = new qx.ui.form.Button("MOTD");
+      butMotd.set(
+        {
+          maxHeight  : 28,
+          marginTop  : 2,
+          visibility : "excluded"
+        });
+      vBox.add(butMotd);
+      butMotd.addListener("execute", this._buildMotdForm, this);
 
       //
       // Build the main view
@@ -268,8 +313,23 @@ qx.Class.define("bcp.client.Client",
 
             switch(wsMessage.messageType)
             {
+            case "users" :
+              userList.removeAll();
+              wsMessage.data.forEach(
+                (user) =>
+                {
+                  listItem = new qx.ui.form.ListItem(user);
+                  listItem.set(
+                    {
+                      rich      : true,
+                      padding   : 0,
+                      decorator : "message-item"
+                    });
+                  userList.add(listItem);
+                });
+              break;
+
             case "motd" :
-            case "user" :
               color = wsMessage.messageType == "motd" ? "red" : "blue";
               text =
                 [
@@ -341,8 +401,9 @@ qx.Class.define("bcp.client.Client",
               return;
             }
 
-            // Make the chat area visible now
+            // Make the chat area and user list visible now
             messageContainer.show();
+            userListContainer.show();
 
             // Create the websocket now
             createWebSocket();
@@ -383,10 +444,16 @@ qx.Class.define("bcp.client.Client",
                   pageInfo.implementation.bind(this)(this._tabView);
                 }
               });
+
+            // Show the MOTD button if permission allows
+            if (me.permissionLevel >= 70)
+            {
+              butMotd.show();
+            }
           });
     },
 
-    close : function()
+    close()
     {
       this.base(arguments);
 
@@ -405,7 +472,7 @@ qx.Class.define("bcp.client.Client",
      * @param s {String}
      *   The string to be bolded
      */
-    bold : function bold(s)
+    bold(s)
     {
       return (
         [
@@ -428,7 +495,7 @@ qx.Class.define("bcp.client.Client",
      * @return {String}
      *   The original string with a single character underlined
      */
-    underlineChar : function bold(s, n = 0)
+    underlineChar(s, n = 0)
     {
       let             result = [];
 
@@ -515,7 +582,7 @@ qx.Class.define("bcp.client.Client",
      *
      * @return {Promise}
      *   Promise that resolves with the RPC result. */
-    rpc : function(functionName, args)
+    rpc(functionName, args)
     {
       let             client;
 
@@ -541,7 +608,7 @@ qx.Class.define("bcp.client.Client",
     /**
      * Creates the login widget
      */
-    _createLogin: function()
+    _createLogin()
     {
       let             loginWidget;
 
@@ -556,6 +623,93 @@ qx.Class.define("bcp.client.Client",
       });
 
       loginWidget.show();
+    },
+
+    /**
+     * Create and process the Message Of The Day form
+     */
+    _buildMotdForm()
+    {
+      let             p;
+      let             form;
+      let             formData;
+      const           _this = this;
+
+      formData =
+        {
+          motd:
+          {
+            type       : "TextField",
+            label      : "New MOTD",
+            value      : "",
+            properties :
+            {
+              width      : 400
+            }
+          }
+        };
+
+      form = new qxl.dialog.Form(
+      {
+        caption    : "Message Of The Day",
+        context    : this
+      });
+
+      form.set(
+        {
+//          labelColumnWidth : 150,
+          formData         : formData,
+        });
+      form._okButton.set(
+        {
+          label   : "Save"
+        });
+      form.show();
+
+
+      // Focus the first field upon appear
+      form.addListener(
+        "appear",
+        () =>
+        {
+          form._formElements["motd"].focus();
+        },
+        this);
+
+      p = form.promise();
+
+      p.then(
+        (formValues) =>
+        {
+          // Cancelled?
+          if (! formValues)
+          {
+            // Yup. Nothing to do
+            return;
+          }
+
+          console.log("formValues=", formValues);
+
+          this.rpc("saveMotd", [ formValues ])
+            .then(
+              (result) =>
+              {
+                console.log(`saveClient result: ${result}`);
+
+                // A result means something failed.
+                if (result)
+                {
+                  qxl.dialog.Dialog.error(result);
+                  return;
+                }
+              })
+            .catch(
+              (e) =>
+              {
+                console.warn("Error saving changes:", e);
+                qxl.dialog.Dialog.error(`Error saving changes: ${e}`);
+              });
+        });
     },
 
     /**
@@ -575,7 +729,7 @@ qx.Class.define("bcp.client.Client",
      *   The callback function that needs to be called with (err, data)
      *   as arguments
      */
-    checkCredentials: function(username, password, callback)
+    checkCredentials(username, password, callback)
     {
       let             xhr = new qx.io.request.Xhr();
 
@@ -598,7 +752,7 @@ qx.Class.define("bcp.client.Client",
      * @param err {String|Error|undefined|null}
      * @param data
      */
-    finalCallback: function(e, data)
+    finalCallback(e, data)
     {
       if (e)
       {
