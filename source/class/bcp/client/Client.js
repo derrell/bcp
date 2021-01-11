@@ -209,6 +209,13 @@ qx.Class.define("bcp.client.Client",
         });
       userListContainer.add(userList);
 
+      userList.addListener(
+        "changeSelection",
+        () =>
+        {
+          userList.resetSelection();
+        });
+
       // Right-justify the buttons
       header.add(new qx.ui.core.Spacer(), { flex : 1 });
 

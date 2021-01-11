@@ -156,7 +156,7 @@ qx.Class.define("bcp.server.WebSocket",
             .then(
               (result) =>
               {
-                if (result.length > 0)
+                if (result.length > 0 && result[0].value.trim().length > 0)
                 {
                   ws.send(
                     JSON.stringify(

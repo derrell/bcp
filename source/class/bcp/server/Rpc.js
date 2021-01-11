@@ -1198,6 +1198,8 @@ qx.Class.define("bcp.server.Rpc",
      */
     _saveMotd(args, callback)
     {
+      const           motd = args[0].motd.trim();
+
       // TODO: move prepared statements to constructor
       return Promise.resolve()
         .then(
@@ -1217,7 +1219,7 @@ qx.Class.define("bcp.server.Rpc",
           {
             return stmt.all(
               {
-                $message : args[0].motd
+                $message : motd
               });
           })
         .then(
@@ -1229,12 +1231,15 @@ qx.Class.define("bcp.server.Rpc",
         .then(
           () =>
           {
-            // Send the new MOTD to everyone
-            bcp.server.WebSocket.getInstance().sendToAll(
-              {
-                messageType : "motd",
-                data        : args[0].motd
-              });
+            // If non-zero length, send the new MOTD to everyone
+            if (motd.length > 0)
+            {
+              bcp.server.WebSocket.getInstance().sendToAll(
+                {
+                  messageType : "motd",
+                  data        : args[0].motd
+                });
+            }
           })
         .catch((e) =>
           {
