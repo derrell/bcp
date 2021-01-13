@@ -32,7 +32,8 @@ REPLACE INTO Report
            THEN " (Large)"
            ELSE " (Small)"
          END AS "Family size",
-       COALESCE(pet_types, "") AS Pets
+       COALESCE(pet_types, "") AS Pets,
+       COALESCE(phone, "") AS Phone
      FROM Fulfillment f, Client c
      WHERE f.distribution = $distribution
        AND length(COALESCE(f.appt_time, "")) > 0
