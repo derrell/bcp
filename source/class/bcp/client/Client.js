@@ -357,7 +357,7 @@ qx.Class.define("bcp.client.Client",
                     {
                       text =
                         [
-                          "<span style='color: gray;'>",
+                          "<span style='color: gray; font-style: italic;'>",
                           name,
                           "</span>"
                         ].join("");
