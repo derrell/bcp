@@ -181,6 +181,7 @@ qx.Class.define("bcp.server.Auth",
                 this.info(`Authenticated user ${username}`);
                 req.session.authenticated = true;
                 req.session.username = username;
+                req.session.userId = username + "#" + (new Date()).getTime();
                 req.session.permissionLevel = result[0].permission_level;
                 res.status(200).send("Authentication successful");
               });

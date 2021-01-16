@@ -3,6 +3,12 @@ qx.Class.define("bcp.server.WebSocket",
   type   : "singleton",
   extend : qx.core.Object,
 
+  statics :
+  {
+    /** Number of ms since last seen, to be considered idle */
+    IDLE_TIME_MS : 60000
+  },
+
   members :
   {
     _userWsMap : null,
@@ -76,13 +82,20 @@ qx.Class.define("bcp.server.WebSocket",
         {
           let             users;
           let             session;
+          let             userTimer;
           let             pingTimer;
-          const           username = req.session.username;
+          const           now = (new Date()).getTime();
+          const           { userId, username } = req.session;
           const           stampedUsername =
-            username + "#" + (new Date()).getTime();
+            username + "#" + now;
 
           // Keep track of this user and his websocket
-          this._userWsMap[stampedUsername] = ws;
+          this._userWsMap[stampedUsername] =
+            {
+              userId   : userId,
+              ws       : ws,
+              lastSeen : now
+            };
 
           session = bcp.server.Session.getInstance().getSession();
           session(
@@ -113,6 +126,10 @@ qx.Class.define("bcp.server.WebSocket",
           ws.bAlive = true;
           ws.on("pong", () => { ws.bAlive = true; });
 
+          // Periodically resend the user list (with idle changes)
+          userTimer = setInterval(this.sendUserList.bind(this), 10000);
+
+          // Periodically check for loss of connection on websocket
           pingTimer = setInterval(
             () =>
             {
@@ -125,14 +142,7 @@ qx.Class.define("bcp.server.WebSocket",
                 delete this._userWsMap[stampedUsername];
 
                 // Let other users know this user was detected gone
-                this.sendToAll(
-                  {
-                    messageType : "users",
-                    data        :
-                      Object.keys(this._userWsMap)
-                      .map(user => user.replace(/#.*/, ""))
-                      .sort()
-                  });
+                this.sendUserList();
                 return;
               }
 
@@ -172,14 +182,7 @@ qx.Class.define("bcp.server.WebSocket",
               });
 
           // Let everyone know this user just logged in
-          this.sendToAll(
-            {
-              messageType : "users",
-              data        :
-                Object.keys(this._userWsMap)
-                .map(user => user.replace(/#.*/, ""))
-                .sort()
-            });
+          this.sendUserList();
 
           ws.on(
             "message",
@@ -220,16 +223,28 @@ qx.Class.define("bcp.server.WebSocket",
               delete this._userWsMap[stampedUsername];
 
               // Let other users know this user has disconnected
-              this.sendToAll(
-                {
-                  messageType : "users",
-                  data        :
-                    Object.keys(this._userWsMap)
-                    .map(user => user.replace(/#.*/, ""))
-                    .sort()
-                });
+              this.sendUserList();
             });
         });
+    },
+
+    /**
+     * Update the last seen time for a user
+     */
+    userActive(sessionData)
+    {
+      let             user;
+      const           { userId } = sessionData;
+
+      for (user in this._userWsMap)
+      {
+        if (this._userWsMap[user].userId == userId)
+        {
+          this._userWsMap[user].lastSeen = (new Date()).getTime();
+          this.sendUserList();
+          break;
+        }
+      }
     },
 
     userLogout(sessionData)
@@ -247,7 +262,7 @@ qx.Class.define("bcp.server.WebSocket",
           username = user.replace(/#.*/, "");
           if (username == sessionData.username)
           {
-            ws = this._userWsMap[user];
+            ws = this._userWsMap[user].ws;
             break;
           }
         }
@@ -264,25 +279,51 @@ qx.Class.define("bcp.server.WebSocket",
       // Find the user who has logged out
       for (user in this._userWsMap)
       {
-        if (this._userWsMap[user] == ws)
+        if (this._userWsMap[user].ws == ws)
         {
           delete this._userWsMap[user];
 
           // Let other users know this user just logged out
-          this.sendToAll(
-            {
-              messageType : "users",
-              data        :
-                Object.keys(this._userWsMap)
-                .map(user => user.replace(/#.*/, ""))
-                .sort()
-            });
+          this.sendUserList();
           break;
         }
       }
 
       // Whether we found it in our map or not, close the websocket
       ws.close();
+    },
+
+    /**
+     * Send the user list to all users
+     */
+    sendUserList()
+    {
+      let           user;
+      let           data = [];
+      let           timeSinceActive;
+      const         now = (new Date()).getTime();
+
+      // For each user...
+      for (user in this._userWsMap)
+      {
+        // ... add a map with the user name and whether their idle or not
+        timeSinceActive = now - this._userWsMap[user].lastSeen;
+        data.push(
+          {
+            name   : user.replace(/#.*/, ""),
+            isIdle : timeSinceActive > this.constructor.IDLE_TIME_MS
+          });
+      }
+
+      // Sort by name
+      data =
+        data.sort((a, b) => a.name < b.name ? -1 : a.name > b.name ? 1 : 0);
+
+      this.sendToAll(
+        {
+          messageType : "users",
+          data        : data
+        });
     },
 
     /**
@@ -304,14 +345,14 @@ qx.Class.define("bcp.server.WebSocket",
       for (user in this._userWsMap)
       {
         // Were we asked not to send to this one?
-        if (exceptWs.includes(this._userWsMap[user]))
+        if (exceptWs.includes(this._userWsMap[user].ws))
         {
           // Yup. Don't send to this user
           continue;
         }
 
         // Send the message to this user
-        this._userWsMap[user].send(messageString);
+        this._userWsMap[user].ws.send(messageString);
       }
     },
 

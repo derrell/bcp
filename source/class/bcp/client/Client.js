@@ -288,6 +288,14 @@ qx.Class.define("bcp.client.Client",
       this._tabView = new qx.ui.tabview.TabView();
       mainContainer.add(this._tabView, { flex : 1 });
 
+      // When the active tab is changed, send an I'm Alive message
+      this._tabView.addListener(
+        "changeSelection",
+        () =>
+        {
+          this.rpc("alive", []);
+        });
+
       // Make sure all of our local form elements are registered
       bcp.client.RegisterFormElements.register();
 
@@ -339,9 +347,27 @@ qx.Class.define("bcp.client.Client",
               case "users" :
                 userList.removeAll();
                 wsMessage.data.forEach(
-                  (user) =>
+                  (userInfo) =>
                   {
-                    listItem = new qx.ui.form.ListItem(user);
+                    let           text;
+                    const         { name, isIdle } = userInfo;
+
+                    // If user is idle, gray their name in the user list
+                    if (isIdle)
+                    {
+                      text =
+                        [
+                          "<span style='color: gray;'>",
+                          name,
+                          "</span>"
+                        ].join("");
+                    }
+                    else
+                    {
+                      text = name;
+                    }
+
+                    listItem = new qx.ui.form.ListItem(text);
                     listItem.set(
                       {
                         rich      : true,

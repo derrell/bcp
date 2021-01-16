@@ -53,6 +53,12 @@ qx.Class.define("bcp.server.Rpc",
       // Each of the available requests
       requests =
         {
+          alive        :
+          {
+            handler             : (args, callback) => { callback(null, null); },
+            permission_level    : 0,
+          },
+
           whoAmI       :
           {
             handler             : this._whoAmI.bind(this),
@@ -161,6 +167,9 @@ qx.Class.define("bcp.server.Rpc",
           const           { username, permissionLevel } = req.session;
 
           console.log(`Got RPC request from ${username}: body=`, req.body);
+
+          // Notifying WebSocket module user is active
+          bcp.server.WebSocket.getInstance().userActive(req.session);
 
           // Ensure basic components of the request are available
           if (! req.body ||
