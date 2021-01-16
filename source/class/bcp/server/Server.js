@@ -8,6 +8,7 @@ qx.Class.define("bcp.server.Server",
     {
       let           p;
       let           app;
+      let           argv;
       let           portPrimary;
       let           portAlternate;
       let           server;
@@ -18,6 +19,7 @@ qx.Class.define("bcp.server.Server",
       const         fs = require("fs");
       const         http = require("http"); // TODO: remove
       const         https = require("https");
+      const         yargs = require("yargs");
       const         express = require("express");
       const         bodyParser = require("body-parser");
       const         CERTDIR = "/etc/letsencrypt/live/bcp.unwireduniverse.com";
@@ -27,11 +29,39 @@ qx.Class.define("bcp.server.Server",
       qx.log.Logger.register(qx.log.appender.NodeConsole);
       this.debug("Starting up");
 
-      if (qx.core.Environment.get("qx.debug"))
+      argv = yargs
+        .option(
+          "test",
+          {
+            alias       : "t",
+            description : "Listen on the test port",
+            type        : "boolean"
+          })
+        .help()
+        .alias("help", "h")
+        .argv;
+
+      if (argv.test)
+      {
+        // We're in test mode, which is on the live server, using
+        // https, but with a non-standard port.
+        protocol = https;
+        portPrimary = 4000;
+        portAlternate = undefined;
+        privateKey = fs.readFileSync(PRIVATE_KEY_FILE);
+        certificate = fs.readFileSync(CERTIFICATE_FILE);
+        options =
+          {
+            key  : privateKey,
+            cert : certificate
+          };
+      }
+      else if (qx.core.Environment.get("qx.debug"))
       {
         // In debug mode, we'll use HTTP only
         protocol = http;
-        portPrimary = portAlternate = 3000;
+        portPrimary = 3000;
+        portAlternate = undefined;
       }
       else
       {
@@ -132,30 +162,33 @@ qx.Class.define("bcp.server.Server",
                 `on port ${portPrimary} (primary access)`);
           });
 
-        //
-        // Create a redirector: direct HTTP traffic to HTTPS
-        //
-        app = express();    // a new app specifically for this purpose
-        app.get(
-          "*",
-          (req, res) =>
-            {
-              let             redirectTo;
+        if (typeof portAlternate == "number")
+        {
+          //
+          // Create a redirector: direct HTTP traffic to HTTPS
+          //
+          app = express();    // a new app specifically for this purpose
+          app.get(
+            "*",
+            (req, res) =>
+              {
+                let             redirectTo;
 
-              // Redirect to the same location, but use HTTPS instead of HTTP
-              redirectTo =
-                `https://${req.hostname}:${portPrimary}/index.html`;
-              console.log(`Got HTTP request; redirecting to ${redirectTo}`);
-              res.redirect(redirectTo);
-            });
+                // Redirect to the same location, but use HTTPS instead of HTTP
+                redirectTo =
+                  `https://${req.hostname}:${portPrimary}/index.html`;
+                console.log(`Got HTTP request; redirecting to ${redirectTo}`);
+                res.redirect(redirectTo);
+              });
 
-        app.listen(
-          portAlternate,        // Port designated for HTTP
-          () =>
-            {
-              this.debug(
-                `Listening for HTTP  on port ${portAlternate} (redirector)`);
-            });
+          app.listen(
+            portAlternate,        // Port designated for HTTP
+            () =>
+              {
+                this.debug(
+                  `Listening for HTTP  on port ${portAlternate} (redirector)`);
+              });
+        }
       }
       else
       {

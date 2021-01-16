@@ -34,8 +34,12 @@ qx.Class.define("bcp.client.Client",
 
   members :
   {
-    _tabView  : null,
+    _tabView        : null,
+    _mostRecentMotd : "",
 
+    /**
+     * @ignore(WebSocket)
+     */
     main()
     {
       let             mainContainer;
@@ -55,6 +59,7 @@ qx.Class.define("bcp.client.Client",
       let             chatSend;
       let             userListContainer;
       let             userList;
+      let             createWebSocket;
       let             ws;
 
       this.base(arguments);
@@ -286,115 +291,129 @@ qx.Class.define("bcp.client.Client",
       // Make sure all of our local form elements are registered
       bcp.client.RegisterFormElements.register();
 
-      function createWebSocket()
-      {
-        // If a prior websocket open was attempted, close it
-        ws && ws.close();
+      createWebSocket =
+        () =>
+        {
+          let           url;
 
-        // Create a websocket for async communication with the server
-        ws = new WebSocket("ws://localhost:3000");
+          // If a prior websocket open was attempted, close it
+          ws && ws.close();
 
-        ws.addEventListener(
-          "open",
-          () =>
-          {
-            console.log("Websocket connected");
-          });
+          // Create a websocket for async communication with the server
+          url =
+            [
+              location.protocol == "https:" ? "wss" : "ws",
+              "://",
+              location.hostname,
+              ":",
+              location.port
+            ].join("");
+          ws = new WebSocket(url);
 
-        ws.addEventListener(
-          "message",
-          (e) =>
-          {
-            let             text;
-            let             color;
-            let             children;
-            let             listItem;
-            let             wsMessage = JSON.parse(e.data);
-
-            console.log(JSON.stringify(wsMessage));
-
-            if (! ("messageType" in wsMessage))
+          ws.addEventListener(
+            "open",
+            () =>
             {
-              return;
-            }
+              console.log("Websocket connected");
+            });
 
-            switch(wsMessage.messageType)
+          ws.addEventListener(
+            "message",
+            (e) =>
             {
-            case "users" :
-              userList.removeAll();
-              wsMessage.data.forEach(
-                (user) =>
-                {
-                  listItem = new qx.ui.form.ListItem(user);
-                  listItem.set(
-                    {
-                      rich      : true,
-                      padding   : 0,
-                      decorator : "message-item"
-                    });
-                  userList.add(listItem);
-                });
-              break;
+              let             text;
+              let             color;
+              let             children;
+              let             listItem;
+              let             wsMessage = JSON.parse(e.data);
 
-            case "motd" :
-              color = wsMessage.messageType == "motd" ? "red" : "blue";
-              text =
-                [
-                  `<span style='color: ${color}; font-weight: bold;'>`,
-                  qx.bom.String.escape(wsMessage.data),
-                  "</span>"
-                ].join("");
-              listItem = new qx.ui.form.ListItem(text);
-              listItem.set(
-                {
-                  rich      : true,
-                  height    : 14,
-                  padding   : 0,
-                  decorator : "message-item"
-                });
-              messages.add(listItem);
-              messages.scrollChildIntoView(listItem, null, null, true);
-              break;
+              console.log(JSON.stringify(wsMessage));
 
-            case "message" :
-              text =
-                [
-                  "<span style='font-style: italic;'>",
-                  wsMessage.data.from,
-                  "</span>",
-                  ": ",
-                  qx.bom.String.escape(wsMessage.data.message),
-                ].join("");
-              listItem = new qx.ui.form.ListItem(text);
-              listItem.set(
-                {
-                  rich      : true,
-                  height    : 14,
-                  padding   : 0,
-                  decorator : "message-item"
-                });
-              messages.add(listItem);
-              messages.scrollChildIntoView(listItem, null, null, true);
-              break;
-            }
+              if (! ("messageType" in wsMessage))
+              {
+                return;
+              }
 
-            // Prune the message list to keep it from ever-expanding
-            for (children = messages.getChildrenContainer()._getChildren();
-                 children.length > 100;
-                 children = messages.getChildrenContainer()._getChildren())
+              switch(wsMessage.messageType)
+              {
+              case "users" :
+                userList.removeAll();
+                wsMessage.data.forEach(
+                  (user) =>
+                  {
+                    listItem = new qx.ui.form.ListItem(user);
+                    listItem.set(
+                      {
+                        rich      : true,
+                        padding   : 0,
+                        decorator : "message-item"
+                      });
+                    userList.add(listItem);
+                  });
+                break;
+
+              case "motd" :
+                // Save this most recent message of the day, and set color
+                this._mostRecentMotd = wsMessage.data;
+
+                color = "red";
+                text =
+                  [
+                    `<span style='color: ${color}; font-weight: bold;'>`,
+                    qx.bom.String.escape(wsMessage.data),
+                    "</span>"
+                  ].join("");
+                listItem = new qx.ui.form.ListItem(text);
+                listItem.set(
+                  {
+                    rich      : true,
+                    height    : 14,
+                    padding   : 0,
+                    decorator : "message-item"
+                  });
+                messages.add(listItem);
+                messages.scrollChildIntoView(listItem, null, null, true);
+                break;
+
+              case "message" :
+                text =
+                  [
+                    "<span style='font-style: italic;'>",
+                    wsMessage.data.from,
+                    "</span>",
+                    ": ",
+                    qx.bom.String.escape(wsMessage.data.message),
+                  ].join("");
+                listItem = new qx.ui.form.ListItem(text);
+                listItem.set(
+                  {
+                    rich      : true,
+                    height    : 14,
+                    padding   : 0,
+                    decorator : "message-item"
+                  });
+                messages.add(listItem);
+                messages.scrollChildIntoView(listItem, null, null, true);
+                break;
+              }
+
+              // Prune the message list to keep it from ever-expanding
+              for (children = messages.getChildrenContainer()._getChildren();
+                   children.length > 100;
+                   children = messages.getChildrenContainer()._getChildren())
+              {
+                messages.remove(children[0]);
+              }
+            });
+
+          ws.addEventListener(
+            "close",
+            () =>
             {
-              messages.remove(children[0]);
-            }
-          });
-
-        ws.addEventListener(
-          "close",
-          () =>
-          {
-            ws = null;
-            setTimeout(() => location.reload(), 3000);
-          });
-      }
+              ws = null;
+              setTimeout(() => location.reload(), 3000);
+            });
+        };
 
       this.rpc("whoAmI", [])
         .then(
@@ -648,7 +667,7 @@ qx.Class.define("bcp.client.Client",
           {
             type       : "TextField",
             label      : "New MOTD",
-            value      : "",
+            value      : this._mostRecentMotd,
             properties :
             {
               width      : 400
