@@ -291,6 +291,7 @@ qx.Mixin.define("bcp.client.MReports",
               .then(
                 (report) =>
                 {
+                  let             heading;
                   let             headings;
                   let             prior = "";
                   
@@ -341,6 +342,10 @@ qx.Mixin.define("bcp.client.MReports",
                         // Yup, we do. Insert one here. We do it with
                         // two separate rows so that the zebra
                         // striping remains consistent.
+                        heading =
+                          reportInfo.separate_by == "Time"
+                          ? this.convert24to12(row[reportInfo.separate_by])
+                          : row[reportInfo.separate_by];
                         this._reportWin.document.write(
                           [
                             `<tr>`,
@@ -356,7 +361,7 @@ qx.Mixin.define("bcp.client.MReports",
                             `  colspan='${Object.keys(report[0]).length}'`,
                             "  class='sep'>",
                             "<span style='font-weight: bold;'>",
-                            `${row[reportInfo.separate_by]}`,
+                            `${heading}`,
                             "</span>",
                             "</td>",
                             "</tr>"
