@@ -34,7 +34,9 @@ qx.Class.define("bcp.client.Client",
 
   members :
   {
+    _me             : null,
     _tabView        : null,
+    _chatCommand    : null,
     _mostRecentMotd : "",
 
     /**
@@ -51,7 +53,7 @@ qx.Class.define("bcp.client.Client",
       let             label;
       let             butLogin;
       let             butLogout;
-      let             butMotd;
+      let             butSettings;
       let             passwordChange;
       let             messageContainer;
       let             messages;
@@ -160,9 +162,10 @@ qx.Class.define("bcp.client.Client",
 
       // Add the chat send button
       chatSend = new qx.ui.form.Button("Send");
+      this._chatCommand = new qx.ui.command.Command("Enter");
       chatSend.set(
         {
-          command : new qx.ui.command.Command("Enter")
+          command : this._chatCommand
         });
       hBox.add(chatSend);
 
@@ -270,15 +273,15 @@ qx.Class.define("bcp.client.Client",
           xhr.send();
         });
 
-      butMotd = new qx.ui.form.Button("MOTD");
-      butMotd.set(
+      butSettings = new qx.ui.form.Button("Settings");
+      butSettings.set(
         {
           maxHeight  : 28,
           marginTop  : 2,
           visibility : "excluded"
         });
-      vBox.add(butMotd);
-      butMotd.addListener("execute", this._buildMotdForm, this);
+      vBox.add(butSettings);
+      butSettings.addListener("execute", this._buildSettingsForm, this);
 
       //
       // Build the main view
@@ -453,6 +456,9 @@ qx.Class.define("bcp.client.Client",
               return;
             }
 
+            // Save information about ourself, for future use
+            this._me = me;
+
             // Make the chat area and user list visible now
             messageContainer.show();
             userListContainer.show();
@@ -497,10 +503,10 @@ qx.Class.define("bcp.client.Client",
                 }
               });
 
-            // Show the MOTD button if permission allows
+            // Show the Settings button if permission allows
             if (me.permissionLevel >= 70)
             {
-              butMotd.show();
+              butSettings.show();
             }
           });
     },
@@ -680,7 +686,7 @@ qx.Class.define("bcp.client.Client",
     /**
      * Create and process the Message Of The Day form
      */
-    _buildMotdForm()
+    _buildSettingsForm()
     {
       let             p;
       let             form;
@@ -689,10 +695,16 @@ qx.Class.define("bcp.client.Client",
 
       formData =
         {
-          motd:
+          _motd_group_header :
+          {
+            type      : "GroupHeader",
+            label     : "Message Of The Day"
+          },
+
+          motd :
           {
             type       : "TextField",
-            label      : "New MOTD",
+            label      : "Publish to all",
             value      : this._mostRecentMotd,
             properties :
             {
@@ -700,6 +712,72 @@ qx.Class.define("bcp.client.Client",
             }
           }
         };
+
+      // Add email configuration for superusers
+      if (this._me.permissionLevel >= 90)
+      {
+        formData = Object.assign(
+          formData,
+          {
+            _email_group_header :
+            {
+              type      : "GroupHeader",
+              label     : "Email Authentication"
+            },
+
+            email_auth_user :
+            {
+              type       : "TextField",
+              label      : "Username",
+              value      : "",
+              properties :
+              {
+                width      : 400
+              }
+            },
+
+            email_auth_password :
+            {
+              type       : "TextField",
+              label      : "Password",
+              value      : "",
+              properties :
+              {
+                width      : 400
+              }
+            },
+
+            _appoint_group_header :
+            {
+              type      : "GroupHeader",
+              label     : "Appointment email (use %APPT%)"
+            },
+
+            appointment_scheduled_text :
+            {
+              type       : "TextArea",
+              label      : "Appointment scheduled text",
+              value      : "",
+              lines      : 10,
+              properties :
+              {
+                width      : 400
+              }
+            },
+
+            appointment_reminder_text :
+            {
+              type       : "TextArea",
+              label      : "Appointment reminder text",
+              value      : "",
+              lines      : 10,
+              properties :
+              {
+                width      : 400
+              }
+            }
+          });
+      }
 
       form = new qxl.dialog.Form(
       {
@@ -709,13 +787,16 @@ qx.Class.define("bcp.client.Client",
 
       form.set(
         {
-//          labelColumnWidth : 150,
+          labelColumnWidth : 200,
           formData         : formData,
         });
       form._okButton.set(
         {
           label   : "Save"
         });
+      form.addListenerOnce("ok", () => this._chatCommand.setEnabled(true));
+      form.addListenerOnce("cancel", () => this._chatCommand.setEnabled(true));
+      this._chatCommand.setEnabled(false);
       form.show();
 
 
@@ -733,6 +814,8 @@ qx.Class.define("bcp.client.Client",
       p.then(
         (formValues) =>
         {
+          let             field;
+
           // Cancelled?
           if (! formValues)
           {
@@ -740,13 +823,87 @@ qx.Class.define("bcp.client.Client",
             return;
           }
 
+          // Delete fields corresponding to group headers, or others
+          // designated with a leading underscore, as not for saving
+          for (field in formValues)
+          {
+            if (field.charAt(0) == "_")
+            {
+              delete formValues[field];
+            }
+          }
+
           console.log("formValues=", formValues);
 
-          this.rpc("saveMotd", [ formValues ])
+          Promise.resolve()
+            .then(
+              () =>
+              {
+                const           values =
+                  {
+                    motd : formValues.motd
+                  };
+
+                // Delete motd from formValues now that we've used it
+                delete formValues.motd;
+
+                return this.rpc("saveMotd", [ values ]);
+              })
             .then(
               (result) =>
               {
-                console.log(`saveClient result: ${result}`);
+                console.log(`saveMotd result: ${result}`);
+
+                // A result means something failed.
+                if (result)
+                {
+                  qxl.dialog.Dialog.error(result);
+                  return;
+                }
+              })
+            .then(
+              () =>
+              {
+                let             bSave = false;
+                let             values = Object.assign({}, formValues);
+
+                // Trim whitespace from values. If any values to be
+                // saved are then zero-length, delete them. Keep track
+                // of whether any values were not zero length, meaning
+                // they need to be saved
+                Object.keys(values).forEach(
+                  (key) =>
+                  {
+                    // Trim whitespace from the value
+                    values[key] = values[key].trim();
+
+                    // Does this one need to be saved?
+                    if (values[key].length > 0)
+                    {
+                      // Yup. Note it.
+                      bSave = true;
+                    }
+                    else
+                    {
+                      // No data to be saved here. Axe it!
+                      delete values[key];
+                    }
+                  });
+
+                // Is there anything to be saved?
+                if (bSave)
+                {
+                  // Yup. Save it.
+                  return this.rpc("saveSettings", [ values ]);
+                }
+
+                // No result is a good result. We had nothing to save.
+                return null;
+              })
+            .then(
+              (result) =>
+              {
+                console.log(`saveSettings result: ${result}`);
 
                 // A result means something failed.
                 if (result)

@@ -135,6 +135,12 @@ qx.Class.define("bcp.server.Rpc",
           {
             handler             : this._saveMotd.bind(this),
             permission_level    : 70
+          },
+
+          saveSettings        :
+          {
+            handler             : this._saveSettings.bind(this),
+            permission_level    : 90
           }
         };
 
@@ -1199,8 +1205,8 @@ qx.Class.define("bcp.server.Rpc",
      * Save a new Message Of The Day
      *
      * @param args {Array}
-     *   args[0] {motd}
-     *     The new message
+     *   args[0] {Map}
+     *     The form values to be saved
      *
      * @param callback {Function}
      *   @signature(err, result)
@@ -1253,6 +1259,71 @@ qx.Class.define("bcp.server.Rpc",
         .catch((e) =>
           {
             console.warn("Error in saveMotd", e);
+            callback( { message : e.toString() } );
+          });
+    },
+
+    /**
+     * Save configuration values
+     *
+     * @param args {Array}
+     *   args[0] {Map}
+     *     The form values to be saved
+     *
+     * @param callback {Function}
+     *   @signature(err, result)
+     */
+    _saveSettings(args, callback)
+    {
+      let             promises = [];
+      const           formFields = args[0];
+
+      Object.keys(formFields).forEach(
+        (key) =>
+        {
+          const           value = formFields[key];
+
+          // Arrange to write this key/value to the database
+          promises.push(
+            Promise.resolve()
+              .then(
+                () =>
+                {
+                  // TODO: move prepared statements to constructor
+                  return this._db.prepare(
+                    [
+                      "REPLACE INTO KeyValueStore",
+                      "    (key, value)",
+                      "  VALUES",
+                      "    ($key, $value);"
+                    ].join(" "));
+                })
+              .then(
+                (stmt) =>
+                {
+                  return stmt.all(
+                    {
+                      $key   : key,
+                      $value : value
+                    });
+                })
+              .catch((e) =>
+                {
+                  console.warn(`Error in saveSettings(${key}`, e);
+                  throw e;          // rethrow
+                }));
+        });
+
+      Promise.all(promises)
+        .then(
+          (result) =>
+          {
+            // Give 'em what they came for
+            callback(null, null);
+          })
+        .catch(
+          (e) =>
+          {
             callback( { message : e.toString() } );
           });
     }
