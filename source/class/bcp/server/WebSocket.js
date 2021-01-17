@@ -6,7 +6,7 @@ qx.Class.define("bcp.server.WebSocket",
   statics :
   {
     /** Number of ms since last seen, to be considered idle */
-    IDLE_TIME_MS : 60000
+    IDLE_TIME_MS : 1000 * 60 * 2
   },
 
   members :
@@ -22,6 +22,7 @@ qx.Class.define("bcp.server.WebSocket",
     init(app, bIsHttps, server, db)
     {
       let             wss;
+      let             userTimer;
       const           WebSocket = require("ws");
 
       this.info("WebSocket: starting");
@@ -82,7 +83,6 @@ qx.Class.define("bcp.server.WebSocket",
         {
           let             users;
           let             session;
-          let             userTimer;
           let             pingTimer;
           const           now = (new Date()).getTime();
           const           { userId, username } = req.session;
@@ -127,7 +127,10 @@ qx.Class.define("bcp.server.WebSocket",
           ws.on("pong", () => { ws.bAlive = true; });
 
           // Periodically resend the user list (with idle changes)
-          userTimer = setInterval(this.sendUserList.bind(this), 10000);
+          if (! userTimer)
+          {
+            userTimer = setInterval(this.sendUserList.bind(this), 10000);
+          }
 
           // Periodically check for loss of connection on websocket
           pingTimer = setInterval(
