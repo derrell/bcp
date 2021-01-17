@@ -1238,12 +1238,6 @@ qx.Class.define("bcp.server.Rpc",
               });
           })
         .then(
-          (result) =>
-          {
-            // Give 'em what they came for
-            callback(null, null);
-          })
-        .then(
           () =>
           {
             // If non-zero length, send the new MOTD to everyone
@@ -1255,6 +1249,12 @@ qx.Class.define("bcp.server.Rpc",
                   data        : args[0].motd
                 });
             }
+          })
+        .then(
+          (result) =>
+          {
+            // Give 'em what they came for
+            callback(null, null);
           })
         .catch((e) =>
           {

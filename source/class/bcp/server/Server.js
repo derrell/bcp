@@ -212,6 +212,26 @@ qx.Class.define("bcp.server.Server",
               protocol === https,
               server,
               db);
+
+
+            // Prepare for sending email
+            bcp.server.Email.getInstance().init(
+              app,
+              protocol === https,
+              server,
+              db)
+/*
+              // FOR TESTING: send email
+              .then(
+                () =>
+                {
+                  bcp.server.Email.getInstance().sendEmail(
+                    "derrell.lipman@gmail.com",
+                    "Test at " + (new Date()),
+                    "Hello world!");
+                })
+*/
+            ;
           });
    }
   }

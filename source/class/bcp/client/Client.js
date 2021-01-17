@@ -334,6 +334,7 @@ qx.Class.define("bcp.client.Client",
             {
               let             text;
               let             color;
+              let             prefix;
               let             children;
               let             listItem;
               let             wsMessage = JSON.parse(e.data);
@@ -382,13 +383,32 @@ qx.Class.define("bcp.client.Client",
                 break;
 
               case "motd" :
-                // Save this most recent message of the day, and set color
-                this._mostRecentMotd = wsMessage.data;
+              case "error" :
+                switch(wsMessage.messageType)
+                {
+                case "motd" :
+                  color = "blue";
+                  prefix = "Alert";
 
-                color = "red";
+                  // Save this most recent message of the day, and set color
+                  this._mostRecentMotd = wsMessage.data;
+                  break;
+
+                case "error" :
+                  color = "red";
+                  prefix = "Error";
+                  break;
+
+                default :
+                  color = "pink";
+                  prefix = "FIX ME";
+                  break;
+                }
+
                 text =
                   [
                     `<span style='color: ${color}; font-weight: bold;'>`,
+                    prefix, ": ",
                     qx.bom.String.escape(wsMessage.data),
                     "</span>"
                   ].join("");
@@ -738,7 +758,7 @@ qx.Class.define("bcp.client.Client",
 
             email_auth_password :
             {
-              type       : "TextField",
+              type       : "PasswordField",
               label      : "Password",
               value      : "",
               properties :
