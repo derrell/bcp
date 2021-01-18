@@ -94,3 +94,17 @@ CREATE TABLE KeyValueStore
   key               VARCHAR PRIMARY KEY NOT NULL,
   value             VARCHAR
 );
+
+
+CREATE TABLE Reminder
+(
+  distribution      VARCHAR REFERENCES DistributionPeriod
+                            ON DELETE CASCADE
+                            ON UPDATE CASCADE,
+  family_name       VARCHAR REFERENCES Client
+                            ON DELETE CASCADE
+                            ON UPDATE CASCADE,
+  reminder_sent     BOOLEAN DEFAULT 0,
+  FOREIGN KEY (distribution, family_name)
+    REFERENCES Fulfillment(distribution, family_name)
+);
