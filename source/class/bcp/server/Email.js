@@ -26,9 +26,7 @@ qx.Class.define("bcp.server.Email",
     _username : null,
 
     /**
-     * Periodically scan for and email reminders of upcoming
-     * appointments. Also send a confirmation when an appointment is
-     * scheduled.
+     * Provide email sending capability to the app
      *
      * @param app {Express}
      *   The Express app object

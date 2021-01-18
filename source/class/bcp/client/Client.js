@@ -396,7 +396,7 @@ qx.Class.define("bcp.client.Client",
 
                 case "error" :
                   color = "red";
-                  prefix = "Error";
+                  prefix = "Error (notify Derrell)";
                   break;
 
                 default :
