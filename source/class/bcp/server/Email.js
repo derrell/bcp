@@ -88,7 +88,7 @@ qx.Class.define("bcp.server.Email",
           });
     },
 
-    async sendEmail(to, subject, body)
+    async sendEmail(to, subject, body, bHtml, callback)
     {
       let             mailOptions;
 
@@ -97,11 +97,26 @@ qx.Class.define("bcp.server.Email",
           from    : this._username,
           to      : to,
           subject : subject,
-          text    : body
         };
+      if (bHtml)
+      {
+        mailOptions.html = body;
+      }
+      else
+      {
+        mailOptions.text = body;
+      }
 
       return this._sendMail(mailOptions)
-        .then((info) => console.log(`Email sent: ${info.response}`))
+        .then(
+          (info) =>
+          {
+            console.log(`Email sent: ${info.response}`);
+            if (callback)
+            {
+              callback(null);
+            }
+          })
         .catch(
           (e) =>
           {
@@ -112,6 +127,8 @@ qx.Class.define("bcp.server.Email",
                 messageType : "error",
                 data        : `EMAIL ERROR sending to ${to}: ${e}`
               });
+
+            callback(e);
           });
     }
   }

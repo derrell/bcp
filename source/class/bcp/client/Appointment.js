@@ -588,13 +588,7 @@ qx.Class.define("bcp.client.Appointment",
      * @return {String}
      *  The time, formatted as HH:MM
      */
-    formatTime24(timestamp)
-    {
-      return (
-        ("0" + timestamp.getHours()).substr(-2) +
-          ":" +
-          ("0" + timestamp.getMinutes()).substr(-2));
-    },
+    formatTime24 : bcp.server.TimeConversion.formatTime24,
 
     /**
      * Provide a consistently formatted 12-hour time
@@ -605,27 +599,6 @@ qx.Class.define("bcp.client.Appointment",
      * @return {String}
      *  The time, formatted as H:MM ap
      */
-    formatTime12(timestamp)
-    {
-      let             suffix;
-      let             hours = timestamp.getHours();
-
-      if (hours < 12)
-      {
-        suffix = " am";
-      }
-      else if (hours == 12)
-      {
-        suffix = " pm";
-      }
-      else
-      {
-        hours -= 12;
-        suffix = " pm";
-      }
-
-      return (
-        hours + ":" + ("0" + timestamp.getMinutes()).substr(-2) + suffix);
-    }
+    formatTime12 : bcp.server.TimeConversion.formatTime12
   }
 });

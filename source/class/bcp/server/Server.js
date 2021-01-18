@@ -228,14 +228,31 @@ qx.Class.define("bcp.server.Server",
               db);
 
 
-            // Prepare for sending email
-            bcp.server.Email.getInstance().init(
-              app,
-              protocol === https,
-              server,
-              db)
+            Promise.resolve()
+
+              // Prepare for sending email
+              .then(
+                () =>
+                {
+                  return bcp.server.Email.getInstance().init(
+                    app,
+                    protocol === https,
+                    server,
+                    db);
+                })
+
+              // Begin cron tasks
+              .then(
+                () =>
+                {
+                  return bcp.server.Cron.getInstance().init(
+                    app,
+                    protocol === https,
+                    server,
+                    db);
+                })
 /*
-              // FOR TESTING: send email
+              // FOR TESTING: test sending email
               .then(
                 () =>
                 {
@@ -245,6 +262,16 @@ qx.Class.define("bcp.server.Server",
                     "Hello world!");
                 })
 */
+
+/*
+              // FOR TESTING: send reminders
+              .then(
+                () =>
+                {
+                  bcp.server.Cron.getInstance()._sendReminders();
+                })
+*/
+
             ;
           });
    }
