@@ -111,7 +111,8 @@ REPLACE INTO Report
        COALESCE(SUM(count_sex_male), 0) AS Male,
        COALESCE(SUM(count_sex_female), 0) AS Female,
        COALESCE(SUM(count_sex_other), 0) AS Other,
-       COALESCE(SUM(count_veteran), 0) AS Veteran
+       COALESCE(SUM(count_veteran), 0) AS Veteran,
+       COUNT(*) AS Families
      FROM Fulfillment f, Client c
      WHERE f.fulfilled
        AND f.distribution = $distribution
@@ -430,6 +431,38 @@ REPLACE INTO Report
      WHERE count_senior + count_adult + count_child <>
              count_sex_male + count_sex_female + count_sex_other
      ORDER BY family_name;
+  '
+);
+
+REPLACE INTO Report
+(
+  name,
+  description,
+  landscape,
+  input_fields,
+  subtitle_field,
+  separate_by,
+  query
+)
+ VALUES
+(
+  'Distribution families per day',
+  'Number of meals needed for a distribution, per day',
+  0,
+  '{
+     "$distribution" :
+     {
+       "type"  : "SelectBox",
+       "label" : "Distribution Date"
+     }
+   }',
+  '$distribution',
+  '',
+  '
+    SELECT appt_day AS Day, COUNT(*) as Count
+      FROM Fulfillment
+      WHERE distribution = $distribution
+      GROUP BY appt_day;
   '
 );
 
