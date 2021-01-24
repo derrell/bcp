@@ -37,6 +37,10 @@ qx.Class.define("bcp.server.Rpc",
      *
      * @param app {Express}
      *   The Express app object
+     *
+     * @ignore(require)
+     * @ignore(process)
+     * @ignore(process.cwd)
      */
     init(app)
     {

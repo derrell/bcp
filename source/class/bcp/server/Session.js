@@ -7,11 +7,13 @@ qx.Class.define("bcp.server.Session",
   {
     _session : null,
 
-   /**
+    /**
      * Create a session.
      *
      * @param app {Express}
      *   The Express app object
+     *
+     * @ignore(require)
      */
     init(app, bSecure)
     {

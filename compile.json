@@ -7,19 +7,67 @@
       "bundle": {
                                                                              "include": "qx.*"
       },
+      "application-types": [
+        "browser"
+      ],
       "addCreatedAt": true,
       "environment": {
         "bcp.target": "source",
         "bcpClientPath": "/../../../"
+      },
+      "babelOptions": {
+        "targets": {
+          "edge": "18",
+          "chrome": "79",
+          "firefox": "72"
+        }
       }
     },
     {
       "type": "build",
       "outputPath": "output/build",
       "addCreatedAt": true,
+      "deployPath": "deploy",
+      "application-types": [
+        "browser"
+      ],
       "environment": {
         "bcp.target": "build",
         "bcpClientPath": "/../"
+      }
+    },
+    {
+      "type": "source",
+      "outputPath": "output/source",
+      "bundle": {
+                                                                             "include": "qx.*"
+      },
+      "application-types": [
+        "node"
+      ],
+      "addCreatedAt": true,
+      "environment": {
+        "bcp.target": "source",
+        "bcpClientPath": "/../../../"
+      },
+      "babelOptions": {
+        "targets": "node >= 11"
+      }
+    },
+    {
+      "type": "build",
+      "outputPath": "output/build",
+      "addCreatedAt": true,
+      "deployPath": "deploy",
+      "application-types": [
+        "node"
+      ],
+      "environment": {
+        "bcp.target": "build",
+        "bcpClientPath": "/../"
+      },
+      "babelOptions": {
+        "targets": "node >= 11"
       }
     }
   ],
@@ -31,7 +79,8 @@
     {
       "class": "bcp.client.Client",
       "theme": "bcp.client.theme.Theme",
-      "name": "bcp.client"
+      "name": "bcp.client",
+      "type": "browser"
     },
     {
       "class": "bcp.server.Server",

@@ -498,6 +498,8 @@ qx.Mixin.define("bcp.client.MClientMgmt",
 
     /**
      * Create the search trees for family and phone
+     *
+     * @ignore(require)
      */
     _generateTrieSearch()
     {

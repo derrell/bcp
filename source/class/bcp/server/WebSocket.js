@@ -18,6 +18,8 @@ qx.Class.define("bcp.server.WebSocket",
      *
      * @param app {Express}
      *   The Express app object
+     *
+     * @ignore(require)
      */
     init(app, bIsHttps, server, db)
     {

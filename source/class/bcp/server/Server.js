@@ -4,6 +4,9 @@ qx.Class.define("bcp.server.Server",
 
   members :
   {
+    /**
+     * @ignore(require)
+     */
     main()
     {
       let           p;
