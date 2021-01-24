@@ -19,6 +19,7 @@ qx.Mixin.define("bcp.client.MAppointment",
     _appointmentForm           : null,
     _appointmentLabelToListMap : null,
     _butNewClient              : null,
+    _butCancelAppointment      : null,
     _tabLabelAppointment       : null,
 
     /**
@@ -127,7 +128,6 @@ qx.Mixin.define("bcp.client.MAppointment",
           beforeFormFunction : function(container)
           {
             let             hbox;
-            let             clearAppointment;
             let             useDefaultAppointment;
 
             // Get the hbox in which the message label is placed
@@ -177,19 +177,40 @@ qx.Mixin.define("bcp.client.MAppointment",
               this);
 
             // Create a button to clear any existing appointment
-            clearAppointment = new qx.ui.form.Button(
-              "Cancel appointment");
-            hbox.add(clearAppointment);
-            clearAppointment.addListener(
+            _this._butCancelAppointment =
+              new qx.ui.form.Button("Cancel appointment");
+            hbox.add(_this._butCancelAppointment);
+            _this._butCancelAppointment.addListener(
               "execute",
               function(e)
               {
                 const           form = _this._appointmentForm;
                 const           formElements = form._formElements;
-                formElements.appointments.set(
+
+                qxl.dialog.Dialog.confirm(
+                  "Are you sure you want to cancel this appointment?",
+                  (result) =>
                   {
-                    value : null
-                  });
+                    const           dist = formElements.distribution;
+
+                    form._cancelButton.execute();
+                    _this.rpc(
+                      "deleteFulfillment",
+                      [
+                        {
+                          distribution : dist.getValue().getLabel(),
+                          family_name  : dist.getUserData("family_name")
+                        }
+                      ])
+                      .catch(
+                        (e) =>
+                        {
+                          console.warn("Error deleting appointment:", e);
+                          qxl.dialog.Dialog.error(`Error saving changes: ${e}`);
+                        });
+                  },
+                  null,
+                  "Confirm");
               });
           },
           afterFormFunction : function(container, form)
@@ -197,7 +218,7 @@ qx.Mixin.define("bcp.client.MAppointment",
             _this._requireAppointment = new qx.ui.basic.Label(
               [
                 "<span style='color: red;'>",
-                "An appointment is required, for Pick-up",
+                "An appointment is required",
                 "</span>"
               ].join(""));
             container.add(_this._requireAppointment);
@@ -437,7 +458,8 @@ qx.Mixin.define("bcp.client.MAppointment",
                   userdata   :
                   {
                     row           : 1,
-                    distributions : distributions
+                    distributions : distributions,
+                    family_name   : familyName // in case of Cancel Appointment
                   },
                   events     :
                   {
@@ -599,6 +621,18 @@ qx.Mixin.define("bcp.client.MAppointment",
                         qxl.dialog.Dialog.error(`Error saving changes: ${e}`);
                       });
                 });
+
+            // If this is an existing appointment that has not been
+            // fulfilled, then show the Cancel Appointment button;
+            // otherwise hide it.
+            if (fulfillment.appt_time && ! fulfillment.fulfilled)
+            {
+              this._butCancelAppointment.show();
+            }
+            else
+            {
+              this._butCancelAppointment.exclude();
+            }
 
             this._appointmentForm.show();
           })

@@ -89,6 +89,12 @@ qx.Class.define("bcp.server.Rpc",
             permission_level    : 50
           },
 
+          deleteFulfillment     :
+          {
+            handler             : this._deleteFulfillment.bind(this),
+            permission_level    : 50
+          },
+
           getDistributionList :
           {
             handler             : this._getDistributionList.bind(this),
@@ -690,6 +696,59 @@ qx.Class.define("bcp.server.Rpc",
             let             error = { message : e.toString() };
 
             console.warn(`Error in saveFulfillment`, e);
+            callback(error);
+          });
+
+      return p;
+    },
+
+    /**
+     * Delete a fulfillment.
+     *
+     * @param args {Array}
+     *   args[0] {Map}
+     *     The map containing (at least) `distribution` and `family_name`
+     *
+     * @param callback {Function}
+     *   @signature(err, result)
+     */
+    _deleteFulfillment(args, callback)
+    {
+      let             p;
+      let             prepare;
+      let             day = null;
+      let             time = null;
+      const           fulfillmentInfo = args[0];
+
+      // This is a new entry
+      prepare = this._db.prepare(
+        [
+          "DELETE FROM Fulfillment",
+          "  WHERE distribution = $distribution",
+          "    AND family_name = $family_name;"
+        ].join(" "));
+
+      // TODO: move prepared statements to constructor
+      p = prepare
+        .then(stmt => stmt.run(
+          {
+            $distribution      : fulfillmentInfo.distribution,
+            $family_name       : fulfillmentInfo.family_name
+          }))
+
+        .then(
+          function (result)
+          {
+            return result;
+          })
+
+        // Give 'em what they came for!
+        .then((result) => callback(null, null))
+        .catch((e) =>
+          {
+            let             error = { message : e.toString() };
+
+            console.warn(`Error in deleteFulfillment`, e);
             callback(error);
           });
 
