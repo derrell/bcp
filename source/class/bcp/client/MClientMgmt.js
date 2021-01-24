@@ -550,7 +550,6 @@ qx.Mixin.define("bcp.client.MClientMgmt",
           {
             type       : "TextField",
             label      : "Family Name",
-            enabled    : bNew,
             value      : clientInfo.family_name || "",
             validation :
             {
@@ -1018,6 +1017,10 @@ qx.Mixin.define("bcp.client.MClientMgmt",
           }
           delete formValues.default_appointment;
 
+          // Add the record name to be updated, in case of rename
+          formValues.family_name_update =
+            clientInfo.family_name || formValues.family_name;
+
           console.log("formValues=", formValues);
 
           this.rpc("saveClient", [ formValues, bNew ])
@@ -1045,7 +1048,7 @@ qx.Mixin.define("bcp.client.MClientMgmt",
                   this._tm
                   .getDataAsMapArray()
                   .map(rowData => rowData.family_name)
-                  .indexOf(formValues.family_name);
+                  .indexOf(formValues.family_name_update);
 
                 // Does it already exist?
                 if (row >= 0)

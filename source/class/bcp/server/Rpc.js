@@ -163,7 +163,21 @@ qx.Class.define("bcp.server.Rpc",
           (db) =>
           {
             this._db = db;
-            this.fireDataEvent("dbReady", db);
+
+            return this._db.prepare(
+              [
+                "PRAGMA foreign_keys = ON;"
+              ].join(" "))
+              .then(
+                (stmt) =>
+                {
+                  return stmt.all({});
+                });
+          })
+        .then(
+          () =>
+          {
+            this.fireDataEvent("dbReady", this._db);
           });
 
       app.use(
@@ -329,6 +343,7 @@ qx.Class.define("bcp.server.Rpc",
     _saveClient(args, callback)
     {
       let             p;
+      let             addlArgs = {};
       let             prepare;
       const           clientInfo = args[0];
       const           bNew = args[1];
@@ -339,6 +354,7 @@ qx.Class.define("bcp.server.Rpc",
           [
             "UPDATE Client",
             "  SET ",
+            "    family_name = $family_name,",
             "    phone = $phone,",
             "    email = $email,",
             "    ethnicity = $ethnicity,",
@@ -356,8 +372,13 @@ qx.Class.define("bcp.server.Rpc",
             "    appt_day_default = $appt_day_default,",
             "    appt_time_default = $appt_time_default,",
             "    verified = $verified",
-            "  WHERE family_name = $family_name;",
+            "  WHERE family_name = $family_name_update;",
           ].join(" "));
+
+        addlArgs =
+          {
+            $family_name_update : clientInfo.family_name_update
+          };
       }
       else
       {
@@ -412,26 +433,28 @@ qx.Class.define("bcp.server.Rpc",
       // TODO: move prepared statements to constructor
       p = prepare
         .then(stmt => stmt.run(
-          {
-            $family_name       : clientInfo.family_name,
-            $phone             : clientInfo.phone,
-            $email             : clientInfo.email,
-            $ethnicity         : clientInfo.ethnicity,
-            $count_senior      : clientInfo.count_senior,
-            $count_adult       : clientInfo.count_adult,
-            $count_child       : clientInfo.count_child,
-            $count_sex_male    : clientInfo.count_sex_male,
-            $count_sex_female  : clientInfo.count_sex_female,
-            $count_sex_other   : clientInfo.count_sex_other,
-            $count_veteran     : clientInfo.count_veteran,
-            $income_source     : clientInfo.income_source,
-            $income_amount     : clientInfo.income_amount,
-            $pet_types         : clientInfo.pet_types,
-            $address_default   : clientInfo.address_default,
-            $appt_day_default  : clientInfo.appt_day_default,
-            $appt_time_default : clientInfo.appt_time_default,
-            $verified          : clientInfo.verified
-          }))
+          Object.assign(
+            {
+              $family_name        : clientInfo.family_name,
+              $phone              : clientInfo.phone,
+              $email              : clientInfo.email,
+              $ethnicity          : clientInfo.ethnicity,
+              $count_senior       : clientInfo.count_senior,
+              $count_adult        : clientInfo.count_adult,
+              $count_child        : clientInfo.count_child,
+              $count_sex_male     : clientInfo.count_sex_male,
+              $count_sex_female   : clientInfo.count_sex_female,
+              $count_sex_other    : clientInfo.count_sex_other,
+              $count_veteran      : clientInfo.count_veteran,
+              $income_source      : clientInfo.income_source,
+              $income_amount      : clientInfo.income_amount,
+              $pet_types          : clientInfo.pet_types,
+              $address_default    : clientInfo.address_default,
+              $appt_day_default   : clientInfo.appt_day_default,
+              $appt_time_default  : clientInfo.appt_time_default,
+              $verified           : clientInfo.verified
+            },
+            addlArgs)))
 
         .then(
           function (result)

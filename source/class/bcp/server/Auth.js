@@ -30,8 +30,17 @@ qx.Class.define("bcp.server.Auth",
           (db) =>
           {
             this._db = db;
-          });
 
+            return this._db.prepare(
+              [
+                "PRAGMA foreign_keys = ON;"
+              ].join(" "))
+              .then(
+                (stmt) =>
+                {
+                  return stmt.all({});
+                });
+          });
 
       // Create routes
       [
