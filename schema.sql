@@ -85,6 +85,8 @@ CREATE TABLE Report
   subtitle_field    VARCHAR,
   separate_by       VARCHAR,
   landscape         BOOLEAN DEFAULT 0,
+  number_style      VARCHAR,
+  number_remaining  VARCHAR,
   UNIQUE (name COLLATE NOCASE)
 );
 

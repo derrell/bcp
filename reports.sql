@@ -6,6 +6,8 @@ REPLACE INTO Report
   input_fields,
   subtitle_field,
   separate_by,
+  number_style,
+  number_remaining,
   query
 )
  VALUES
@@ -22,6 +24,8 @@ REPLACE INTO Report
    }',
   '$distribution',
   'Time',
+  '$remaining',
+  'Day',
   '
    SELECT
        f.appt_day as Day,

@@ -293,7 +293,11 @@ qx.Mixin.define("bcp.client.MReports",
                 {
                   let             heading;
                   let             headings;
-                  let             prior = "";
+                  let             lineNumber = 0;
+                  let             lineRemaining = 0;
+                  let             priorForSep = "";
+                  let             priorForRemaining = 0;
+                  let             totals = {};
                   
                   if (report.length === 0)
                   {
@@ -314,6 +318,34 @@ qx.Mixin.define("bcp.client.MReports",
                     "Report",
                     "resizable=yes,scrollbars=yes,width=1000,height=600");
 
+                  // If we're showing number remaining per some field
+                  // (identified by some value other than "$all"...
+                  if (reportInfo.number_remaining &&
+                      reportInfo.number_remaining != "$all")
+                  {
+                    // ... then figure out how many in each
+                    report.forEach(
+                      (row) =>
+                      {
+                        let             v;
+
+                        if (reportInfo.number_remaining in row)
+                        {
+                          v = row[reportInfo.number_remaining];
+
+                          // If there's no total for this value yet...
+                          if (! (v in totals))
+                          {
+                            // ... then create an entry
+                            totals[v] = 0;
+                          }
+
+                          // Increment the total number with this value
+                          ++totals[v];
+                        }
+                      });
+                  }
+
                   // Insert the common prefix HTML code
                   this._insertPrefix(
                     this._reportWin,
@@ -323,6 +355,13 @@ qx.Mixin.define("bcp.client.MReports",
 
                   // Write the heading
                   this._reportWin.document.write("<thead><tr>");
+
+                  // If numbers are requested...
+                  if (reportInfo.number_style)
+                  {
+                    this._reportWin.document.write(
+                      "<th>Number/Remaining</th>");
+                  }
                   Object.keys(report[0]).forEach(
                     (heading) =>
                     {
@@ -335,9 +374,30 @@ qx.Mixin.define("bcp.client.MReports",
                   report.forEach(
                     (row, index) =>
                     {
+                      // If we're showing remaining entries, and were
+                      // told to restart numbering when some field
+                      // changes...
+                      if (reportInfo.number_remaining &&
+                          row[reportInfo.number_remaining] !=
+                          priorForRemaining)
+                      {
+                        // ... then remember what value we're
+                        // tracking, and reset the number of lines
+                        // remaining.
+                        priorForRemaining = row[reportInfo.number_remaining];
+                        lineRemaining = 0;
+
+                        // If we're numbering by the same as remaining
+                        if (reportInfo.number_style == "$remaining")
+                        {
+                          // ... then restart line numbers
+                          lineNumber = 0;
+                        }
+                      }
+
                       // See if we need a separator here
                       if (reportInfo.separate_by &&
-                          row[reportInfo.separate_by] != prior)
+                          row[reportInfo.separate_by] != priorForSep)
                       {
                         // Yup, we do. Insert one here. We do it with
                         // two separate rows so that the zebra
@@ -366,12 +426,46 @@ qx.Mixin.define("bcp.client.MReports",
                             "</td>",
                             "</tr>"
                           ].join(""));
+
+                        // Line numbering is either "$sections" or
+                        // "$remaining" or "$continuous". If we're
+                        // numbering by section, restart numbering
+                        // now.
+                        if (reportInfo.number_style == "$sections")
+                        {
+                          lineNumber = 0;
+                        }
                       }
 
                       // Save the separator field for next comparison
-                      prior = row[reportInfo.separate_by];
+                      priorForSep = row[reportInfo.separate_by];
 
-                      this._reportWin.document.write("<tr>");
+                      this._reportWin.document.write(`<tr>`);
+
+                      if (reportInfo.number_style)
+                      {
+                        this._reportWin.document.write(
+                          [
+                            "<td>",
+                            "<span style='color:green'>",
+                            `#${++lineNumber}`,
+                            "</span>"
+                          ].join(""));
+                        if (reportInfo.number_remaining)
+                        {
+                          this._reportWin.document.write(
+                            [
+                              " ",
+                              "<span style='color:gray'>",
+                              "(+",
+                              (totals[row[reportInfo.number_remaining]] -
+                               ++lineRemaining),
+                              ")",
+                              "</span>"
+                            ].join(""));
+                        }
+                        this._reportWin.document.write("</td>");
+                      }
                       Object.keys(report[0]).forEach(
                         (heading) =>
                         {
