@@ -73,7 +73,8 @@ REPLACE INTO Report
   '
    SELECT
        c.ethnicity AS Ethnicity,
-       COUNT(*) AS Count
+       (COALESCE((SUM(count_senior) + SUM(count_adult) + SUM(count_child)), 0))
+         AS Count
      FROM Client c, Fulfillment f
      WHERE f.fulfilled
        AND f.distribution = $distribution
