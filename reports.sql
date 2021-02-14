@@ -14,7 +14,7 @@ REPLACE INTO Report
 (
   'Distribution appointments',
   'Schedule of appointments for a specified distribution',
-  0,
+  1,
   '{
      "$distribution" :
      {
@@ -37,7 +37,8 @@ REPLACE INTO Report
            ELSE " (Small)"
          END AS "Family size",
        COALESCE(pet_types, "") AS Pets,
-       COALESCE(phone, "") AS Phone
+       COALESCE(phone, "") AS Phone,
+       COALESCE(notes, "") AS Notes
      FROM Fulfillment f, Client c
      WHERE f.distribution = $distribution
        AND length(COALESCE(f.appt_time, "")) > 0
