@@ -300,19 +300,24 @@ REPLACE INTO Report
      }
    }',
   '$distribution',
-  '',
+  'day',
   '
-    SELECT "Large" as size, COUNT(*) AS count
-      FROM Fulfillment f, Client c
-      WHERE f.distribution = $distribution
-        AND c.family_name = f.family_name
-        AND (c.count_senior + c.count_adult + c.count_child >= 4)
-    UNION ALL
-    SELECT "Small" as size, COUNT(*) AS count
-      FROM Fulfillment f, Client c
-      WHERE f.distribution = $distribution
-        AND c.family_name = f.family_name
-        AND (c.count_senior + c.count_adult + c.count_child < 4)
+    SELECT day, size, SUM(count) FROM
+      (SELECT appt_day AS day, "Large" AS size, COUNT(*) AS count
+         FROM Fulfillment f, Client c
+         WHERE f.distribution = $distribution
+           AND c.family_name = f.family_name
+           AND (c.count_senior + c.count_adult + c.count_child >= 4)
+         GROUP BY appt_day
+       UNION ALL
+       SELECT appt_day AS day, "Small" AS size, COUNT(*) AS count
+         FROM Fulfillment f, Client c
+         WHERE f.distribution = $distribution
+           AND c.family_name = f.family_name
+           AND (c.count_senior + c.count_adult + c.count_child < 4)
+         GROUP BY appt_day)
+     GROUP BY day, size
+     ORDER BY day, size
   '
 );
 
