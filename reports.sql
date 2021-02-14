@@ -472,3 +472,43 @@ REPLACE INTO Report
   '
 );
 
+REPLACE INTO Report
+(
+  name,
+  description,
+  landscape,
+  input_fields,
+  subtitle_field,
+  separate_by,
+  query
+)
+ VALUES
+(
+  'Missing RSVP',
+  'Families that have a default appointment but have not RSVPed for a distribution',
+  0,
+  '{
+     "$distribution" :
+     {
+       "type"  : "SelectBox",
+       "label" : "Distribution Date"
+     }
+   }',
+  '$distribution',
+  '',
+  '
+    SELECT
+        family_name AS `Family Name`,
+        appt_day_default AS `Default Day`,
+        appt_time_default AS `Default time`
+      FROM Client
+      WHERE appt_time_default IS NOT NULL
+        AND length(appt_time_default) > 0
+        AND family_name NOT IN
+          (SELECT family_name
+            FROM Fulfillment
+            WHERE distribution = $distribution)
+     ORDER BY family_name, appt_day_default, appt_time_default;
+  '
+);
+
