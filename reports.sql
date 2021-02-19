@@ -302,7 +302,7 @@ REPLACE INTO Report
   '$distribution',
   'day',
   '
-    SELECT day, size, SUM(count) FROM
+    SELECT day, size, SUM(count) AS count FROM
       (SELECT appt_day AS day, "Large" AS size, COUNT(*) AS count
          FROM Fulfillment f, Client c
          WHERE f.distribution = $distribution
