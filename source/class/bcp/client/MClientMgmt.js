@@ -810,6 +810,113 @@ qx.Mixin.define("bcp.client.MClientMgmt",
                 });
             });
         },
+        afterButtonsFunction : function(buttonBar, form)
+        {
+          let             butDelete;
+
+          // If the user doesn't have permission to delete (level 60),
+          // then there's no reason to add a Delete button
+          if (_this._me.permissionLevel < 60)
+          {
+            return;
+          }
+
+          // Create the Delete button
+          butDelete = new qx.ui.form.Button("Delete");
+          butDelete.setWidth(100);
+
+          butDelete.addListener(
+            "execute",
+            () =>
+            {
+              let             confirm;
+
+               confirm = qxl.dialog.Dialog.confirm(
+                 "Are you absolutely sure you want to delete this client? " +
+                   "This will delete all Fulfillment history for this " +
+                   "client as well.",
+                (result) =>
+                {
+                  // If they didn't confirm, we have nothing to do
+                  if (! result)
+                  {
+                    return;
+                  }
+
+                  // Do normal form cancellation
+                  form._cancelButton.execute();
+
+                  // Issue the request to delete this client
+                  _this.rpc(
+                    "deleteClient",
+                    [
+                      {
+                        family_name  : clientInfo.family_name
+                      }
+                    ])
+                    .catch(
+                      (e) =>
+                      {
+                        console.warn("Error deleting client:", e);
+                        qxl.dialog.Dialog.error(
+                          `Error deleting client: ${e}`);
+                      })
+
+                    // Re-retrieve the client list
+                    .then(
+                      () =>
+                      {
+                        this.rpc("getClientList", [])
+                          .then(
+                            (result) =>
+                            {
+                              if (! result)
+                              {
+                                return;
+                              }
+
+                              // Add the provided client list, munging
+                              // column data as necessary
+                              result = result.map(
+                                (client) =>
+                                {
+                                  this._mungeClient(client);
+                                  return client;
+                                });
+                              this._tm.setDataAsMapArray(result, true);
+
+                              // Sort initially by the Family column
+                              this._tm.sortByColumn(
+                                this._tm.getColumnIndexById("family_name"),
+                                true);
+
+                              // Build the search trees
+                              this._generateTrieSearch();
+                            })
+                          .catch(
+                            (e) =>
+                            {
+                              console.warn("getClientList:", e);
+                              qxl.dialog.Dialog.alert(
+                                "Could not retrieve client list: " +
+                                  e.message);
+                            });
+                      });
+                },
+                null,
+                "Confirm");
+              confirm.setWidth(500);
+            });
+
+          // Add the delete button at far left, and add spacer to
+          // center Save/Cancel buttons
+          buttonBar.addAt(butDelete, 0);
+          buttonBar.addAt(new qx.ui.core.Spacer(), 1, { flex : 1 });
+
+          // Add corresponding space on right side of Save/Cancel buttons
+          buttonBar.add(new qx.ui.core.Spacer(), { flex : 1});
+          buttonBar.add(new qx.ui.core.Spacer(100));
+        },
         afterFormFunction : function(container, form)
         {
           this._wrongCountsWarning = new qx.ui.basic.Label(

@@ -34,6 +34,7 @@ qx.Class.define("bcp.client.Client",
 
   members :
   {
+    _me             : null,
     _tabView        : null,
     _mostRecentMotd : "",
 
@@ -452,6 +453,9 @@ qx.Class.define("bcp.client.Client",
             {
               return;
             }
+
+            // Save information about ourself
+            this._me = me;
 
             // Make the chat area and user list visible now
             messageContainer.show();
