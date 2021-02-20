@@ -81,6 +81,12 @@ qx.Class.define("bcp.server.Rpc",
             permission_level    : 50
           },
 
+          deleteClient        :
+          {
+            handler             : this._deleteClient.bind(this),
+            permission_level    : 60
+          },
+
           getAppointments     :
           {
             handler             : this._getAppointments.bind(this),
@@ -489,6 +495,51 @@ qx.Class.define("bcp.server.Rpc",
               break;
             }
 
+            callback(error);
+          });
+
+      return p;
+    },
+
+    /**
+     * Delete a client.
+     *
+     * @param args {Array}
+     *   args[0] {Map}
+     *     The map containing at least the member `family_name` which
+     *     references a string indicating the client to delete
+     *
+     * @param callback {Function}
+     *   @signature(err, result)
+     */
+    _deleteClient(args, callback)
+    {
+      let             p;
+      let             prepare;
+      const           clientInfo = args[0];
+
+      // TODO: move prepared statements to constructor
+      prepare = this._db.prepare(
+        [
+          "DELETE FROM Client",
+          "  WHERE family_name = $family_name;"
+        ].join(" "));
+
+      // This will delete the Client record and any Fulfillment
+      // records that reference that client.
+      p = prepare
+        .then(stmt => stmt.run(
+          {
+            $family_name        : clientInfo.family_name
+          }))
+
+        // Let 'em know it succeeded
+        .then((result) => callback(null, null))
+        .catch((e) =>
+          {
+            let             error = { message : e.toString() };
+
+            console.warn(`Error in deleteClient`, e);
             callback(error);
           });
 
