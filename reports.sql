@@ -404,33 +404,6 @@ REPLACE INTO Report
 )
  VALUES
 (
-  'Missing default appointments',
-  'Show all families which do not have a default appointment',
-  1,
-  '',
-  '',
-  '
-   SELECT
-       family_name AS `Family Name`,
-       COALESCE(phone, "") AS Phone,
-       COALESCE(email, "") AS Email
-     FROM Client
-     WHERE length(COALESCE(appt_time_default, '''')) = 0
-     ORDER BY `Family Name`;
-  '
-);
-
-REPLACE INTO Report
-(
-  name,
-  description,
-  landscape,
-  input_fields,
-  separate_by,
-  query
-)
- VALUES
-(
   'Faulty client data',
   'Show all families where sum by age does not equal sum by sex',
   0,
@@ -514,6 +487,115 @@ REPLACE INTO Report
             FROM Fulfillment
             WHERE distribution = $distribution)
      ORDER BY family_name, appt_day_default, appt_time_default;
+  '
+);
+
+REPLACE INTO Report
+(
+  name,
+  description,
+  landscape,
+  input_fields,
+  subtitle_field,
+  separate_by,
+  number_style,
+  number_remaining,
+  query
+)
+ VALUES
+(
+  'Default appointments: all, by day & time',
+  'All default appointments, sorted in order of appointment day and time',
+  0,
+  '',
+  '',
+  'Time',
+  '',
+  '',
+  '
+   SELECT
+       c.appt_day_default as Day,
+       c.appt_time_default AS Time,
+       c.family_name as "Family name",
+       (c.count_senior + c.count_adult + c.count_child) ||
+         CASE WHEN c.count_senior + c.count_adult + c.count_child >= 4
+           THEN " (Large)"
+           ELSE " (Small)"
+         END AS "Family size",
+       COALESCE(c.pet_types, "") AS Pets,
+       COALESCE(c.phone, "") AS Phone
+     FROM Client c
+     WHERE appt_time_default IS NOT NULL
+        AND length(appt_time_default) > 0
+     ORDER BY Day, Time, "Family name";
+  '
+);
+
+REPLACE INTO Report
+(
+  name,
+  description,
+  landscape,
+  input_fields,
+  subtitle_field,
+  separate_by,
+  number_style,
+  number_remaining,
+  query
+)
+ VALUES
+(
+  'Default appointments: all, by family name',
+  'All default appointments, sorted in order of family name',
+  0,
+  '',
+  '',
+  '',
+  '',
+  '',
+  '
+   SELECT
+       c.family_name as "Family name",
+       c.appt_day_default as Day,
+       c.appt_time_default AS Time,
+       (c.count_senior + c.count_adult + c.count_child) ||
+         CASE WHEN c.count_senior + c.count_adult + c.count_child >= 4
+           THEN " (Large)"
+           ELSE " (Small)"
+         END AS "Family size",
+       COALESCE(c.pet_types, "") AS Pets,
+       COALESCE(c.phone, "") AS Phone
+     FROM Client c
+     WHERE appt_time_default IS NOT NULL
+        AND length(appt_time_default) > 0
+     ORDER BY "Family name", Day, Time;
+  '
+);
+
+REPLACE INTO Report
+(
+  name,
+  description,
+  landscape,
+  input_fields,
+  separate_by,
+  query
+)
+ VALUES
+(
+  'Default appointments: missing',
+  'Show all families which do not have a default appointment',
+  1,
+  '',
+  '',
+  '
+   SELECT
+       family_name AS `Family Name`,
+       COALESCE(phone, "") AS Phone,
+       COALESCE(email, "") AS Email
+     FROM Client
+     WHERE length(COALESCE(appt_time_default, '''')) = 0
+     ORDER BY `Family Name`;
   '
 );
 
