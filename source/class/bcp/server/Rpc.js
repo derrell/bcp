@@ -196,7 +196,8 @@ qx.Class.define("bcp.server.Rpc",
         {
           const           { username, permissionLevel } = req.session;
 
-          console.log(`Got RPC request from ${username}: body=`, req.body);
+          console.log(`${username} issued RPC request: body=`,
+                      JSON.stringify(req.body, null, "  "));
 
           // Notifying WebSocket module user is active
           bcp.server.WebSocket.getInstance().userActive(req.session);
