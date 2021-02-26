@@ -30,8 +30,14 @@ CREATE TABLE Client
   appt_time_default VARCHAR, -- default appt time HH:MM,
   verified          BOOLEAN DEFAULT FALSE,
   archived          BOOLEAN DEFAULT FALSE,
+  notes_default     VARCHAR NOT NULL DEFAULT '',
   UNIQUE (family_name COLLATE NOCASE)
 );
+
+-- Changes from original to derive the above table
+--
+-- ALTER TABLE Client ADD COLUMN notes_default VARCHAR NOT NULL DEFAULT '';
+
 
 CREATE TABLE Fulfillment
 (

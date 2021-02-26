@@ -406,6 +406,7 @@ qx.Mixin.define("bcp.client.MAppointment",
             let             distribution;
             let             distributions = data.distributions;
             let             appointmentsScheduled = data.appoitnmentsScheduled;
+            let             bNew = data.fulfillment.length === 0;
             let             fulfillment = data.fulfillment[0] || {};
 
             // Disable access to the rest of the gui while working
@@ -474,13 +475,27 @@ qx.Mixin.define("bcp.client.MAppointment",
                   enabled    : false
                 },
 
+                notes :
+                {
+                  type       : "TextArea",
+                  label      : "Notes",
+                  lines      : 3,
+                  value      : (fulfillment.notes ||
+                                (bNew ? client.notes_default : "") ||
+                                ""),
+                  properties :
+                  {
+                    height     : 70
+                  }
+                },
+
                 default_apointment_label :
                 {
                   type       : "Label",
                   label      : this.bold("Default Appointment"),
                   userdata   :
                   {
-                    row        : 2    // leave a blank row above
+                    row        : 4    // leave a blank row above
                   }
                 },
 
@@ -501,22 +516,6 @@ qx.Mixin.define("bcp.client.MAppointment",
                   userdata   :
                   {
                     time24     : client.appt_time_default
-                  }
-                },
-
-                notes :
-                {
-                  type       : "TextArea",
-                  label      : "Notes",
-                  lines      : 3,
-                  value      : fulfillment.notes || "",
-                  userdata   :
-                  {
-                    rowspan    : 3
-                  },
-                  properties :
-                  {
-                    height     : 70
                   }
                 },
 

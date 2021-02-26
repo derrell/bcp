@@ -554,7 +554,7 @@ REPLACE INTO Report
 (
   'Default appointments: all, by day & time',
   'All default appointments, sorted in order of appointment day and time',
-  0,
+  1,
   '',
   '',
   'Time',
@@ -571,7 +571,8 @@ REPLACE INTO Report
            ELSE " (Small)"
          END AS "Family size",
        COALESCE(c.pet_types, "") AS Pets,
-       COALESCE(c.phone, "") AS Phone
+       COALESCE(c.phone, "") AS Phone,
+       COALESCE(c.notes_default, "") AS Notes
      FROM Client c
      WHERE appt_time_default IS NOT NULL
         AND length(appt_time_default) > 0
@@ -595,7 +596,7 @@ REPLACE INTO Report
 (
   'Default appointments: all, by family name',
   'All default appointments, sorted in order of family name',
-  0,
+  1,
   '',
   '',
   '',
@@ -612,7 +613,8 @@ REPLACE INTO Report
            ELSE " (Small)"
          END AS "Family size",
        COALESCE(c.pet_types, "") AS Pets,
-       COALESCE(c.phone, "") AS Phone
+       COALESCE(c.phone, "") AS Phone,
+       COALESCE(c.notes_default, "") AS Notes
      FROM Client c
      WHERE appt_time_default IS NOT NULL
         AND length(appt_time_default) > 0

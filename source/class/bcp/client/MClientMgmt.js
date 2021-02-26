@@ -90,6 +90,7 @@ qx.Mixin.define("bcp.client.MClientMgmt",
           "# female",
           "# ?gender",
           "# veteran",
+          "Notes",
           "Income source",
           "Income amount",
           "Pet types",
@@ -110,6 +111,7 @@ qx.Mixin.define("bcp.client.MClientMgmt",
           "count_sex_female",
           "count_sex_other",
           "count_veteran",
+          "notes_default",
           "income_source",
           "income_amount",
           "pet_types",
@@ -183,6 +185,7 @@ qx.Mixin.define("bcp.client.MClientMgmt",
       behavior.setWidth(tm.getColumnIndexById("count_sex_female"), 60);
       behavior.setWidth(tm.getColumnIndexById("count_sex_other"), 70);
       behavior.setWidth(tm.getColumnIndexById("count_veteran"), 70);
+      behavior.setWidth(tm.getColumnIndexById("notes_default"), 200);
       behavior.setWidth(tm.getColumnIndexById("income_source"), 100);
       behavior.setWidth(tm.getColumnIndexById("income_amount"), 100);
       behavior.setWidth(tm.getColumnIndexById("pet_types"), 100);
@@ -644,6 +647,21 @@ qx.Mixin.define("bcp.client.MClientMgmt",
             properties :
             {
               tabIndex   : 8
+            }
+          },
+          notes_default :
+          {
+            type       : "TextArea",
+            label      : "Notes",
+            lines      : 3,
+            value      : clientInfo.notes_default || "",
+            userdata   :
+            {
+              rowspan    : 2
+            },
+            properties :
+            {
+              tabIndex   : 9
             }
           },
           verified :
@@ -1126,6 +1144,9 @@ qx.Mixin.define("bcp.client.MClientMgmt",
           }
           delete formValues.default_appointment;
 
+          // Be sure notes_default is empty string if all whitespace
+          formValues.notes_default = formValues.notes_default.trim();
+
           // Add the record name to be updated, in case of rename
           formValues.family_name_update =
             clientInfo.family_name || formValues.family_name;
@@ -1159,17 +1180,17 @@ qx.Mixin.define("bcp.client.MClientMgmt",
                   .map(rowData => rowData.family_name)
                   .indexOf(formValues.family_name_update);
 
+                this._mungeClient(formValues);
+
                 // Does it already exist?
                 if (row >= 0)
                 {
                   // Yup. Replace the data for that row
-                  this._mungeClient(formValues);
                   this._tm.setRowsAsMapArray([formValues], row, true, false);
                 }
                 else
                 {
                   // It's new. Add it.
-                  this._mungeClient(formValues);
                   this._tm.addRowsAsMapArray([formValues], null, true, false);
                 }
 
