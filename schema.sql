@@ -102,3 +102,57 @@ CREATE TABLE KeyValueStore
   key               VARCHAR PRIMARY KEY NOT NULL,
   value             VARCHAR
 );
+
+
+CREATE TABLE GroceryItem
+(
+  item              VARCHAR PRIMARY KEY NOT NULL,
+  perishable        BOOLEAN NOT NULL DEFAULT 0,
+  dist_aisle        VARCHAR DEFAULT '',    -- A, B, ...
+  dist_unit         VARCHAR DEFAULT '',    -- 0=north 1-9=shelves 10=south
+  dist_side         VARCHAR DEFAULT '',    -- L=left R=right
+  dist_shelf        VARCHAR DEFAULT '',    -- 1=top, 2=second-from-top, etc.
+  on_hand           VARCHAR,    -- "plenty", "reorder", "ignore"
+  order_contact     VARCHAR,    -- who to contact for reorder
+  UNIQUE (item COLLATE NOCASE)
+);
+
+CREATE TABLE ClientGroceryPreference
+(
+  family_name       VARCHAR REFERENCES Client
+                            ON DELETE CASCADE
+                            ON UPDATE CASCADE,
+  grocery_item      INTEGER REFERENCES GroceryItem
+                            ON DELETE CASCADE
+                            ON UPDATE CASCADE,
+  preference        VARCHAR    -- "exclude", "requested", "extra"
+);
+
+--
+-- Not yet implemented...
+--
+-- CREATE TABLE GroceryItemDistributionMap
+-- (
+-- grocery_item      INTEGER REFERENCES GroceryItem
+--                           ON DELETE CASCADE
+--                           ON UPDATE CASCADE,
+-- distribution      VARCHAR REFERENCES DistributionPeriod
+--                           ON DELETE CASCADE
+--                           ON UPDATE CASCADE
+-- );
+--
+-- CREATE TABLE GroceryCategory
+-- (
+--   catgory_name      VARCHAR PRIMARY KEY NOT NULL, -- e.g., "meat", "fish"
+--   description       VARCHAR                       -- optional
+-- );
+
+-- CREATE TABLE GroceryItemCategoryMap
+-- (
+--   grocery_item      INTEGER REFERENCES GroceryItem
+--                             ON DELETE CASCADE
+--                             ON UPDATE CASCADE,
+--   category          VARCHAR REFERENCES GroceryCategory,
+--                             ON DELETE CASCADE,
+--                             ON UPDATE CASCADE
+-- );
