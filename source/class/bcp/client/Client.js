@@ -24,6 +24,7 @@ qx.Class.define("bcp.client.Client",
     bcp.client.MAppointment,
     bcp.client.MDeliveryDay,
     bcp.client.MDistribution,
+    bcp.client.MGroceryList,
     bcp.client.MReports
   ],
 
@@ -487,6 +488,10 @@ qx.Class.define("bcp.client.Client",
               {
                 requiredPermission : 50,
                 implementation     : this._createDistributionTab
+              },
+              {
+                requiredPermission : 50,
+                implementation     : this._createGroceryListTab
               },
               {
                 requiredPermission : 50,

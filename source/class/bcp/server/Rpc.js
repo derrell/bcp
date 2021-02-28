@@ -151,7 +151,26 @@ qx.Class.define("bcp.server.Rpc",
           {
             handler             : this._saveMotd.bind(this),
             permission_level    : 70
-          }
+          },
+
+          getGroceryList       :
+          {
+            handler             : this._getGroceryList.bind(this),
+            permission_level    : 50
+          },
+
+          saveGroceryItem          :
+          {
+            handler             : this._saveGroceryItem.bind(this),
+            permission_level    : 50
+          },
+
+          deleteGroceryItem        :
+          {
+            handler             : this._deleteGroceryItem.bind(this),
+            permission_level    : 60
+          },
+
         };
 
       // Create the rpcName:handler map needed for jayson.server()
@@ -478,7 +497,7 @@ qx.Class.define("bcp.server.Rpc",
             // Ensure that a request to edit actually edited something
             if (! bNew && result.changes != 1)
             {
-              throw new Error("Edit did not find a row to modify");
+              throw new Error("Edit Client did not find a row to modify");
             }
 
             return result;
@@ -1003,7 +1022,8 @@ qx.Class.define("bcp.server.Rpc",
             // Ensure that a request to edit actually edited something
             if (! bNew && result.changes != 1)
             {
-              throw new Error("Edit did not find a row to modify");
+              throw new Error(
+                "Edit Distribution did not find a row to modify");
             }
 
             return result;
@@ -1398,6 +1418,221 @@ qx.Class.define("bcp.server.Rpc",
             console.warn("Error in saveMotd", e);
             callback( { message : e.toString() } );
           });
+    },
+
+    /**
+     * Retrieve the full grocery list
+     *
+     * @param args {Array}
+     *   There are no arguments to this method. The array is unused.
+     *
+     * @param callback {Function}
+     *   @signature(err, result)
+     */
+    _getGroceryList(args, callback)
+    {
+      // TODO: move prepared statements to constructor
+      return this._db.prepare(
+        [
+          "SELECT",
+          [
+            "item",
+            "perishable",
+            "dist_aisle",
+            "dist_unit",
+            "dist_side",
+            "dist_shelf",
+            "on_hand",
+            "order_contact"
+          ].join(", "),
+          "FROM GroceryItem",
+          "ORDER BY item"
+        ].join(" "))
+        .then(
+          (stmt) =>
+          {
+            return stmt.all({});
+          })
+        .then(
+          (result) =>
+          {
+            callback(null, result);
+          })
+        .catch((e) =>
+          {
+            console.warn("Error in getGroceryList", e);
+            callback( { message : e.toString() } );
+          });
+    },
+
+    /**
+     * Save a new or updated grocery item. When updating, the record is
+     * replaced in its entirety.
+     *
+     * @param args {Array}
+     *   args[0] {Map}
+     *     The map containing complete data for a grocery item record
+     *
+     *   args[1] {Boolean}
+     *     true if this is a new entry; false if it is an edit
+     *
+     * @param callback {Function}
+     *   @signature(err, result)
+     */
+    _saveGroceryItem(args, callback)
+    {
+      let             p;
+      let             addlArgs = {};
+      let             prepare;
+      const           itemInfo = args[0];
+      const           bNew = args[1];
+
+      if (! bNew)
+      {
+        prepare = this._db.prepare(
+          [
+            "UPDATE GroceryItem",
+            "  SET ",
+            "    item = $item,",
+            "    perishable = $perishable,",
+            "    dist_aisle = $dist_aisle,",
+            "    dist_unit = $dist_unit,",
+            "    dist_side = $dist_side,",
+            "    dist_shelf = $dist_shelf,",
+            "    on_hand = $on_hand,",
+            "    order_contact = $order_contact",
+            "  WHERE item = $item_update;",
+          ].join(" "));
+
+        addlArgs =
+          {
+            $item_update : itemInfo.item_update
+          };
+      }
+      else
+      {
+        // This is a new entry
+        prepare = this._db.prepare(
+          [
+            "INSERT INTO GroceryItem",
+            "  (",
+            "    item,",
+            "    perishable,",
+            "    dist_aisle,",
+            "    dist_unit,",
+            "    dist_side,",
+            "    dist_shelf,",
+            "    on_hand,",
+            "    order_contact",
+            "  )",
+            "  VALUES",
+            "  (",
+            "    $item,",
+            "    $perishable,",
+            "    $dist_aisle,",
+            "    $dist_unit,",
+            "    $dist_side,",
+            "    $dist_shelf,",
+            "    $on_hand,",
+            "    $order_contact",
+            "  );"
+          ].join(" "));
+      }
+
+      // TODO: move prepared statements to constructor
+      p = prepare
+        .then(stmt => stmt.run(
+          Object.assign(
+            {
+              $item             : itemInfo.item,
+              $perishable       : itemInfo.perishable,
+              $dist_aisle       : itemInfo.dist_aisle,
+              $dist_unit        : itemInfo.dist_unit,
+              $dist_side        : itemInfo.dist_side,
+              $dist_shelf       : itemInfo.dist_shelf,
+              $on_hand          : itemInfo.on_hand,
+              $order_contact    : itemInfo.order_contact
+            },
+            addlArgs)))
+
+        .then(
+          function (result)
+          {
+            // Ensure that a request to edit actually edited something
+            if (! bNew && result.changes != 1)
+            {
+              throw new Error("Edit GroceryItem did not find a row to modify");
+            }
+
+            return result;
+          })
+
+        // Give 'em what they came for!
+        .then((result) => callback(null, null))
+        .catch((e) =>
+          {
+            let             error = { message : e.toString() };
+
+            console.warn(`Error in saveGroceryItem`, e);
+
+            // Is the error one we expect? If so, specify an error code.
+            // Otherwise, it will default to InternalError
+            switch(e.code)
+            {
+            case "SQLITE_CONSTRAINT" :
+              error.code = this.constructor.Error.AlreadyExists;
+              break;
+            }
+
+            callback(error);
+          });
+
+      return p;
+    },
+
+    /**
+     * Delete a grocery item.
+     *
+     * @param args {Array}
+     *   args[0] {Map}
+     *     The map containing at least the member `item` which
+     *     references a string indicating the grocery item to delete
+     *
+     * @param callback {Function}
+     *   @signature(err, result)
+     */
+    _deleteGroceryItem(args, callback)
+    {
+      let             p;
+      let             prepare;
+      const           itemInfo = args[0];
+
+      // TODO: move prepared statements to constructor
+      prepare = this._db.prepare(
+        [
+          "DELETE FROM GroceryItem",
+          "  WHERE item = $item;"
+        ].join(" "));
+
+      // This will delete the GroceryItem record and any
+      // ClientGroceryPreference records that reference that item.
+      p = prepare
+        .then(stmt => stmt.run(
+          {
+            $item        : itemInfo.item
+          }))
+
+        // Let 'em know it succeeded
+        .then((result) => callback(null, null))
+        .catch((e) =>
+          {
+            let             error = { message : e.toString() };
+
+            console.warn(`Error in deleteGroceryItem`, e);
+            callback(error);
+          });
+
+      return p;
     }
   }
 });
