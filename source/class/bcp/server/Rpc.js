@@ -226,7 +226,9 @@ qx.Class.define("bcp.server.Rpc",
           }
 
           // Save req locally so it's accessible in RPC.
-          // SAVE IT AS FIRST STEP IN RPC. It may change due to other RPC calls.
+
+          // SAVE IT AS FIRST STEP IN RPC. It may change due to other
+          // RPC calls.
           this._req = req;
 
           server.middleware()(req, res, next);
