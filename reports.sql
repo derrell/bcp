@@ -351,14 +351,14 @@ REPLACE INTO Report
   'day',
   '
     SELECT day, size, SUM(count) AS count FROM
-      (SELECT appt_day AS day, "Large" AS size, COUNT(*) AS count
+      (SELECT appt_day AS day, "c-Large" AS size, COUNT(*) AS count
          FROM Fulfillment f, Client c
          WHERE f.distribution = $distribution
            AND c.family_name = f.family_name
            AND (c.count_senior + c.count_adult + c.count_child >= 4)
          GROUP BY appt_day
        UNION ALL
-       SELECT appt_day AS day, "Small" AS size, COUNT(*) AS count
+       SELECT appt_day AS day, "b-Small" AS size, COUNT(*) AS count
          FROM Fulfillment f, Client c
          WHERE f.distribution = $distribution
            AND c.family_name = f.family_name
@@ -366,7 +366,7 @@ REPLACE INTO Report
                 AND c.count_senior + c.count_adult + c.count_child >= 2)
          GROUP BY appt_day
        UNION ALL
-       SELECT appt_day AS day, "Solo" AS size, COUNT(*) AS count
+       SELECT appt_day AS day, "a-Single" AS size, COUNT(*) AS count
          FROM Fulfillment f, Client c
          WHERE f.distribution = $distribution
            AND c.family_name = f.family_name
