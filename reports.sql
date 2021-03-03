@@ -32,8 +32,11 @@ REPLACE INTO Report
        f.appt_time AS Time,
        c.family_name as "Family name",
        (c.count_senior + c.count_adult + c.count_child) ||
-         CASE WHEN c.count_senior + c.count_adult + c.count_child >= 4
-           THEN " (Large)"
+         CASE
+           WHEN c.count_senior + c.count_adult + c.count_child >= 4
+             THEN " (Large)"
+           WHEN c.count_senior + c.count_adult + c.count_child = 1
+             THEN " (Single)"
            ELSE " (Small)"
          END AS "Family size",
        COALESCE(pet_types, "") AS Pets,
@@ -80,8 +83,11 @@ REPLACE INTO Report
        f.appt_day as Day,
        f.appt_time AS Time,
        (c.count_senior + c.count_adult + c.count_child) ||
-         CASE WHEN c.count_senior + c.count_adult + c.count_child >= 4
-           THEN " (Large)"
+         CASE
+           WHEN c.count_senior + c.count_adult + c.count_child >= 4
+             THEN " (Large)"
+           WHEN c.count_senior + c.count_adult + c.count_child = 1
+             THEN " (Single)"
            ELSE " (Small)"
          END AS "Family size",
        COALESCE(pet_types, "") AS Pets,
@@ -574,8 +580,11 @@ REPLACE INTO Report
        c.appt_time_default AS Time,
        c.family_name as "Family name",
        (c.count_senior + c.count_adult + c.count_child) ||
-         CASE WHEN c.count_senior + c.count_adult + c.count_child >= 4
-           THEN " (Large)"
+         CASE
+           WHEN c.count_senior + c.count_adult + c.count_child >= 4
+             THEN " (Large)"
+           WHEN c.count_senior + c.count_adult + c.count_child = 1
+             THEN " (Single)"
            ELSE " (Small)"
          END AS "Family size",
        COALESCE(c.pet_types, "") AS Pets,
@@ -616,8 +625,11 @@ REPLACE INTO Report
        c.appt_day_default as Day,
        c.appt_time_default AS Time,
        (c.count_senior + c.count_adult + c.count_child) ||
-         CASE WHEN c.count_senior + c.count_adult + c.count_child >= 4
-           THEN " (Large)"
+         CASE
+           WHEN c.count_senior + c.count_adult + c.count_child >= 4
+             THEN " (Large)"
+           WHEN c.count_senior + c.count_adult + c.count_child = 1
+             THEN " (Single)"
            ELSE " (Small)"
          END AS "Family size",
        COALESCE(c.pet_types, "") AS Pets,
