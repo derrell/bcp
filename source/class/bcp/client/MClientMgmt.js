@@ -774,7 +774,7 @@ qx.Mixin.define("bcp.client.MClientMgmt",
           default_appointment :
           {
             type       : "appointments",
-            label      : "Default appointment time",
+            label      : null,
             value      : (
               clientInfo.appt_time_default
               ? {
@@ -790,7 +790,7 @@ qx.Mixin.define("bcp.client.MClientMgmt",
             userdata   :
             {
               row      : 0,
-              column   : 4,
+              column   : 3,
               rowspan  : 20
             }
           }
@@ -985,8 +985,8 @@ qx.Mixin.define("bcp.client.MClientMgmt",
           layout.setColumnWidth(col(2), this.getLabelColumnWidth());
           layout.setColumnAlign(col(2), "right", "top");
 
-          layout.setColumnFlex(col(3), 1);
           layout.setColumnAlign(col(3), "left", "top");
+          layout.setColumnMinWidth(col(3), 20);
 
           layout.setColumnMaxWidth(col(4), this.getLabelColumnWidth());
           layout.setColumnWidth(col(4), this.getLabelColumnWidth());

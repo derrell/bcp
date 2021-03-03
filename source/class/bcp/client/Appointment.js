@@ -246,7 +246,7 @@ qx.Class.define("bcp.client.Appointment",
       this._tree = tree = new qx.ui.treevirtual.TreeVirtual(fields);
       tree.set(
         {
-          width                      : 400,
+          width                      : bShowScheduledToo ? 400 : 240,
           statusBarVisible           : false,
           useTreeLines               : false
         });
@@ -264,7 +264,7 @@ qx.Class.define("bcp.client.Appointment",
       // The other one or two columns can have a set width too
       for (let i = 1; i < fields.length; i++)
       {
-        resizeBehavior.set(i, { width : 100 });
+        resizeBehavior.set(i, { width : bShowScheduledToo ? 100 : 80 });
       }
 
       // Get the tree data model
