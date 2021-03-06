@@ -30,8 +30,8 @@ REPLACE INTO Report
    SELECT
        f.appt_day as Day,
        f.appt_time AS Time,
-       c.family_name as "Family name",
-       CASE c.verified WHEN 1 THEN "&check;" ELSE "" END AS V,
+       c.family_name || CASE c.verified WHEN 1 THEN "&check;" ELSE "" END
+          AS "Family name",
        (c.count_senior + c.count_adult + c.count_child) ||
          CASE
            WHEN c.count_senior + c.count_adult + c.count_child >= 4
