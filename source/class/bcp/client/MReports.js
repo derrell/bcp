@@ -360,7 +360,7 @@ qx.Mixin.define("bcp.client.MReports",
                   if (reportInfo.number_style)
                   {
                     this._reportWin.document.write(
-                      "<th>Number/Remaining</th>");
+                      "<th>#</th>");
                   }
                   Object.keys(report[0]).forEach(
                     (heading) =>
@@ -447,7 +447,7 @@ qx.Mixin.define("bcp.client.MReports",
                         this._reportWin.document.write(
                           [
                             "<td>",
-                            "<span style='color:green'>",
+                            "<span style='font-weight: bold;'>",
                             `#${++lineNumber}`,
                             "</span>"
                           ].join(""));
@@ -456,7 +456,7 @@ qx.Mixin.define("bcp.client.MReports",
                           this._reportWin.document.write(
                             [
                               " ",
-                              "<span style='color:gray'>",
+                              "<span style='color:black'>",
                               "(+",
                               (totals[row[reportInfo.number_remaining]] -
                                ++lineRemaining),
