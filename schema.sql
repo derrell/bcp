@@ -114,6 +114,7 @@ CREATE TABLE GroceryItem
   dist_shelf        VARCHAR DEFAULT '',    -- 1=top, 2=second-from-top, etc.
   on_hand           VARCHAR,    -- "plenty", "reorder", "ignore"
   order_contact     VARCHAR,    -- who to contact for reorder
+  category          INTEGER REFERENCES GroceryCategory,
   UNIQUE (item COLLATE NOCASE)
 );
 
@@ -125,8 +126,24 @@ CREATE TABLE ClientGroceryPreference
   grocery_item      INTEGER REFERENCES GroceryItem
                             ON DELETE CASCADE
                             ON UPDATE CASCADE,
-  preference        VARCHAR    -- "exclude", "requested", "extra"
+  exclude           BOOLEAN NOT NULL DEFAULT 0,
+  notes             VARCHAR
 );
+
+CREATE TABLE GroceryCategory
+(
+  id                INTEGER PRIMARY KEY NOT NULL,
+  parent            INTEGER REFERENCES GroceryCategory
+                            ON DELETE CASCADE
+                            ON UPDATE CASCADE,
+  name              VARCHAR NOT NULL, -- e.g., "meat", "fish"
+  UNIQUE (name COLLATE NOCASE)
+);
+
+INSERT OR IGNORE INTO GroceryCategory
+    (id, parent, name)
+  VALUES
+    (0, NULL, 'Categories');
 
 --
 -- Not yet implemented...
