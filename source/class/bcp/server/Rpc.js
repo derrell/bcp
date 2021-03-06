@@ -168,7 +168,13 @@ qx.Class.define("bcp.server.Rpc",
           deleteGroceryItem        :
           {
             handler             : this._deleteGroceryItem.bind(this),
-            permission_level    : 60
+            permission_level    : 50
+          },
+
+          getGroceryCategoryList   :
+          {
+            handler             : this._getGroceryCategoryList.bind(this),
+            permission_level    : 50
           },
 
         };
@@ -1631,6 +1637,46 @@ qx.Class.define("bcp.server.Rpc",
             let             error = { message : e.toString() };
 
             console.warn(`Error in deleteGroceryItem`, e);
+            callback(error);
+          });
+
+      return p;
+    },
+
+    /**
+     * Get the grocery category list
+     *
+     * @param callback {Function}
+     *   @signature(err, result)
+     */
+    _getGroceryCategoryList(args, callback)
+    {
+      let             p;
+      let             prepare;
+
+      // TODO: move prepared statements to constructor
+      prepare = this._db.prepare(
+        [
+          "SELECT",
+          "    id,",
+          "    parent,",
+          "    name",
+          "  FROM GroceryCategory",
+          "  ORDER BY id;"
+        ].join(" "));
+
+      // This will delete the GroceryItem record and any
+      // ClientGroceryPreference records that reference that item.
+      p = prepare
+        .then(stmt => stmt.all({}))
+
+        // Let 'em know it succeeded
+        .then((result) => callback(null, result))
+        .catch((e) =>
+          {
+            let             error = { message : e.toString() };
+
+            console.warn(`Error in getGroceryCategoryList`, e);
             callback(error);
           });
 
