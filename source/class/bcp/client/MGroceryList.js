@@ -39,6 +39,8 @@ qx.Mixin.define("bcp.client.MGroceryList",
     _createGroceryListTab(tabView)
     {
       let             page;
+      let             pageItems;
+      let             pageCategories;
       let             tm;
       let             table;
       let             tcm;
@@ -47,17 +49,14 @@ qx.Mixin.define("bcp.client.MGroceryList",
       let             command;
       let             butNewItem;
       let             label;
-      let             search;
-      let             listSearch;
-      let             txtSearch;
-      let             cbPhone;
       let             data;
       let             custom;
       let             behavior;
       let             cellRenderer;
+      let             categoryEditor;
 
       // Generate the label for this tab
-      this._tabLabelGrocery = this.underlineChar("Grocery List", 2);
+      this._tabLabelGrocery = this.underlineChar("Groceries", 2);
 
       page = new qx.ui.tabview.Page(this._tabLabelGrocery);
       page.setLayout(new qx.ui.layout.VBox());
@@ -69,6 +68,19 @@ qx.Mixin.define("bcp.client.MGroceryList",
       command = new qx.ui.command.Command("Alt+O");
       command.addListener("execute", () => tabView.setSelection( [ page ] ));
 
+      // Create the local tabview for selection between the grocery
+      // list and grocery categories
+      tabView = new qx.ui.tabview.TabView();
+      page.add(tabView, { flex : 1 });
+
+      pageItems = new qx.ui.tabview.Page("Items");
+      pageItems.setLayout(new qx.ui.layout.VBox());
+      tabView.add(pageItems);
+
+      pageCategories = new qx.ui.tabview.Page("Categories");
+      pageCategories.setLayout(new qx.ui.layout.VBox());
+      tabView.add(pageCategories);
+
       this._tmGrocery = tm = new qx.ui.table.model.Simple();
       tm.setColumns(
         [
@@ -79,7 +91,7 @@ qx.Mixin.define("bcp.client.MGroceryList",
           "Side of aisle",
           "Shelf #",
           "Stock on hand",
-          "Order contact"
+          "Vendor contact info"
         ],
         [
           "item",
@@ -114,9 +126,6 @@ qx.Mixin.define("bcp.client.MGroceryList",
             // Sort initially by the Item column
             this._tmGrocery.sortByColumn(
               this._tmGrocery.getColumnIndexById("item"), true);
-
-            // Build the search trees
-            this._generateTrieSearch();
           })
         .catch(
           (e) =>
@@ -139,7 +148,7 @@ qx.Mixin.define("bcp.client.MGroceryList",
           minHeight              : 100,
           height                 : 100
         });
-      page.add(table, { flex : 1 });
+      pageItems.add(table, { flex : 1 });
 
       tcm = table.getTableColumnModel();
 
@@ -211,7 +220,7 @@ qx.Mixin.define("bcp.client.MGroceryList",
         {
           marginTop : 20
         });
-      page.add(hBox);
+      pageItems.add(hBox);
 
       // Handle tap to edit an existing grocery item
       table.addListener(
@@ -234,6 +243,30 @@ qx.Mixin.define("bcp.client.MGroceryList",
           this._buildGroceryItemForm();
         },
         this);
+
+      // Add the grocery category editor when its page appears; remove
+      // it when its page disappears, so that it always has fresh data
+      tabView.addListener(
+        "changeSelection",
+        (e) =>
+        {
+          if (e.getData()[0] == pageCategories)
+          {
+            this._getGroceryCategoryList()
+              .then(
+                (categories) =>
+                {
+                  categoryEditor =
+                    new bcp.client.GroceryCategoryEditor(
+                      qx.data.marshal.Json.createModel(categories, true));
+                  pageCategories.add(categoryEditor, { flex : 1 });
+                });
+          }
+          else
+          {
+            pageCategories.removeAll();
+          }
+        });
     },
 
     /**
@@ -388,8 +421,7 @@ qx.Mixin.define("bcp.client.MGroceryList",
               { label : "a (top shelf)",  value : "a" },
               { label : "b",        value : "b" },
               { label : "c",        value : "c" },
-              { label : "d",        value : "d" },
-              { label : "e",        value : "e" }
+              { label : "d",        value : "d" }
             ],
             properties :
             {
@@ -684,6 +716,79 @@ qx.Mixin.define("bcp.client.MGroceryList",
                 }
               });
         });
+    },
+
+    async _getGroceryCategoryList()
+    {
+      return this.rpc("getGroceryCategoryList", [])
+        .then(
+          (result) =>
+          {
+            let             categories = [];
+            let             idMap = {};
+
+            result.forEach(
+              (item) =>
+              {
+                let             parentItem;
+
+                // Add this node to our map so we can find it if it's
+                // any subsequent item's parent
+                idMap[item.id] = item;
+
+                // We should always find the parent in the map, unless
+                // it's the root item
+                parentItem = idMap[item.parent];
+
+                // Add a children array and open property.
+                item.children = [];
+                item.open = true;
+
+                // If found, add this item to its parent's children
+                if (parentItem)
+                {
+                  parentItem.children.push(item);
+                }
+                else
+                {
+                  // It's the root item
+                  categories.push(item);
+                }
+              });
+
+            return categories;
+          })
+        .then(
+          (categories) =>
+          {
+            function sorter(node)
+            {
+              // If this node has no children, there's nothing to do
+              if (! node.children)
+              {
+                return;
+              }
+
+              // First, sort this node's children
+              node.children.forEach(
+                (child) =>
+                {
+                  sorter(child);
+                });
+
+              // Sort this node's children
+              node.children = node.children.sort(
+                (a, b) =>  a.name < b.name ? -1 : a.name > b.name ? 1 : 0);
+            }
+
+            // If there are any categories, sort them
+            if (categories.length > 0)
+            {
+              sorter(categories[0]);
+            }
+
+            return categories;
+          });
     }
   }
 });
