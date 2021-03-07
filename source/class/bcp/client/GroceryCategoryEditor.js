@@ -18,6 +18,7 @@ qx.Class.define("bcp.client.GroceryCategoryEditor",
   construct(model)
   {
     let             tree;
+    let             menu;
     let             dragDropImage;
 
     this.base(arguments, new qx.ui.layout.VBox());
@@ -116,6 +117,40 @@ qx.Class.define("bcp.client.GroceryCategoryEditor",
           });
       });
 
+    //
+    // Context menu handling
+    //
+
+    // Create the context menu, initially disabled
+    menu = new qx.ui.menu.Menu();
+
+    tree.addListener(
+      "pointerdown",
+      (e) =>
+      {
+        let             menuButton;
+        const { target, label, model, id } = this.__contextEventInfo(e);
+
+        if (target && label && model && id)
+        {
+          menuButton = new qx.ui.menu.Button(`Delete '${label}'`);
+          menu.removeAll();
+          menu.add(menuButton);
+          tree.setContextMenu(menu);
+
+          menuButton.addListener(
+            "execute",
+            () =>
+            {
+              console.log(`DELETE ${id}`);
+            });
+        }
+        else
+        {
+          tree.setContextMenu(null);
+        }
+      });
+
     // Add label for, and then the actual image that can be dragged to
     // add a new category
     this.add(new qx.ui.core.Spacer(10, 10)); // just a bit of space after tree
@@ -205,6 +240,41 @@ qx.Class.define("bcp.client.GroceryCategoryEditor",
     _showModel()
     {
       console.log(JSON.stringify(this.getModelAsNativeObject(), null, "  "));
+    },
+
+    /**
+     * Retrieve context menu event data
+     *
+     * @param e {MouseEvent}
+     */
+    __contextEventInfo(e)
+    {
+      let             target = null;
+      let             label = null;
+      let             model = null;
+      let             id = null;
+
+      if (e.getTarget())
+      {
+        target = e.getTarget();
+
+        if (target.getLabel)
+        {
+          label = target.getLabel();
+        }
+
+        if (target.getModel)
+        {
+          model = target.getModel();
+
+          if (model.getId)
+          {
+            id = model.getId();
+          }
+        }
+      }
+
+      return { target, label, model, id };
     }
   }
 });
