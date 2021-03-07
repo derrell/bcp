@@ -19,6 +19,7 @@ qx.Class.define("bcp.client.GroceryCategoryEditor",
   {
     let             tree;
     let             menu;
+    let             prompt;
     let             dragDropImage;
 
     this.base(arguments, new qx.ui.layout.VBox());
@@ -83,17 +84,61 @@ qx.Class.define("bcp.client.GroceryCategoryEditor",
         else
         {
           // We're adding an item. Create its model
-          name = window.prompt("New category name?");
-          newItem = qx.data.marshal.Json.createModel(
+          p = new Promise(
+            (resolve, reject) =>
             {
-              "name": name,
-              "children": []
+              qxl.dialog.Dialog.prompt(
+                "New category name?",
+               (name) =>
+               {
+                 name = name.trim();
+
+                 // If they didn't enter a name, choose one for them
+                 if (! name)
+                 {
+                   name = "<unnamed>";
+                 }
+
+                 newItem = qx.data.marshal.Json.createModel(
+                   {
+                     "id": null,
+                     "name": name,
+                     "children": []
+                   });
+                 resolve(newItem);
+               });
             });
-          p = Promise.resolve(newItem);
         }
 
-        // Wait for the new item to be ready, then...
         p.then(
+          (newItem) =>
+          {
+            return qx.core.Init.getApplication().rpc(
+              "saveGroceryCategory",
+              [
+                {
+                  parent : model.getId(),
+                  name   : newItem.getName()
+                },
+                true
+              ])
+              .catch(
+                (e) =>
+                {
+                  console.warn("Error saving grocery category:", e);
+                  qxl.dialog.Dialog.error(
+                    `Error saving grocery category: ${e}`);
+                })
+              .then(
+                (id) =>
+                {
+                  newItem.setId(id);
+                  return newItem;
+                });
+          })
+
+        // Wait for the new item to be ready, then...
+        .then(
           (newItem) =>
           {
             // If they dropped onto a branch (always true)...
@@ -131,18 +176,94 @@ qx.Class.define("bcp.client.GroceryCategoryEditor",
         let             menuButton;
         const { target, label, model, id } = this.__contextEventInfo(e);
 
+        // If we found a removable category (and not "Categories" -> id=0)
         if (target && label && model && id)
         {
-          menuButton = new qx.ui.menu.Button(`Delete '${label}'`);
+          // ... then (re)create the context menu
           menu.removeAll();
-          menu.add(menuButton);
           tree.setContextMenu(menu);
+
+          //
+          // First, create the Rename button
+          //
+          menuButton = new qx.ui.menu.Button(`Rename '${label}'`);
+          menu.add(menuButton);
 
           menuButton.addListener(
             "execute",
             () =>
             {
-              console.log(`DELETE ${id}`);
+              qxl.dialog.Dialog.prompt(
+                `Rename '${label}' to:`,
+                (newName) =>
+                {
+                  qx.core.Init.getApplication().rpc(
+                    "renameGroceryCategory",
+                    [
+                      {
+                        id      : id,
+                        newName : newName
+                      }
+                    ])
+                    .catch(
+                      (e) =>
+                      {
+                        console.warn(
+                          `Error renaming grocery category ${label}:`, e);
+                        qxl.dialog.Dialog.error(
+                          `Error renaming grocery category ${label}: ${e}`);
+                      })
+                    .then(
+                      () =>
+                      {
+                        model.setName(newName);
+                      });
+                });
+            });
+
+          //
+          // Now create the Delete button
+          //
+          menuButton = new qx.ui.menu.Button(`Delete '${label}'`);
+          menu.add(menuButton);
+
+          menuButton.addListener(
+            "execute",
+            () =>
+            {
+              qxl.dialog.Dialog.confirm(
+                `Are you sure you want to delete category '${label}?`,
+               (result) =>
+               {
+                 // If they didn't confirm, we have nothing to do
+                 if (! result)
+                 {
+                   return;
+                 }
+
+                qx.core.Init.getApplication().rpc(
+                  "deleteGroceryCategory",
+                  [
+                    {
+                      id : id
+                    },
+                    true
+                  ])
+                  .catch(
+                    (e) =>
+                    {
+                      console.warn(
+                        `Error deleting grocery category ${label}:`, e);
+                      qxl.dialog.Dialog.error(
+                        `Error deleting grocery category ${label}: ${e}`);
+                    })
+                  .then(
+                    () =>
+                    {
+                      this.removeItem(tree.getModel(), model);
+                      console.log(`Deleted grocery category ${label}`);
+                    });
+               });
             });
         }
         else

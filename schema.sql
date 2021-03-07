@@ -114,7 +114,8 @@ CREATE TABLE GroceryItem
   dist_shelf        VARCHAR DEFAULT '',    -- 1=top, 2=second-from-top, etc.
   on_hand           VARCHAR,    -- "plenty", "reorder", "ignore"
   order_contact     VARCHAR,    -- who to contact for reorder
-  category          INTEGER REFERENCES GroceryCategory,
+  category          INTEGER REFERENCES GroceryCategory
+                            ON DELETE SET NULL,
   UNIQUE (item COLLATE NOCASE)
 );
 

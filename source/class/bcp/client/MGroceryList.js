@@ -70,7 +70,7 @@ qx.Mixin.define("bcp.client.MGroceryList",
 
       // Create the local tabview for selection between the grocery
       // list and grocery categories
-      tabView = new qx.ui.tabview.TabView();
+      tabView = new qx.ui.tabview.TabView("left");
       page.add(tabView, { flex : 1 });
 
       pageItems = new qx.ui.tabview.Page("Items");
@@ -85,6 +85,7 @@ qx.Mixin.define("bcp.client.MGroceryList",
       tm.setColumns(
         [
           "Item",
+          "Category",
           "Perishable",
           "Aisle",
           "Shelf unit #",
@@ -95,6 +96,7 @@ qx.Mixin.define("bcp.client.MGroceryList",
         ],
         [
           "item",
+          "category_name",
           "perishable",
           "dist_aisle",
           "dist_unit",

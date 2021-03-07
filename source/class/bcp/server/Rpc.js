@@ -177,6 +177,23 @@ qx.Class.define("bcp.server.Rpc",
             permission_level    : 50
           },
 
+          saveGroceryCategory     :
+          {
+            handler            : this._saveGroceryCategory.bind(this),
+            permission_level   : 50
+          },
+
+          renameGroceryCategory     :
+          {
+            handler            : this._renameGroceryCategory.bind(this),
+            permission_level   : 50
+          },
+
+          deleteGroceryCategory     :
+          {
+            handler            : this._deleteGroceryCategory.bind(this),
+            permission_level   : 50
+          }
         };
 
       // Create the rpcName:handler map needed for jayson.server()
@@ -1443,18 +1460,20 @@ qx.Class.define("bcp.server.Rpc",
       return this._db.prepare(
         [
           "SELECT",
-          [
-            "item",
-            "perishable",
-            "dist_aisle",
-            "dist_unit",
-            "dist_side",
-            "dist_shelf",
-            "on_hand",
-            "order_contact"
-          ].join(", "),
-          "FROM GroceryItem",
-          "ORDER BY item"
+          "    gi.item AS item,",
+          "    gi.perishable AS perishable,",
+          "    gi.dist_aisle AS dist_aisle,",
+          "    gi.dist_unit AS dist_unit,",
+          "    gi.dist_side AS dist_side,",
+          "    gi.dist_shelf AS dist_shelf,",
+          "    gi.on_hand AS on_hand,",
+          "    gi.order_contact AS order_contact,",
+          "    COALESCE(gi.category, 0) AS category,",
+          "    gc.name AS category_name",
+          "FROM GroceryItem gi",
+          "LEFT JOIN GroceryCategory gc",
+          "  ON gc.id = gi.category",
+          "ORDER BY gi.item"
         ].join(" "))
         .then(
           (stmt) =>
@@ -1665,8 +1684,6 @@ qx.Class.define("bcp.server.Rpc",
           "  ORDER BY id;"
         ].join(" "));
 
-      // This will delete the GroceryItem record and any
-      // ClientGroceryPreference records that reference that item.
       p = prepare
         .then(stmt => stmt.all({}))
 
@@ -1677,6 +1694,184 @@ qx.Class.define("bcp.server.Rpc",
             let             error = { message : e.toString() };
 
             console.warn(`Error in getGroceryCategoryList`, e);
+            callback(error);
+          });
+
+      return p;
+    },
+
+    /**
+     * Save a new or updated grocery category. When updating, the
+     * record is replaced in its entirety.
+     *
+     * @param args {Array}
+     *   args[0] {Map}
+     *     The map containing complete data for a category record
+     *
+     *   args[1] {Boolean}
+     *     true if this is a new entry; false if it is an edit
+     *
+     * @param callback {Function}
+     *   @signature(err, result)
+     */
+    _saveGroceryCategory(args, callback)
+    {
+      let             p;
+      let             prepare;
+      let             addlArgs = {};
+      const           categoryInfo = args[0];
+      const           bNew = args[1];
+
+      if (! bNew)
+      {
+        prepare = this._db.prepare(
+          [
+            "UPDATE GroceryCategory",
+            "  SET ",
+            "    parent = $parent,",
+            "    name = $name",
+            "  WHERE id = $id;"
+          ].join(" "));
+
+        addlArgs = { $id : categoryInfo.id };
+      }
+      else
+      {
+        // This is a new entry
+        prepare = this._db.prepare(
+          [
+            "INSERT INTO GroceryCategory",
+            "  (",
+            "    parent,",
+            "    name",
+            "  )",
+            "  VALUES",
+            "  (",
+            "    $parent,",
+            "    $name",
+            "  );"
+          ].join(" "));
+      }
+
+      // TODO: move prepared statements to constructor
+      return prepare
+        .then(stmt => stmt.run(
+          Object.assign(
+            {
+              $id     : categoryInfo.id,
+              $parent : categoryInfo.parent,
+              $name   : categoryInfo.name
+            },
+            addlArgs)))
+
+        .then(
+          function (result)
+          {
+            // Ensure that a request to edit actually edited something
+            if (! bNew && result.changes != 1)
+            {
+              throw new Error(
+                "Edit Grocery Category did not find a row to modify");
+            }
+
+            return result.lastID;
+          })
+
+        // Give 'em what they came for!
+        .then((result) => callback(null, result))
+        .catch((e) =>
+          {
+            let             error = { message : e.toString() };
+
+            console.warn(`Error in saveGroceryCategory`, e);
+            callback(error);
+          });
+    },
+
+    /**
+     * Rename a grocery category.
+     *
+     * @param args {Array}
+     *   args[0] {Map}
+     *     A map containing the members `id` and `newName`
+     *
+     * @param callback {Function}
+     *   @signature(err, result)
+     */
+    _renameGroceryCategory(args, callback)
+    {
+      let             p;
+      let             prepare;
+      const           categoryInfo = args[0];
+      const           bNew = args[1];
+
+      // TODO: move prepared statements to constructor
+      return Promise.resolve()
+        .then(
+          () =>
+          {
+            return this._db.prepare(
+              [
+                "UPDATE GroceryCategory",
+                "  SET ",
+                "    name = $newName",
+                "  WHERE id = $id;"
+              ].join(" "));
+          })
+        .then(stmt => stmt.run(
+          {
+            $id      : categoryInfo.id,
+            $newName : categoryInfo.newName
+          }))
+
+        // Give 'em what they came for!
+        .then((result) => callback(null, null))
+        .catch((e) =>
+          {
+            let             error = { message : e.toString() };
+
+            console.warn(`Error in renameGroceryCategory`, e);
+            callback(error);
+          });
+    },
+
+    /**
+     * Delete a grocery category.
+     *
+     * @param args {Array} args[0] {Map}
+     *     The map containing at least the member `id` which
+     *     indicates which grocery category to delete
+     *
+     * @param callback {Function}
+     *   @signature(err, result)
+     */
+    _deleteGroceryCategory(args, callback)
+    {
+      let             p;
+      let             prepare;
+      const           categoryInfo = args[0];
+
+      // TODO: move prepared statements to constructor
+      prepare = this._db.prepare(
+        [
+          "DELETE FROM GroceryCategory",
+          "  WHERE id = $id;"
+        ].join(" "));
+
+      // This will delete the GroceryCategory record. Additionally,
+      // any GroceryItem records that reference that category will
+      // have their category set to null..
+
+      p = prepare
+        .then(stmt => stmt.run( { $id : categoryInfo.id }))
+
+        // Let 'em know it succeeded
+        .then((result) => callback(null, null))
+        .catch((e) =>
+          {
+            let             error = { message : e.toString() };
+
+            console.warn(`Error in deleteGroceryCategory`, e);
             callback(error);
           });
 
