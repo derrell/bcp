@@ -64,6 +64,59 @@ REPLACE INTO Report
 )
  VALUES
 (
+  'Distribution appointments with phone',
+  'Schedule of appointments for a specified distribution, including family name and phone number',
+  1,
+  '{
+     "$distribution" :
+     {
+       "type"  : "SelectBox",
+       "label" : "Distribution Date"
+     }
+   }',
+  '$distribution',
+  'Time',
+  '$remaining',
+  'Day',
+  '
+   SELECT
+       f.appt_day as Day,
+       f.appt_time AS Time,
+       c.family_name || CASE c.verified WHEN 1 THEN "&check;" ELSE "" END
+          AS "Family name",
+       (c.count_senior + c.count_adult + c.count_child) ||
+         CASE
+           WHEN c.count_senior + c.count_adult + c.count_child >= 4
+             THEN " (Large)"
+           WHEN c.count_senior + c.count_adult + c.count_child = 1
+             THEN " (Single)"
+           ELSE " (Small)"
+         END AS "Family size",
+       COALESCE(pet_types, "") AS Pets,
+       COALESCE(phone, "") AS Phone,
+       COALESCE(notes, "") AS Notes
+     FROM Fulfillment f, Client c
+     WHERE f.distribution = $distribution
+       AND length(COALESCE(f.appt_time, "")) > 0
+       AND c.family_name = f.family_name
+     ORDER BY Day, Time, "Family name";
+  '
+);
+
+REPLACE INTO Report
+(
+  name,
+  description,
+  landscape,
+  input_fields,
+  subtitle_field,
+  separate_by,
+  number_style,
+  number_remaining,
+  query
+)
+ VALUES
+(
   'Distribution appointments',
   'Schedule of appointments for a specified distribution, without family name',
   1,
