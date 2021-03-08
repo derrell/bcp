@@ -24,7 +24,7 @@ qx.Class.define("bcp.client.Client",
     bcp.client.MAppointment,
     bcp.client.MDeliveryDay,
     bcp.client.MDistribution,
-    bcp.client.MGroceryList,
+    bcp.client.MGroceries,
     bcp.client.MReports
   ],
 

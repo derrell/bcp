@@ -11,7 +11,7 @@
  * Authors:
  *   * Derrell Lipman (derrell)
  */
-qx.Mixin.define("bcp.client.MGroceryList",
+qx.Mixin.define("bcp.client.MGroceries",
 {
   events :
   {
