@@ -150,7 +150,7 @@ REPLACE INTO Report
      WHERE f.distribution = $distribution
        AND length(COALESCE(f.appt_time, "")) > 0
        AND c.family_name = f.family_name
-     ORDER BY Day, Time, "Family name";
+     ORDER BY Day, Time, c.family_name;
   '
 );
 
