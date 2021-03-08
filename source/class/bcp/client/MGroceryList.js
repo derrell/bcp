@@ -259,7 +259,7 @@ qx.Mixin.define("bcp.client.MGroceryList",
                 (categories) =>
                 {
                   categoryEditor =
-                    new bcp.client.GroceryCategoryEditor(
+                    new bcp.client.grocery.CategoryEditor(
                       qx.data.marshal.Json.createModel(categories, true));
                   pageCategories.add(categoryEditor, { flex : 1 });
                 });
@@ -763,31 +763,22 @@ qx.Mixin.define("bcp.client.MGroceryList",
         .then(
           (categories) =>
           {
-            function sorter(node)
-            {
-              // If this node has no children, there's nothing to do
-              if (! node.children)
+            const sorter =
+              (node) =>
               {
-                return;
-              }
+                // If this node has no children, there's nothing to do
+                if (! node.children) return;
 
-              // First, sort this node's children
-              node.children.forEach(
-                (child) =>
-                {
-                  sorter(child);
-                });
+                // First, sort this node's children
+                node.children.forEach(child => sorter(child));
 
-              // Sort this node's children
-              node.children = node.children.sort(
-                (a, b) =>  a.name < b.name ? -1 : a.name > b.name ? 1 : 0);
-            }
+                // Sort this node's children
+                node.children = node.children.sort(
+                  (a, b) =>  a.name < b.name ? -1 : a.name > b.name ? 1 : 0);
+              };
 
-            // If there are any categories, sort them
-            if (categories.length > 0)
-            {
-              sorter(categories[0]);
-            }
+            // If there are any categories, sort them, recursively
+            categories.length > 0 && sorter(categories[0]);
 
             return categories;
           });

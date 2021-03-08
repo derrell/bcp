@@ -11,7 +11,7 @@
  * Authors:
  *   * Derrell Lipman (derrell)
  */
-qx.Class.define("bcp.client.GroceryCategoryEditor",
+qx.Class.define("bcp.client.grocery.CategoryEditor",
 {
   extend : qx.ui.container.Composite,
 
