@@ -802,14 +802,14 @@ qx.Mixin.define("bcp.client.MClientMgmt",
               {
                 open : true,
                 label: "Root",
-                checked : false,
+                checked : null,
                 notes : "a",
                 children :
                 [
                   {
                     open : true,
                     label: "Desktop",
-                    checked : false,
+                    checked : null,
                     notes : "b",
                     children:
                     [
@@ -817,7 +817,15 @@ qx.Mixin.define("bcp.client.MClientMgmt",
                         open : false,
                         label: "Files",
                         checked : true,
-                        notes : "c"
+                        notes : "c",
+                        children : []
+                      },
+                      {
+                        open : false,
+                        label: "Folders",
+                        checked : false,
+                        notes : "d",
+                        children : []
                       }
                     ]
                   }

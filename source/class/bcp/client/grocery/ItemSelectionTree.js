@@ -64,63 +64,62 @@ qx.Class.define("bcp.client.grocery.ItemSelectionTree",
      */
     configureTriState(item)
     {
-      // let             i;
-      // let             children;
-      // let             child;
+      let             i;
+      let             child;
+      let             children;
 
-      // item.getModel = () => this;
+      item.getModel = () => item;
 
-      // if (item.getChildren != null)
-      // {
-      //   children = item.getChildren();
-      //   for (i = 0; i < children.getLength(); i++)
-      //   {
-      //     child = children.getItem(i);
-      //     this.configureTriState(child);
+      if (item.getChildren)
+      {
+        children = item.getChildren();
+        for (i = 0; i < children.getLength(); i++)
+        {
+          child = children.getItem(i);
+          this.configureTriState(child);
 
-      //     // bind parent with child
-      //     item.bind(
-      //       "checked",
-      //       child,
-      //       "checked",
-      //       {
-      //         converter(value, child)
-      //         {
-      //           // when parent is set to null than the child should
-      //           // keep it's value
-      //           if (value === null)
-      //           {
-      //             return child.getChecked();
-      //           }
+          // bind parent with child
+          item.bind(
+            "checked",
+            child,
+            "checked",
+            {
+              converter(value, child)
+              {
+                // when parent is set to null than the child should keep
+                // it's value
+                if (value === null)
+                {
+                  return child.getChecked();
+                }
+                return value;
+              }
+            });
 
-      //           return !!value;
-      //         }
-      //       });
+          // bind child with parent
+          child.bind(
+            "checked",
+            item,
+            "checked",
+            {
+              converter(value, parent)
+              {
+                let             children;
+                let             isAllChecked;
+                let             isOneChecked;
 
-      //     // bind child with parent
-      //     child.bind(
-      //       "checked",
-      //       item,
-      //       "checked",
-      //       {
-      //         converter(value, parent)
-      //         {
-      //           let             isAllChecked;
-      //           let             isOneChecked;
+                children = parent.getChildren().toArray();
 
-      //           children = parent.getChildren().toArray();
+                isAllChecked = children.every(item => item.getChecked());
+                isOneChecked = children.some(
+                  item => item.getChecked() || item.getChecked() === null);
 
-      //           isAllChecked = children.every(item => item.getChecked());
-      //           isOneChecked =
-      //             children.some(
-      //               item => item.getChecked() || item.getChecked() === null);
-
-      //           // Set triState (on parent node) when one child is checked
-      //           return isOneChecked ? (isAllChecked ? true : null) : false;
-      //         }
-      //       });
-      //   }
-      // }
+                // Set triState (on parent node) when one child is checked
+                return isOneChecked ? (isAllChecked ? true : null) : false;
+              }
+            });
+        }
+      }
     },
 
     // delegate implementation
