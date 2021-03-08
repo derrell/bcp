@@ -19,32 +19,31 @@ qx.Class.define("bcp.client.grocery.Item",
   {
     checked :
     {
-      check : "Boolean",
-      event: "changeChecked",
+      check    : "Boolean",
+      event    : "changeChecked",
       nullable : true
     },
 
     notes :
     {
-      check : "String",
-      event: "changeNotes",
+      check    : "String",
+      event    : "changeNotes",
       nullable : true
     }
   },
 
   members :
   {
-    _addWidgets : function() {
+    _notes : null,
+
+    _addWidgets : function()
+    {
       let             checkbox;
       let             notes;
 
       // Tree indentation
       this.addSpacer();
       this.addOpenButton();
-
-      // Tree icon
-//      this.addIcon();
-//      this.setIcon(null);
 
       // Selection checkbox
       checkbox = new qx.ui.form.CheckBox();
@@ -62,7 +61,7 @@ qx.Class.define("bcp.client.grocery.Item",
       this.addWidget(new qx.ui.core.Spacer(), {flex: 1});
 
       // Notes
-      notes = new qx.ui.form.TextField();
+      notes = this._notes = new qx.ui.form.TextField();
       this.bind("notes", notes, "value");
       notes.bind("value", this, "notes");
       notes.set(
@@ -72,6 +71,11 @@ qx.Class.define("bcp.client.grocery.Item",
           liveUpdate : true
         });
       this.addWidget(notes);
+    },
+
+    getNotesWidget()
+    {
+      return this._notes;
     }
   }
 });

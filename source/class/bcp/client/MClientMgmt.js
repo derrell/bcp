@@ -817,15 +817,13 @@ qx.Mixin.define("bcp.client.MClientMgmt",
                         open : false,
                         label: "Files",
                         checked : true,
-                        notes : "c",
-                        children : []
+                        notes : "c"
                       },
                       {
                         open : false,
                         label: "Folders",
                         checked : false,
-                        notes : "d",
-                        children : []
+                        notes : "d"
                       }
                     ]
                   }

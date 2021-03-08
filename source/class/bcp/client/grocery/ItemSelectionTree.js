@@ -122,6 +122,13 @@ qx.Class.define("bcp.client.grocery.ItemSelectionTree",
       }
     },
 
+
+    // delegate implementation
+    createItem()
+    {
+      return new bcp.client.grocery.Item();
+    },
+
     // delegate implementation
     bindItem(controller, item, id)
     {
@@ -133,9 +140,11 @@ qx.Class.define("bcp.client.grocery.ItemSelectionTree",
     },
 
     // delegate implementation
-    createItem()
+    configureItem(item)
     {
-      return new bcp.client.grocery.Item();
+      console.log("item=", item);
+      item.getNotesWidget().setVisibility(
+        item.getChildren ? "hidden" : "visible");
     }
   }
 });
