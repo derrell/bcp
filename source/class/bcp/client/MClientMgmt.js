@@ -793,6 +793,46 @@ qx.Mixin.define("bcp.client.MClientMgmt",
               column   : 3,
               rowspan  : 20
             }
+          },
+          grocery_items :
+          {
+            type       : "groceryItems",
+            label      : null,
+            value      :
+              {
+                open : true,
+                label: "Root",
+                checked : false,
+                notes : "a",
+                children :
+                [
+                  {
+                    open : true,
+                    label: "Desktop",
+                    checked : false,
+                    notes : "b",
+                    children:
+                    [
+                      {
+                        open : false,
+                        label: "Files",
+                        checked : true,
+                        notes : "c"
+                      }
+                    ]
+                  }
+                ]
+              },
+            properties :
+            {
+              tabIndex      : null
+            },
+            userdata   :
+            {
+              row      : 0,
+              column   : 4,
+              rowspan  : 20
+            }
           }
         };
 
@@ -989,11 +1029,7 @@ qx.Mixin.define("bcp.client.MClientMgmt",
           layout.setColumnMinWidth(col(3), 20);
 
           layout.setColumnMaxWidth(col(4), this.getLabelColumnWidth());
-          layout.setColumnWidth(col(4), this.getLabelColumnWidth());
           layout.setColumnAlign(col(4), "right", "top");
-
-          layout.setColumnFlex(col(5), 1);
-          layout.setColumnAlign(col(5), "left", "top");
 
           renderer._setLayout(layout);
 
