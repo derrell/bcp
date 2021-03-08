@@ -53,7 +53,6 @@ qx.Mixin.define("bcp.client.MGroceryList",
       let             custom;
       let             behavior;
       let             cellRenderer;
-      let             categoryEditor;
 
       // Generate the label for this tab
       this._tabLabelGrocery = this.underlineChar("Groceries", 2);
@@ -258,7 +257,7 @@ qx.Mixin.define("bcp.client.MGroceryList",
               .then(
                 (categories) =>
                 {
-                  categoryEditor =
+                  let categoryEditor =
                     new bcp.client.grocery.CategoryEditor(
                       qx.data.marshal.Json.createModel(categories, true));
                   pageCategories.add(categoryEditor, { flex : 1 });
