@@ -328,6 +328,10 @@ qx.Mixin.define("bcp.client.MGroceries",
             properties :
             {
               tabIndex   : 1
+            },
+            userdata :
+            {
+              row        : 1
             }
           },
           perishable :
@@ -460,6 +464,28 @@ qx.Mixin.define("bcp.client.MGroceries",
             {
               tabIndex   : 8
             }
+          },
+          category_label :
+          {
+            type       : "Label",
+            label      : "Category:",
+            userdata   :
+            {
+              row        : 0,
+              column     : 2
+            }
+          },
+          category :
+          {
+            type       : "groceryCategories",
+            label      : null,
+            value      : 0,
+            userdata   :
+            {
+              row        : 1,
+              column     : 1,
+              rowspan    : 9
+            }
           }
         };
 
@@ -570,7 +596,6 @@ qx.Mixin.define("bcp.client.MGroceries",
         },
         setupFormRendererFunction : function(form) {
           var         renderer = new qxl.dialog.FormRenderer(form);
-/*
           var         renderer = new qxl.dialog.MultiColumnFormRenderer(form);
           var         layout = new qx.ui.layout.Grid();
           const       col = renderer.column;
@@ -581,25 +606,14 @@ qx.Mixin.define("bcp.client.MGroceries",
           layout.setColumnWidth(col(0), this.getLabelColumnWidth());
           layout.setColumnAlign(col(0), "right", "top");
 
-          layout.setColumnFlex(col(1), 1);
+          layout.setColumnMaxWidth(col(1), 1);
+          layout.setColumnWidth(col(1), 10);
           layout.setColumnAlign(col(1), "left", "top");
 
-          layout.setColumnMaxWidth(col(2), this.getLabelColumnWidth());
-          layout.setColumnWidth(col(2), this.getLabelColumnWidth());
-          layout.setColumnAlign(col(2), "right", "top");
-
-          layout.setColumnFlex(col(3), 1);
-          layout.setColumnAlign(col(3), "left", "top");
-
-          layout.setColumnMaxWidth(col(4), this.getLabelColumnWidth());
-          layout.setColumnWidth(col(4), this.getLabelColumnWidth());
-          layout.setColumnAlign(col(4), "right", "top");
-
-          layout.setColumnFlex(col(5), 1);
-          layout.setColumnAlign(col(5), "left", "top");
+          layout.setColumnFlex(col(2), 1);
+          layout.setColumnAlign(col(2), "left", "top");
 
           renderer._setLayout(layout);
-*/
 
           // Give 'em what they came for
           return renderer;

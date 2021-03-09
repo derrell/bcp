@@ -67,6 +67,12 @@ qx.Class.define("bcp.client.grocery.CategoryEditor",
           return;
         }
 
+        // Ignore drop onto something we can't drop onto
+        if (! item.getModel)
+        {
+          return;
+        }
+
         // Get the model of the item on which we'll add the dropped one.
         model = item.getModel();
 
@@ -103,6 +109,7 @@ qx.Class.define("bcp.client.grocery.CategoryEditor",
                    {
                      "id": null,
                      "name": name,
+                     "open": true,
                      "children": []
                    });
                  resolve(newItem);
@@ -158,7 +165,8 @@ qx.Class.define("bcp.client.grocery.CategoryEditor",
                 });
             }
 
-//          this.showModel();
+            tree.buildLookupTable();
+//            this._showModel();
           });
       });
 
