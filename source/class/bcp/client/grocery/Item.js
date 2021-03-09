@@ -76,7 +76,7 @@ qx.Class.define("bcp.client.grocery.Item",
         notes,
         "visibility",
         {
-          converter : function(value, obj, source, target)
+          converter : function(value, model, source, target)
           {
             return value ? value : "hidden"; // let null mean hidden
           }
