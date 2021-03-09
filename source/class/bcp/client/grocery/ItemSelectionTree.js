@@ -68,8 +68,6 @@ qx.Class.define("bcp.client.grocery.ItemSelectionTree",
       let             child;
       let             children;
 
-      item.getModel = () => item;
-
       if (item.getChildren)
       {
         children = item.getChildren();
@@ -84,13 +82,13 @@ qx.Class.define("bcp.client.grocery.ItemSelectionTree",
             child,
             "checked",
             {
-              converter(value, child)
+              converter(value, child, source, target)
               {
                 // when parent is set to null than the child should keep
                 // it's value
                 if (value === null)
                 {
-                  return child.getChecked();
+                  return target.getChecked();
                 }
                 return value;
               }
@@ -102,13 +100,13 @@ qx.Class.define("bcp.client.grocery.ItemSelectionTree",
             item,
             "checked",
             {
-              converter(value, parent)
+              converter(value, parent, source, target)
               {
                 let             children;
                 let             isAllChecked;
                 let             isOneChecked;
 
-                children = parent.getChildren().toArray();
+                children = target.getChildren().toArray();
 
                 isAllChecked = children.every(item => item.getChecked());
                 isOneChecked = children.some(
@@ -137,14 +135,8 @@ qx.Class.define("bcp.client.grocery.ItemSelectionTree",
       controller.bindPropertyReverse("checked", "checked", null, item, id);
       controller.bindProperty("notes", "notes", null, item, id);
       controller.bindPropertyReverse("notes", "notes", null, item, id);
-    },
-
-    // delegate implementation
-    configureItem(item)
-    {
-      console.log("item=", item);
-      item.getNotesWidget().setVisibility(
-        item.getChildren ? "hidden" : "visible");
+      controller.bindProperty(
+        "notesVisibility", "notesVisibility", null, item, id);
     }
   }
 });

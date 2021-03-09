@@ -13,7 +13,7 @@
  */
 qx.Class.define("bcp.client.grocery.Item",
 {
-  extend : qx.ui.tree.VirtualTreeItem,
+  extend  : qx.ui.tree.VirtualTreeItem,
 
   properties :
   {
@@ -29,6 +29,13 @@ qx.Class.define("bcp.client.grocery.Item",
       check    : "String",
       event    : "changeNotes",
       nullable : true
+    },
+
+    notesVisibility :
+    {
+      check    : "String",
+      event    : "changeNotesVisible",
+      nullable : true
     }
   },
 
@@ -36,7 +43,7 @@ qx.Class.define("bcp.client.grocery.Item",
   {
     _notes : null,
 
-    _addWidgets : function()
+    _addWidgets()
     {
       let             checkbox;
       let             notes;
@@ -64,6 +71,16 @@ qx.Class.define("bcp.client.grocery.Item",
       notes = this._notes = new qx.ui.form.TextField();
       this.bind("notes", notes, "value");
       notes.bind("value", this, "notes");
+      this.bind(
+        "notesVisibility",
+        notes,
+        "visibility",
+        {
+          converter : function(value, obj, source, target)
+          {
+            return value ? value : "hidden"; // let null mean hidden
+          }
+        });
       notes.set(
         {
           width      : 200,
