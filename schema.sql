@@ -158,19 +158,18 @@ INSERT OR IGNORE INTO GroceryCategory
 --                           ON DELETE CASCADE
 --                           ON UPDATE CASCADE
 -- );
---
--- CREATE TABLE GroceryCategory
+
+-- CREATE TABLE GroceryAttribute
 -- (
---   catgory_name      VARCHAR PRIMARY KEY NOT NULL, -- e.g., "meat", "fish"
---   description       VARCHAR                       -- optional
+--   attribute_name    VARCHAR PRIMARY KEY NOT NULL, --e.g., gluten-free
 -- );
 
--- CREATE TABLE GroceryItemCategoryMap
+-- CREATE TABLE GroceryItemAttributeMap
 -- (
 --   grocery_item      INTEGER REFERENCES GroceryItem
 --                             ON DELETE CASCADE
 --                             ON UPDATE CASCADE,
---   category          VARCHAR REFERENCES GroceryCategory,
+--   attribute         VARCHAR REFERENCES GroceryAttribute,
 --                             ON DELETE CASCADE,
 --                             ON UPDATE CASCADE
 -- );
