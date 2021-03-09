@@ -536,6 +536,11 @@ qx.Mixin.define("bcp.client.MReports",
         win.document.write(`<h2>${subtitle}</h2>`);
       }
 
+      if (this._specialSiteId)
+      {
+        win.document.write(`<h2>${this._specialSiteId}</h2>`);
+      }
+
       win.document.write(
         [
           "    <table>"

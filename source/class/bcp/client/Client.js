@@ -38,6 +38,7 @@ qx.Class.define("bcp.client.Client",
     _me             : null,
     _tabView        : null,
     _mostRecentMotd : "",
+    _specialSiteId  : "",
 
     /**
      * @ignore(WebSocket)
@@ -63,6 +64,7 @@ qx.Class.define("bcp.client.Client",
       let             userList;
       let             createWebSocket;
       let             ws;
+      let             notProduction = "";
 
       this.base(arguments);
 
@@ -100,8 +102,31 @@ qx.Class.define("bcp.client.Client",
       // Spread out the title
       header.add(new qx.ui.core.Spacer(), { flex : 1 });
 
+      // Determine if this is not a production environment, so we can
+      // label it as such
+      if (window.location.hostname == "localhost")
+      {
+        this._specialSiteId =
+          [
+            "<span style='font-weight: bold; color: magenta;'>",
+            "(development)",
+            "</span>"
+          ].join("");
+      }
+      else if (window.location.port != 3000)
+      {
+        this._specialSiteId =
+          [
+            "<span style='font-weight: bold; color: red;'>",
+            "Demo Only",
+            "</span>"
+          ].join("");
+      }
+
+      notProduction = "<br>" + this._specialSiteId;
+
       label = new qx.ui.basic.Label(
-        "Billerica Community Pantry<br>Management Console");
+        "Billerica Community Pantry<br>Management Console" + notProduction);
       label.set(
         {
           paddingTop : 20,
