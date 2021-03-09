@@ -314,6 +314,21 @@ qx.Mixin.define("bcp.client.MGroceries",
         ? "<span style='font-weight: bold;'>New Grocery Item</span>"
         : "";
 
+      // this.rpc(
+      //   "getClientGroceryItems",
+      //   [
+      //     {
+      //       family_name :
+      //     }
+      //   ])
+      //   .catch(
+      //     (e) =>
+      //     {
+      //       console.warn("Error deleting grocery item:", e);
+      //       qxl.dialog.Dialog.error(
+      //         `Error deleting grocery item: ${e}`);
+      //     })
+
       formData =
         {
           item :
@@ -736,28 +751,74 @@ qx.Mixin.define("bcp.client.MGroceries",
     async _getGroceryCategoryList()
     {
       return this.rpc("getGroceryCategoryList", [])
-        .then(
-          (result) =>
-          {
-            let             categories = [];
-            let             idMap = {};
+        .then(result => this._groceryListToTreeData(result));
+    },
 
-            result.forEach(
+    async _groceryListToTreeData(list)
+    {
+      let             idMap = {};
+
+      return Promise.resolve(list)
+        .then(
+          (list) =>
+          {
+            let             treeData = [];
+
+            list.forEach(
               (item) =>
               {
                 let             parentItem;
 
-                // Add this node to our map so we can find it if it's
-                // any subsequent item's parent
-                idMap[item.id] = item;
+                // If this is a category, it has members id, parent, name;
+                // If it's an item, it has members category and fmaily_name
+                if ("id" in item && "parent" in item)
+                {
+                  // It's a category
 
-                // We should always find the parent in the map, unless
-                // it's the root item
-                parentItem = idMap[item.parent];
+                  // Add this node to our map so we can find it if it's
+                  // any subsequent item's parent
+                  idMap[item.id] = item;
 
-                // Add a children array and open property.
-                item.children = [];
-                item.open = true;
+                  // We should always find the parent in the map, unless
+                  // it's the root item
+                  parentItem = idMap[item.parent];
+
+                  // Add a children array and open property.
+                  item.children = [];
+                  item.label = item.name;
+                  item.notes = "";
+                  item.notesVisibility = "hidden";
+                  item.checked = null;
+                  item.open = true;
+                }
+                else
+                {
+                  // It's an item
+
+                  parentItem = idMap[item.category];
+                  item.parent = item.category;
+                  item.label = item.item;
+                  item.notesVisibility = "visible";
+                  item.checked = !! item.wanted;
+                  item.open = false;
+
+                  for (let field in item)
+                  {
+                    if (!
+                        [
+                          "id",
+                          "parent",
+                          "name",
+                          "label", // identical to name; both needed
+                          "checked",
+                          "notes",
+                          "notesVisibility"
+                        ].includes(field))
+                    {
+                      delete item[field];
+                    }
+                  }
+                }
 
                 // If found, add this item to its parent's children
                 if (parentItem)
@@ -767,14 +828,14 @@ qx.Mixin.define("bcp.client.MGroceries",
                 else
                 {
                   // It's the root item
-                  categories.push(item);
+                  treeData.push(item);
                 }
               });
 
-            return categories;
+            return treeData;
           })
         .then(
-          (categories) =>
+          (treeData) =>
           {
             const sorter =
               (node) =>
@@ -790,10 +851,10 @@ qx.Mixin.define("bcp.client.MGroceries",
                   (a, b) =>  a.name < b.name ? -1 : a.name > b.name ? 1 : 0);
               };
 
-            // If there are any categories, sort them, recursively
-            categories.length > 0 && sorter(categories[0]);
+            // If there are any nodes, sort them, recursively
+            treeData.length > 0 && sorter(treeData[0]);
 
-            return categories;
+            return treeData;
           });
     }
   }

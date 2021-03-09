@@ -549,727 +549,770 @@ qx.Mixin.define("bcp.client.MClientMgmt",
         ? "<span style='font-weight: bold;'>New Client</span>"
         : "";
 
-      formData =
-        {
-          family_name:
+      this.rpc(
+        "getClientGrocerySelections",
+        [
           {
-            type       : "TextField",
-            label      : "Family Name",
-            value      : clientInfo.family_name || "",
-            validation :
-            {
-              required   : true
-            },
-            properties :
-            {
-              tabIndex   : 1
-            }
-          },
-          address_default :
+            family_name : clientInfo.family_name || null
+          }
+        ])
+        .then(
+          (results) =>
           {
-            type       : "TextArea",
-            label      : "Address",
-            lines      : 3,
-            value      : clientInfo.address_default || "",
-            userdata   :
-            {
-              rowspan    : 2
-            },
-            properties :
-            {
-              tabIndex   : 2
-            }
-          },
-          phone :
+            return this._groceryListToTreeData(
+              results.categories.concat(results.items));
+          })
+        .catch(
+          (e) =>
           {
-            type       : "TextField",
-            label      : "Phone",
-            value      : clientInfo.phone || "",
-            properties :
-            {
-              tabIndex   : 3
-            }
-          },
-          email :
+            console.warn("Error getting client grocery items selections:", e);
+            qxl.dialog.Dialog.error(
+              `Error getting client grocery selections: ${e}`);
+          })
+
+        .then(
+          (groceryTreeData) =>
           {
-            type       : "TextField",
-            label      : "Email",
-            value      : clientInfo.email || "",
-            properties :
-            {
-              tabIndex   : 4
-            }
-          },
-          ethnicity :
-          {
-            type       : "SelectBox",
-            label      : "Ethnicity",
-            value      : clientInfo.ethnicity || "Undeclared",
-            options :
-            [
-              { label : "Undeclared",       value : "Undeclared" },
-              { label : "African American", value : "African American" },
-              { label : "Amer. Indian",     value : "Amer. Indian" },
-              { label : "Asian",            value : "Asian" },
-              { label : "Hispanic",         value : "Hispanic" },
-              { label : "White",            value : "White" }
-            ],
-            properties :
-            {
-              tabIndex   : 5
-            }
-          },
-          income_source :
-          {
-            type       : "TextField",
-            label      : "Income source",
-            value      : clientInfo.income_source || "",
-            properties :
-            {
-              tabIndex   : 6
-            }
-          },
-          income_amount :
-          {
-            type       : "TextField",
-            label      : "Income amount",
-            value      : clientInfo.income_amount || "",
-            properties :
-            {
-              tabIndex   : 7
-            }
-          },
-          pet_types :
-          {
-            type       : "TextField",
-            label      : "Pet types",
-            value      : clientInfo.pet_types || "",
-            properties :
-            {
-              tabIndex   : 8
-            }
-          },
-          notes_default :
-          {
-            type       : "TextArea",
-            label      : "Notes",
-            lines      : 3,
-            value      : clientInfo.notes_default || "",
-            userdata   :
-            {
-              rowspan    : 2
-            },
-            properties :
-            {
-              tabIndex   : 9
-            }
-          },
-          verified :
-          {
-            type       : "Checkbox",
-            label      : "Verified",
-            value      : clientInfo.verified || false,
-            properties :
-            {
-              tabIndex   : null
-            }
-          },
-          count_senior :
-          {
-            type      : "spinner",
-            label     : "# of seniors (age 65+)",
-            value     : clientInfo.count_senior || 0,
-            min       : 0,
-            step      : 1,
-            userdata  :
-            {
-              row       : 0,
-              column    : 2
-            },
-            properties :
-            {
-              tabIndex   : 10
-            }
-          },
-          count_adult :
-          {
-            type      : "spinner",
-            label     : "# of adults (age 18-64)",
-            value     : clientInfo.count_adult || 0,
-            min       : 0,
-            step      : 1,
-            properties :
-            {
-              tabIndex   : 11
-            }
-          },
-          count_child :
-          {
-            type      : "spinner",
-            label     : "# of children (age 0-17)",
-            value     : clientInfo.count_child || 0,
-            min       : 0,
-            step      : 1,
-            properties :
-            {
-              tabIndex   : 12
-            }
-          },
-          count_sex_male :
-          {
-            type      : "spinner",
-            label     : "# of males",
-            value     : clientInfo.count_sex_male || 0,
-            min       : 0,
-            step      : 1,
-            userdata  :
-            {
-              row       : 4
-            },
-            properties :
-            {
-              tabIndex   : 13
-            }
-          },
-          count_sex_female :
-          {
-            type      : "spinner",
-            label     : "# of females",
-            value     : clientInfo.count_sex_female || 0,
-            min       : 0,
-            step      : 1,
-            properties :
-            {
-              tabIndex   : 14
-            }
-          },
-          count_sex_other :
-          {
-            type      : "spinner",
-            label     : "# of other genders",
-            value     : clientInfo.count_sex_other || 0,
-            min       : 0,
-            step      : 1,
-            properties :
-            {
-              tabIndex   : 15
-            }
-          },
-          count_veteran :
-          {
-            type      : "spinner",
-            label     : "# of veterans",
-            value     : clientInfo.count_veteran || 0,
-            min       : 0,
-            step      : 1,
-            userdata  :
-            {
-              row       : 8
-            },
-            properties :
-            {
-              tabIndex   : 16
-            }
-          },
-          default_appointment :
-          {
-            type       : "appointments",
-            label      : null,
-            value      : (
-              clientInfo.appt_time_default
-              ? {
-                  day  : clientInfo.appt_day_default,
-                  time : clientInfo.appt_time_default
-                }
-              : null),
-            properties :
-            {
-              showScheduled : false,
-              tabIndex      : null
-            },
-            userdata   :
-            {
-              row      : 0,
-              column   : 3,
-              rowspan  : 20
-            }
-          },
-          grocery_items :
-          {
-            type       : "groceryItems",
-            label      : null,
-            value      :
+            formData =
               {
-                open : true,
-                label: "Root",
-                checked : null,
-                notes : "a",
-                notesVisibility : "hidden",
-                children :
-                [
-                  {
-                    open : true,
-                    label: "Desktop",
-                    checked : null,
-                    notes : "b",
-                    notesVisibility : "hidden",
-                    children:
-                    [
-                      {
-                        open : false,
-                        label: "Files",
-                        checked : true,
-                        notes : "c",
-                        notesVisibility : "visible"
-                      },
-                      {
-                        open : false,
-                        label: "Folders",
-                        checked : false,
-                        notes : "d",
-                        notesVisibility : "visible"
-                      }
-                    ]
-                  }
-                ]
-              },
-            properties :
-            {
-              tabIndex      : null
-            },
-            userdata   :
-            {
-              row      : 0,
-              column   : 4,
-              rowspan  : 20
-            }
-          }
-        };
-
-      form = new qxl.dialog.Form(
-      {
-        caption                   : caption,
-        message                   : message,
-        context                   : this,
-        beforeFormFunction : function(container)
-        {
-          let             hbox;
-          let             clearAppointment;
-          let             useDefaultAppointment;
-
-          // Get the hbox in which the message label is placed
-          hbox = container.getUserData("messageHBox");
-
-          // Right-justify the button
-          hbox.add(new qx.ui.core.Spacer(), { flex : 1 });
-
-          // Create a button to clear any existing appointment
-          clearAppointment = new qx.ui.form.Button(
-            "Remove default appointment");
-          hbox.add(clearAppointment);
-          clearAppointment.addListener(
-            "execute",
-            function(e)
-            {
-              const           formElements = form._formElements;
-              formElements.default_appointment.set(
+                family_name:
                 {
-                  value : null
-                });
-            });
-        },
-        afterButtonsFunction : function(buttonBar, form)
-        {
-          let             butDelete;
-
-          // If the user doesn't have permission to delete (level 60),
-          // then there's no reason to add a Delete button
-          if (_this._me.permissionLevel < 60)
-          {
-            return;
-          }
-
-          // Create the Delete button
-          butDelete = new qx.ui.form.Button("Delete");
-          butDelete.setWidth(100);
-
-          butDelete.addListener(
-            "execute",
-            () =>
-            {
-              let             confirm;
-
-               confirm = qxl.dialog.Dialog.confirm(
-                 "Are you absolutely sure you want to delete this client? " +
-                   "This will delete all Fulfillment history for this " +
-                   "client as well.",
-                (result) =>
-                {
-                  // If they didn't confirm, we have nothing to do
-                  if (! result)
+                  type       : "TextField",
+                  label      : "Family Name",
+                  value      : clientInfo.family_name || "",
+                  validation :
                   {
-                    return;
+                    required   : true
+                  },
+                  properties :
+                  {
+                    tabIndex   : 1
                   }
-
-                  // Do normal form cancellation
-                  form._cancelButton.execute();
-
-                  // Issue the request to delete this client
-                  _this.rpc(
-                    "deleteClient",
-                    [
-                      {
-                        family_name  : clientInfo.family_name
-                      }
-                    ])
-                    .catch(
-                      (e) =>
-                      {
-                        console.warn("Error deleting client:", e);
-                        qxl.dialog.Dialog.error(
-                          `Error deleting client: ${e}`);
-                      })
-
-                    // Re-retrieve the client list
-                    .then(
-                      () =>
-                      {
-                        this.rpc("getClientList", [])
-                          .then(
-                            (result) =>
-                            {
-                              if (! result)
-                              {
-                                return;
-                              }
-
-                              // Add the provided client list, munging
-                              // column data as necessary
-                              result = result.map(
-                                (client) =>
-                                {
-                                  this._mungeClient(client);
-                                  return client;
-                                });
-                              this._tm.setDataAsMapArray(result, true);
-
-                              // Sort initially by the Family column
-                              this._tm.sortByColumn(
-                                this._tm.getColumnIndexById("family_name"),
-                                true);
-
-                              // Build the search trees
-                              this._generateTrieSearch();
-                            })
-                          .catch(
-                            (e) =>
-                            {
-                              console.warn("getClientList:", e);
-                              qxl.dialog.Dialog.alert(
-                                "Could not retrieve client list: " +
-                                  e.message);
-                            });
-                      });
                 },
-                null,
-                "Confirm");
-              confirm.setWidth(500);
-            });
-
-          // Add the delete button at far left, and add spacer to
-          // center Save/Cancel buttons
-          buttonBar.addAt(butDelete, 0);
-          buttonBar.addAt(new qx.ui.core.Spacer(), 1, { flex : 1 });
-
-          // Add corresponding space on right side of Save/Cancel buttons
-          buttonBar.add(new qx.ui.core.Spacer(), { flex : 1});
-          buttonBar.add(new qx.ui.core.Spacer(100));
-        },
-        afterFormFunction : function(container, form)
-        {
-          this._wrongCountsWarning = new qx.ui.basic.Label(
-            [
-              "<span style='color: red;'>",
-              "The counts by age do not match counts by sex",
-              "</span>"
-            ].join(""));
-          container.add(this._wrongCountsWarning);
-          this._wrongCountsWarning.setRich(true);
-          this._wrongCountsWarning.exclude();
-
-          this._noCountsWarning = new qx.ui.basic.Label(
-            [
-              "<span style='color: red;'>",
-              "Family counts have not yet been entered",
-              "</span>"
-            ].join(""));
-          container.add(this._noCountsWarning);
-          this._noCountsWarning.setRich(true);
-          this._noCountsWarning.exclude();
-
-          this._veteranWarning = new qx.ui.basic.Label(
-            [
-              "<span style='color: red;'>",
-              "The number of veterans exceeds the number of family members",
-              "</span>"
-            ].join(""));
-          container.add(this._veteranWarning);
-          this._veteranWarning.setRich(true);
-          this._veteranWarning.exclude();
-        },
-        setupFormRendererFunction : function(form) {
-          var         renderer = new qxl.dialog.MultiColumnFormRenderer(form);
-          var         layout = new qx.ui.layout.Grid();
-          const       col = renderer.column;
-
-          layout.setSpacing(6);
-
-          layout.setColumnMaxWidth(col(0), this.getLabelColumnWidth());
-          layout.setColumnWidth(col(0), this.getLabelColumnWidth());
-          layout.setColumnAlign(col(0), "right", "top");
-
-          layout.setColumnFlex(col(1), 1);
-          layout.setColumnAlign(col(1), "left", "top");
-
-          layout.setColumnMaxWidth(col(2), this.getLabelColumnWidth());
-          layout.setColumnWidth(col(2), this.getLabelColumnWidth());
-          layout.setColumnAlign(col(2), "right", "top");
-
-          layout.setColumnAlign(col(3), "left", "top");
-          layout.setColumnMinWidth(col(3), 20);
-
-          layout.setColumnMaxWidth(col(4), this.getLabelColumnWidth());
-          layout.setColumnAlign(col(4), "right", "top");
-
-          renderer._setLayout(layout);
-
-          // Give 'em what they came for
-          return renderer;
-        },
-        finalizeFunction : function(form, formDialog)
-        {
-          let         f;
-          let         manager;
-
-          //
-          // Use a validation manager. Ensure that the entered data is
-          // consistent, and that all required fields are entered.
-          // When valid, enable the Save button.
-          //
-
-          // Instantiate a validation manager
-          form._validationManager = manager =
-            new qx.ui.form.validation.Manager();
-
-          // Prepare a validation function
-          f = function()
-          {
-            let             familyName;
-            let             ageSenior;
-            let             ageAdult;
-            let             ageChild;
-            let             sexMale;
-            let             sexFemale;
-            let             sexOther;
-            let             veteran;
-
-            // Enable the Save button if the form validates
-            manager.bind(
-              "valid",
-              formDialog._okButton,
-              "enabled", 
-             {
-                converter: function(value)
+                address_default :
                 {
-                  return value || false;
+                  type       : "TextArea",
+                  label      : "Address",
+                  lines      : 3,
+                  value      : clientInfo.address_default || "",
+                  userdata   :
+                  {
+                    rowspan    : 2
+                  },
+                  properties :
+                  {
+                    tabIndex   : 2
+                  }
+                },
+                phone :
+                {
+                  type       : "TextField",
+                  label      : "Phone",
+                  value      : clientInfo.phone || "",
+                  properties :
+                  {
+                    tabIndex   : 3
+                  }
+                },
+                email :
+                {
+                  type       : "TextField",
+                  label      : "Email",
+                  value      : clientInfo.email || "",
+                  properties :
+                  {
+                    tabIndex   : 4
+                  }
+                },
+                ethnicity :
+                {
+                  type       : "SelectBox",
+                  label      : "Ethnicity",
+                  value      : clientInfo.ethnicity || "Undeclared",
+                  options :
+                  [
+                    { label : "Undeclared",       value : "Undeclared" },
+                    { label : "African American", value : "African American" },
+                    { label : "Amer. Indian",     value : "Amer. Indian" },
+                    { label : "Asian",            value : "Asian" },
+                    { label : "Hispanic",         value : "Hispanic" },
+                    { label : "White",            value : "White" }
+                  ],
+                  properties :
+                  {
+                    tabIndex   : 5
+                  }
+                },
+                income_source :
+                {
+                  type       : "TextField",
+                  label      : "Income source",
+                  value      : clientInfo.income_source || "",
+                  properties :
+                  {
+                    tabIndex   : 6
+                  }
+                },
+                income_amount :
+                {
+                  type       : "TextField",
+                  label      : "Income amount",
+                  value      : clientInfo.income_amount || "",
+                  properties :
+                  {
+                    tabIndex   : 7
+                  }
+                },
+                pet_types :
+                {
+                  type       : "TextField",
+                  label      : "Pet types",
+                  value      : clientInfo.pet_types || "",
+                  properties :
+                  {
+                    tabIndex   : 8
+                  }
+                },
+                notes_default :
+                {
+                  type       : "TextArea",
+                  label      : "Notes",
+                  lines      : 3,
+                  value      : clientInfo.notes_default || "",
+                  userdata   :
+                  {
+                    rowspan    : 2
+                  },
+                  properties :
+                  {
+                    tabIndex   : 9
+                  }
+                },
+                verified :
+                {
+                  type       : "Checkbox",
+                  label      : "Verified",
+                  value      : clientInfo.verified || false,
+                  properties :
+                  {
+                    tabIndex   : null
+                  }
+                },
+                count_senior :
+                {
+                  type      : "spinner",
+                  label     : "# of seniors (age 65+)",
+                  value     : clientInfo.count_senior || 0,
+                  min       : 0,
+                  step      : 1,
+                  userdata  :
+                  {
+                    row       : 0,
+                    column    : 2
+                  },
+                  properties :
+                  {
+                    tabIndex   : 10
+                  }
+                },
+                count_adult :
+                {
+                  type      : "spinner",
+                  label     : "# of adults (age 18-64)",
+                  value     : clientInfo.count_adult || 0,
+                  min       : 0,
+                  step      : 1,
+                  properties :
+                  {
+                    tabIndex   : 11
+                  }
+                },
+                count_child :
+                {
+                  type      : "spinner",
+                  label     : "# of children (age 0-17)",
+                  value     : clientInfo.count_child || 0,
+                  min       : 0,
+                  step      : 1,
+                  properties :
+                  {
+                    tabIndex   : 12
+                  }
+                },
+                count_sex_male :
+                {
+                  type      : "spinner",
+                  label     : "# of males",
+                  value     : clientInfo.count_sex_male || 0,
+                  min       : 0,
+                  step      : 1,
+                  userdata  :
+                  {
+                    row       : 4
+                  },
+                  properties :
+                  {
+                    tabIndex   : 13
+                  }
+                },
+                count_sex_female :
+                {
+                  type      : "spinner",
+                  label     : "# of females",
+                  value     : clientInfo.count_sex_female || 0,
+                  min       : 0,
+                  step      : 1,
+                  properties :
+                  {
+                    tabIndex   : 14
+                  }
+                },
+                count_sex_other :
+                {
+                  type      : "spinner",
+                  label     : "# of other genders",
+                  value     : clientInfo.count_sex_other || 0,
+                  min       : 0,
+                  step      : 1,
+                  properties :
+                  {
+                    tabIndex   : 15
+                  }
+                },
+                count_veteran :
+                {
+                  type      : "spinner",
+                  label     : "# of veterans",
+                  value     : clientInfo.count_veteran || 0,
+                  min       : 0,
+                  step      : 1,
+                  userdata  :
+                  {
+                    row       : 8
+                  },
+                  properties :
+                  {
+                    tabIndex   : 16
+                  }
+                },
+                default_appointment :
+                {
+                  type       : "appointments",
+                  label      : null,
+                  value      : (
+                    clientInfo.appt_time_default
+                    ? {
+                        day  : clientInfo.appt_day_default,
+                        time : clientInfo.appt_time_default
+                      }
+                    : null),
+                  properties :
+                  {
+                    showScheduled : false,
+                    tabIndex      : null
+                  },
+                  userdata   :
+                  {
+                    row      : 0,
+                    column   : 3,
+                    rowspan  : 20
+                  }
+                },
+                grocery_items :
+                {
+                  type       : "groceryItems",
+                  label      : null,
+                  value      : groceryTreeData[0],
+                    // {
+                    //   open : true,
+                    //   label: "Root",
+                    //   checked : null,
+                    //   notes : "a",
+                    //   notesVisibility : "hidden",
+                    //   children :
+                    //   [
+                    //     {
+                    //       open : true,
+                    //       label: "Desktop",
+                    //       checked : null,
+                    //       notes : "b",
+                    //       notesVisibility : "hidden",
+                    //       children:
+                    //       [
+                    //         {
+                    //           open : false,
+                    //           label: "Files",
+                    //           checked : true,
+                    //           notes : "c",
+                    //           notesVisibility : "visible"
+                    //         },
+                    //         {
+                    //           open : false,
+                    //           label: "Folders",
+                    //           checked : false,
+                    //           notes : "d",
+                    //           notesVisibility : "visible"
+                    //         }
+                    //       ]
+                    //     }
+                    //   ]
+                    // },
+                  properties :
+                  {
+                    tabIndex      : null
+                  },
+                  userdata   :
+                  {
+                    row      : 0,
+                    column   : 4,
+                    rowspan  : 20
+                  }
                 }
-              });
+              };
 
-            familyName = formDialog._formElements["family_name"].getValue();
-            ageSenior = formDialog._formElements["count_senior"].getValue();
-            ageAdult = formDialog._formElements["count_adult"].getValue();
-            ageChild = formDialog._formElements["count_child"].getValue();
-            sexMale = formDialog._formElements["count_sex_male"].getValue();
-            sexFemale = formDialog._formElements["count_sex_female"].getValue();
-            sexOther = formDialog._formElements["count_sex_other"].getValue();
-            veteran = formDialog._formElements["count_veteran"].getValue();
-
-            // If there's text in Family Name, it's valid
-            formDialog._formElements["family_name"].setValid(!! familyName);
-            manager.add(formDialog._formElements["family_name"]);
-
-            // Reset warnings
-            _this._wrongCountsWarning.exclude();
-            _this._noCountsWarning.exclude();
-            _this._veteranWarning.exclude();
-
-            // Sums of by-age and by-sex must match
-            if (ageSenior + ageAdult + ageChild !=
-                sexMale + sexFemale + sexOther)
+            form = new qxl.dialog.Form(
             {
-              _this._wrongCountsWarning.show();
-              return false;
-            }
-
-            // There must be at least one family member
-            if (ageSenior + ageAdult + ageChild <= 0)
-            {
-              _this._noCountsWarning.show();
-              return false;
-            }
-
-            // Number of veterans must not exceed number of family members
-            if (veteran > ageSenior + ageAdult + ageChild)
-            {
-              _this._veteranWarning.show();
-              return false;
-            }
-
-            return true;
-          }.bind(this);
-
-          // Use that validator
-          manager.setValidator(f);
-          form.validate(manager);
-        }
-      });
-
-      form.set(
-        {
-          labelColumnWidth : 150,
-          formData         : formData,
-        });
-      form._okButton.set(
-        {
-          label   : "Save"
-        });
-      form.show();
-
-
-      // Focus the first field upon appear
-      form.addListener(
-        "appear",
-        () =>
-        {
-          // If the family name field is enabled...
-          if (form._formElements["family_name"].getEnabled())
-          {
-            // ... then focus it
-            form._formElements["family_name"].focus();
-          }
-          else
-          {
-            // Otherwise, focus the default delivery address field
-            form._formElements["address_default"].focus();
-          }
-        },
-        this);
-
-      p = form.promise();
-
-      p.then(
-        (formValues) =>
-        {
-          // Cancelled?
-          if (! formValues)
-          {
-            // Yup. Nothing to do
-            return;
-          }
-
-          // Convert the appointment value (a map) to its constituent values
-          if (formValues.default_appointment)
-          {
-            formValues.appt_day_default = formValues.default_appointment.day;
-            formValues.appt_time_default = formValues.default_appointment.time;
-          }
-          else
-          {
-            formValues.appt_day_default = 1;
-            formValues.appt_time_default = "";
-          }
-          delete formValues.default_appointment;
-
-          // Be sure notes_default is empty string if all whitespace
-          formValues.notes_default = formValues.notes_default.trim();
-
-          // Add the record name to be updated, in case of rename
-          formValues.family_name_update =
-            clientInfo.family_name || formValues.family_name;
-
-          console.log("formValues=", formValues);
-
-          this.rpc("saveClient", [ formValues, bNew ])
-            .then(
-              (result) =>
+              caption                   : caption,
+              message                   : message,
+              context                   : this,
+              beforeFormFunction : function(container)
               {
-                console.log(`saveClient result: ${result}`);
+                let             hbox;
+                let             clearAppointment;
+                let             useDefaultAppointment;
 
-                // A result means something failed.
-                if (result)
+                // Get the hbox in which the message label is placed
+                hbox = container.getUserData("messageHBox");
+
+                // Right-justify the button
+                hbox.add(new qx.ui.core.Spacer(), { flex : 1 });
+
+                // Create a button to clear any existing appointment
+                clearAppointment = new qx.ui.form.Button(
+                  "Remove default appointment");
+                hbox.add(clearAppointment);
+                clearAppointment.addListener(
+                  "execute",
+                  function(e)
+                  {
+                    const           formElements = form._formElements;
+                    formElements.default_appointment.set(
+                      {
+                        value : null
+                      });
+                  });
+              },
+              afterButtonsFunction : function(buttonBar, form)
+              {
+                let             butDelete;
+
+                // If the user doesn't have permission to delete (level 60),
+                // then there's no reason to add a Delete button
+                if (_this._me.permissionLevel < 60)
                 {
-                  qxl.dialog.Dialog.error(result);
                   return;
                 }
 
-                // We want nothing displayed for verified==false.
-                // Change to null.
-                if (! formValues.verified)
-                {
-                  formValues.verified = null;
-                }
+                // Create the Delete button
+                butDelete = new qx.ui.form.Button("Delete");
+                butDelete.setWidth(100);
 
-                // Find this family name in the table
-                row =
-                  this._tm
-                  .getDataAsMapArray()
-                  .map(rowData => rowData.family_name)
-                  .indexOf(formValues.family_name_update);
-
-                this._mungeClient(formValues);
-
-                // Does it already exist?
-                if (row >= 0)
-                {
-                  // Yup. Replace the data for that row
-                  this._tm.setRowsAsMapArray([formValues], row, true, false);
-                }
-                else
-                {
-                  // It's new. Add it.
-                  this._tm.addRowsAsMapArray([formValues], null, true, false);
-                }
-
-                // Resort  by the Family column
-                this._tm.sortByColumn(
-                  this._tm.getSortColumnIndex(), true);
-
-                // Recreate the search trees
-                this._generateTrieSearch();
-
-                // Let listeners know the client list changed
-                this.fireDataEvent(
-                  "clientListChanged",
+                butDelete.addListener(
+                  "execute",
+                  () =>
                   {
-                    family_name : formValues.family_name
+                    let             confirm;
+
+                     confirm = qxl.dialog.Dialog.confirm(
+                       "Are you absolutely sure you want to delete this client? " +
+                         "This will delete all Fulfillment history for this " +
+                         "client as well.",
+                      (result) =>
+                      {
+                        // If they didn't confirm, we have nothing to do
+                        if (! result)
+                        {
+                          return;
+                        }
+
+                        // Do normal form cancellation
+                        form._cancelButton.execute();
+
+                        // Issue the request to delete this client
+                        _this.rpc(
+                          "deleteClient",
+                          [
+                            {
+                              family_name  : clientInfo.family_name
+                            }
+                          ])
+                          .catch(
+                            (e) =>
+                            {
+                              console.warn("Error deleting client:", e);
+                              qxl.dialog.Dialog.error(
+                                `Error deleting client: ${e}`);
+                            })
+
+                          // Re-retrieve the client list
+                          .then(
+                            () =>
+                            {
+                              this.rpc("getClientList", [])
+                                .then(
+                                  (result) =>
+                                  {
+                                    if (! result)
+                                    {
+                                      return;
+                                    }
+
+                                    // Add the provided client list, munging
+                                    // column data as necessary
+                                    result = result.map(
+                                      (client) =>
+                                      {
+                                        this._mungeClient(client);
+                                        return client;
+                                      });
+                                    this._tm.setDataAsMapArray(result, true);
+
+                                    // Sort initially by the Family column
+                                    this._tm.sortByColumn(
+                                      this._tm.getColumnIndexById("family_name"),
+                                      true);
+
+                                    // Build the search trees
+                                    this._generateTrieSearch();
+                                  })
+                                .catch(
+                                  (e) =>
+                                  {
+                                    console.warn("getClientList:", e);
+                                    qxl.dialog.Dialog.alert(
+                                      "Could not retrieve client list: " +
+                                        e.message);
+                                  });
+                            });
+                      },
+                      null,
+                      "Confirm");
+                    confirm.setWidth(500);
                   });
 
-              })
-            .catch(
-              (e) =>
+                // Add the delete button at far left, and add spacer to
+                // center Save/Cancel buttons
+                buttonBar.addAt(butDelete, 0);
+                buttonBar.addAt(new qx.ui.core.Spacer(), 1, { flex : 1 });
+
+                // Add corresponding space on right side of Save/Cancel buttons
+                buttonBar.add(new qx.ui.core.Spacer(), { flex : 1});
+                buttonBar.add(new qx.ui.core.Spacer(100));
+              },
+              afterFormFunction : function(container, form)
               {
-                console.warn("Error saving changes:", e);
-                if (e.code == this.constructor.RpcError.AlreadyExists)
+                this._wrongCountsWarning = new qx.ui.basic.Label(
+                  [
+                    "<span style='color: red;'>",
+                    "The counts by age do not match counts by sex",
+                    "</span>"
+                  ].join(""));
+                container.add(this._wrongCountsWarning);
+                this._wrongCountsWarning.setRich(true);
+                this._wrongCountsWarning.exclude();
+
+                this._noCountsWarning = new qx.ui.basic.Label(
+                  [
+                    "<span style='color: red;'>",
+                    "Family counts have not yet been entered",
+                    "</span>"
+                  ].join(""));
+                container.add(this._noCountsWarning);
+                this._noCountsWarning.setRich(true);
+                this._noCountsWarning.exclude();
+
+                this._veteranWarning = new qx.ui.basic.Label(
+                  [
+                    "<span style='color: red;'>",
+                    "The number of veterans exceeds the number of family members",
+                    "</span>"
+                  ].join(""));
+                container.add(this._veteranWarning);
+                this._veteranWarning.setRich(true);
+                this._veteranWarning.exclude();
+              },
+              setupFormRendererFunction : function(form) {
+                var         renderer = new qxl.dialog.MultiColumnFormRenderer(form);
+                var         layout = new qx.ui.layout.Grid();
+                const       col = renderer.column;
+
+                layout.setSpacing(6);
+
+                layout.setColumnMaxWidth(col(0), this.getLabelColumnWidth());
+                layout.setColumnWidth(col(0), this.getLabelColumnWidth());
+                layout.setColumnAlign(col(0), "right", "top");
+
+                layout.setColumnFlex(col(1), 1);
+                layout.setColumnAlign(col(1), "left", "top");
+
+                layout.setColumnMaxWidth(col(2), this.getLabelColumnWidth());
+                layout.setColumnWidth(col(2), this.getLabelColumnWidth());
+                layout.setColumnAlign(col(2), "right", "top");
+
+                layout.setColumnAlign(col(3), "left", "top");
+                layout.setColumnMinWidth(col(3), 20);
+
+                layout.setColumnMaxWidth(col(4), this.getLabelColumnWidth());
+                layout.setColumnAlign(col(4), "right", "top");
+
+                renderer._setLayout(layout);
+
+                // Give 'em what they came for
+                return renderer;
+              },
+              finalizeFunction : function(form, formDialog)
+              {
+                let         f;
+                let         manager;
+
+                //
+                // Use a validation manager. Ensure that the entered data is
+                // consistent, and that all required fields are entered.
+                // When valid, enable the Save button.
+                //
+
+                // Instantiate a validation manager
+                form._validationManager = manager =
+                  new qx.ui.form.validation.Manager();
+
+                // Prepare a validation function
+                f = function()
                 {
-                  qxl.dialog.Dialog.error(
-                    `Family name "${formValues.family_name}" already exists`);
+                  let             familyName;
+                  let             ageSenior;
+                  let             ageAdult;
+                  let             ageChild;
+                  let             sexMale;
+                  let             sexFemale;
+                  let             sexOther;
+                  let             veteran;
+
+                  // Enable the Save button if the form validates
+                  manager.bind(
+                    "valid",
+                    formDialog._okButton,
+                    "enabled", 
+                   {
+                      converter: function(value)
+                      {
+                        return value || false;
+                      }
+                    });
+
+                  familyName =
+                    formDialog._formElements["family_name"].getValue();
+                  ageSenior =
+                    formDialog._formElements["count_senior"].getValue();
+                  ageAdult =
+                    formDialog._formElements["count_adult"].getValue();
+                  ageChild =
+                    formDialog._formElements["count_child"].getValue();
+                  sexMale =
+                    formDialog._formElements["count_sex_male"].getValue();
+                  sexFemale =
+                    formDialog._formElements["count_sex_female"].getValue();
+                  sexOther =
+                    formDialog._formElements["count_sex_other"].getValue();
+                  veteran =
+                    formDialog._formElements["count_veteran"].getValue();
+
+                  // If there's text in Family Name, it's valid
+                  formDialog._formElements["family_name"].setValid(
+                    !! familyName);
+                  manager.add(formDialog._formElements["family_name"]);
+
+                  // Reset warnings
+                  _this._wrongCountsWarning.exclude();
+                  _this._noCountsWarning.exclude();
+                  _this._veteranWarning.exclude();
+
+                  // Sums of by-age and by-sex must match
+                  if (ageSenior + ageAdult + ageChild !=
+                      sexMale + sexFemale + sexOther)
+                  {
+                    _this._wrongCountsWarning.show();
+                    return false;
+                  }
+
+                  // There must be at least one family member
+                  if (ageSenior + ageAdult + ageChild <= 0)
+                  {
+                    _this._noCountsWarning.show();
+                    return false;
+                  }
+
+                  // Number of veterans must not exceed number of family members
+                  if (veteran > ageSenior + ageAdult + ageChild)
+                  {
+                    _this._veteranWarning.show();
+                    return false;
+                  }
+
+                  return true;
+                }.bind(this);
+
+                // Use that validator
+                manager.setValidator(f);
+                form.validate(manager);
+              }
+            });
+
+            form.set(
+              {
+                labelColumnWidth : 150,
+                formData         : formData,
+              });
+            form._okButton.set(
+              {
+                label   : "Save"
+              });
+            form.show();
+
+
+            // Focus the first field upon appear
+            form.addListener(
+              "appear",
+              () =>
+              {
+                // If the family name field is enabled...
+                if (form._formElements["family_name"].getEnabled())
+                {
+                  // ... then focus it
+                  form._formElements["family_name"].focus();
                 }
                 else
                 {
-                  qxl.dialog.Dialog.error(`Error saving changes: ${e}`);
+                  // Otherwise, focus the default delivery address field
+                  form._formElements["address_default"].focus();
                 }
-              });
-        });
+              },
+              this);
+
+            return form;
+          })
+        .then(
+          (form) =>
+          {
+            return form.promise();
+          })
+
+        .then(
+          (formValues) =>
+          {
+            // Cancelled?
+            if (! formValues)
+            {
+              // Yup. Nothing to do
+              return;
+            }
+
+            // Convert the appointment value (a map) to its constituent values
+            if (formValues.default_appointment)
+            {
+              formValues.appt_day_default =
+                formValues.default_appointment.day;
+              formValues.appt_time_default =
+                formValues.default_appointment.time;
+            }
+            else
+            {
+              formValues.appt_day_default = 1;
+              formValues.appt_time_default = "";
+            }
+            delete formValues.default_appointment;
+
+            // Be sure notes_default is empty string if all whitespace
+            formValues.notes_default = formValues.notes_default.trim();
+
+            // Add the record name to be updated, in case of rename
+            formValues.family_name_update =
+              clientInfo.family_name || formValues.family_name;
+
+            console.log("formValues=", formValues);
+
+            this.rpc("saveClient", [ formValues, bNew ])
+              .then(
+                (result) =>
+                {
+                  console.log(`saveClient result: ${result}`);
+
+                  // A result means something failed.
+                  if (result)
+                  {
+                    qxl.dialog.Dialog.error(result);
+                    return;
+                  }
+
+                  // We want nothing displayed for verified==false.
+                  // Change to null.
+                  if (! formValues.verified)
+                  {
+                    formValues.verified = null;
+                  }
+
+                  // Find this family name in the table
+                  row =
+                    this._tm
+                    .getDataAsMapArray()
+                    .map(rowData => rowData.family_name)
+                    .indexOf(formValues.family_name_update);
+
+                  this._mungeClient(formValues);
+
+                  // Does it already exist?
+                  if (row >= 0)
+                  {
+                    // Yup. Replace the data for that row
+                    this._tm.setRowsAsMapArray(
+                      [formValues], row, true, false);
+                  }
+                  else
+                  {
+                    // It's new. Add it.
+                    this._tm.addRowsAsMapArray(
+                      [formValues], null, true, false);
+                  }
+
+                  // Resort  by the Family column
+                  this._tm.sortByColumn(
+                    this._tm.getSortColumnIndex(), true);
+
+                  // Recreate the search trees
+                  this._generateTrieSearch();
+
+                  // Let listeners know the client list changed
+                  this.fireDataEvent(
+                    "clientListChanged",
+                    {
+                      family_name : formValues.family_name
+                    });
+
+                })
+              .catch(
+                (e) =>
+                {
+                  console.warn("Error saving changes:", e);
+                  if (e.code == this.constructor.RpcError.AlreadyExists)
+                  {
+                    qxl.dialog.Dialog.error(
+                      `Family name "${formValues.family_name}" already exists`);
+                  }
+                  else
+                  {
+                    qxl.dialog.Dialog.error(`Error saving changes: ${e}`);
+                  }
+                });
+          });
     }
   }
 });

@@ -193,6 +193,12 @@ qx.Class.define("bcp.server.Rpc",
           {
             handler            : this._deleteGroceryCategory.bind(this),
             permission_level   : 50
+          },
+
+          getClientGrocerySelections :
+          {
+            handler            : this._getClientGrocerySelections.bind(this),
+            permission_level   : 50
           }
         };
 
@@ -1093,7 +1099,7 @@ qx.Class.define("bcp.server.Rpc",
       // TODO: move prepared statements to constructor
       return Promise.resolve()
         .then(
-          () =>this._db.prepare(
+          () => this._db.prepare(
             [
               "SELECT",
               [
@@ -1120,7 +1126,7 @@ qx.Class.define("bcp.server.Rpc",
             results.reports = result;
           })
         .then(
-          () =>this._db.prepare(
+          () => this._db.prepare(
             [
               "SELECT start_date",
               "  FROM DistributionPeriod",
@@ -1135,7 +1141,6 @@ qx.Class.define("bcp.server.Rpc",
           (result) =>
           {
             results.distributions = result;
-
             callback(null, results);
           })
         .catch((e) =>
@@ -1876,6 +1881,106 @@ qx.Class.define("bcp.server.Rpc",
           });
 
       return p;
+    },
+
+    /**
+     * Get a client's grocery list, and the full list of categories
+     *
+     * @param args {Array}
+     *   args[0] {Map}
+     *     A map containing the member `family_name` if ths is for an existing
+     *     client; or null or an empty map if this is for a to-be-created
+     *     family
+     *
+     * @param callback {Function}
+     *   @signature(err, result)
+     */
+    _getClientGrocerySelections(args, callback)
+    {
+      let             results = {};
+      const           info = args[0] || {};
+
+      return Promise.resolve()
+        // Retrieve the grocery cateogry list
+        .then(
+          () =>
+          {
+            return this._db.prepare(
+              [
+                "SELECT",
+                "    id,",
+                "    parent,",
+                "    name",
+                "  FROM GroceryCategory",
+                "  ORDER BY id;"
+              ].join(" "));
+          })
+        .then(stmt => stmt.all({}))
+        .then(
+          (result) =>
+          {
+            results.categories = result;
+          })
+        .catch(
+          (e) =>
+          {
+            let             error = { message : e.toString() };
+
+            console.warn(
+              "Error getting grocery categories " +
+                "in getClientGrocerySelections", e);
+            throw e;            // rethrow
+          })
+
+        // Retrieve, for a family name, all items, and exclusions and
+        // notes for those items.
+        .then(
+          () =>
+          {
+            // TODO: move prepared statements to constructor
+            return this._db.prepare(
+              [
+                "SELECT",
+                "    c.family_name AS family_name,",
+                "    gi.item AS item,",
+                "    gi.category AS category,",
+                "    gi.perishable AS perishable,",
+                "    CASE",
+                "      WHEN cgp.exclude IS NULL THEN 1",
+                "      ELSE NOT cgp.exclude",
+                "    END AS wanted,",
+                "    cgp.notes AS notes",
+                "  FROM Client c",
+                "  CROSS JOIN  GroceryItem gi",
+                "  LEFT JOIN ClientGroceryPreference cgp",
+                "    ON     cgp.family_name = c.family_name",
+                "       AND cgp.grocery_item = gi.item",
+                "   WHERE c.family_name = $family_name;"
+              ].join(" "));
+          })
+        .then(stmt => stmt.all(
+          {
+            $family_name : info.family_name
+          }))
+        .then(
+          (result) =>
+          {
+            results.items = result;
+          })
+
+          // Let 'em know it succeeded
+        .then((result) => callback(null, results))
+
+        .catch(
+          (e) =>
+          {
+            let             error = { message : e.toString() };
+
+            console.warn(
+              "Error getting grocery selections " +
+                "in getClientGrocerySelections", e);
+            callback(error);
+          });
     }
   }
 });
