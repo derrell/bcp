@@ -11,5 +11,5 @@ live :
 
 backup :
 	rsync -av \
-		${SERVER}:~/bcp-db.git \
+		${SERVER}:~/bcp-db.git/ \
 		~/ME/billerica-community-pantry/bcp-db.git/
