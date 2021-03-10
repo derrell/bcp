@@ -38,6 +38,9 @@ qx.Class.define("bcp.client.grocery.CategoryEditor",
         draggable : true
       });
 
+    // Don't allow any selection
+    tree._provider.isSelectable = () => false;
+
     // Allow an item to be dragged (moved) within the tree
     tree.addListener(
       "dragstart",

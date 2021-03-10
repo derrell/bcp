@@ -253,7 +253,8 @@ qx.Mixin.define("bcp.client.MGroceries",
         {
           if (e.getData()[0] == pageCategories)
           {
-            this._getGroceryCategoryList()
+            Promise.resolve()
+              .then(() => this._getGroceryCategoryList())
               .then(
                 (categories) =>
                 {
@@ -302,6 +303,7 @@ qx.Mixin.define("bcp.client.MGroceries",
       let             form;
       let             formData;
       let             message;
+      let             categories;
       const           bNew = ! itemInfo;
       const           caption = "Grocery Item Detail";
       const           _this = this;
@@ -314,438 +316,442 @@ qx.Mixin.define("bcp.client.MGroceries",
         ? "<span style='font-weight: bold;'>New Grocery Item</span>"
         : "";
 
-      // this.rpc(
-      //   "getClientGroceryItems",
-      //   [
-      //     {
-      //       family_name :
-      //     }
-      //   ])
-      //   .catch(
-      //     (e) =>
-      //     {
-      //       console.warn("Error deleting grocery item:", e);
-      //       qxl.dialog.Dialog.error(
-      //         `Error deleting grocery item: ${e}`);
-      //     })
-
-      formData =
-        {
-          item :
+      Promise.resolve()
+        .then(() => this._getGroceryCategoryList())
+        .then(
+          (categoryList) =>
           {
-            type       : "TextField",
-            label      : "Item Name",
-            value      : itemInfo.item || "",
-            validation :
-            {
-              required   : true
-            },
-            properties :
-            {
-              tabIndex   : 1
-            },
-            userdata :
-            {
-              row        : 1
-            }
-          },
-          perishable :
-          {
-            type       : "SelectBox",
-            label      : "Perishable",
-            value      : itemInfo.perishable ? 1 : 0,
-            options :
-            [
-              { label : "No",    value : 0 },
-              { label : "Yes",   value : 1 }
-            ],
-            properties :
-            {
-              maxWidth   : 60,
-              tabIndex   : 2
-            }
-          },
-          dist_aisle :
-          {
-            type       : "SelectBox",
-            label      : "Aisle",
-            value      : itemInfo.dist_aisle || "",
-            options :
-            [
-              { label : "A",    value : "A" },
-              { label : "B",    value : "B" },
-              { label : "C",    value : "C" },
-              { label : "D",    value : "D" },
-              { label : "E",    value : "E" },
-              { label : "F",    value : "F" },
-              { label : "G",    value : "G" },
-              { label : "X",    value : "X" },
-              { label : "Y",    value : "Y" },
-              { label : "Z",    value : "Z" }
-            ],
-            properties :
-            {
-              maxWidth   : 60,
-              tabIndex   : 3
-            }
-          },
-          dist_unit :
-          {
-            type       : "SelectBox",
-            label      : "Shelf Unit #",
-            value      : itemInfo.dist_unit || "",
-            options :
-            [
-              { label : "1",    value : "1" },
-              { label : "2",    value : "2" },
-              { label : "3",    value : "3" },
-              { label : "4",    value : "4" },
-              { label : "5",    value : "5" },
-              { label : "6",    value : "6" },
-              { label : "10",    value : "10" },
-              { label : "11",    value : "11" },
-              { label : "12",    value : "12" },
-              { label : "00",    value : "00" },
-              { label : "01",    value : "01" },
-              { label : "02",    value : "02" }
-            ],
-            properties :
-            {
-              maxWidth   : 60,
-              tabIndex   : 4
-            }
-          },
-          dist_side :
-          {
-            type       : "SelectBox",
-            label      : "Side of Aisle",
-            value      : itemInfo.dist_side || "L",
-            options :
-            [
-              { label : "Left",   value : "L" },
-              { label : "Right",  value : "R" }
-            ],
-            properties :
-            {
-              maxWidth   : 60,
-              tabIndex   : 5
-            }
-          },
-          dist_shelf :
-          {
-            type       : "SelectBox",
-            label      : "Shelf #",
-            value      : itemInfo.income_source || "",
-            options :
-            [
-              { label : "a (top shelf)",  value : "a" },
-              { label : "b",        value : "b" },
-              { label : "c",        value : "c" },
-              { label : "d",        value : "d" }
-            ],
-            properties :
-            {
-              maxWidth   : 110,
-              tabIndex   : 6
-            }
-          },
-          on_hand :
-          {
-            type       : "SelectBox",
-            label      : "Stock on hand",
-            value      : itemInfo.dist_side || "L",
-            options :
-            [
-              { label : "Plenty in stock",   value : "Plenty" },
-              { label : "Re-order soon",     value : "Reorder" },
-              { label : "Currently unused",  value : "Ignore" }
-            ],
-            properties :
-            {
-              tabIndex   : 7
-            }
-          },
-          order_contact :
-          {
-            type       : "TextArea",
-            label      : "Vendor Contact Info",
-            value      : itemInfo.order_contact || "",
-            lines      : 3,
-            userdata   :
-            {
-              rowspan    : 2
-            },
-            properties :
-            {
-              tabIndex   : 8
-            }
-          },
-          category_label :
-          {
-            type       : "Label",
-            label      : "Category:",
-            userdata   :
-            {
-              row        : 0,
-              column     : 2
-            }
-          },
-          category :
-          {
-            type       : "groceryCategories",
-            label      : null,
-            value      : 0,
-            userdata   :
-            {
-              row        : 1,
-              column     : 1,
-              rowspan    : 9
-            }
-          }
-        };
+            // Save the category list
+            categories = categoryList;
+console.log("buildGroceryItemForm: categories=", categories);
 
-      form = new qxl.dialog.Form(
-      {
-        caption                   : caption,
-        message                   : message,
-        context                   : this,
-        afterButtonsFunction : function(buttonBar, form)
-        {
-          let             butDelete;
-
-          // If the user doesn't have permission to delete (level 60),
-          // then there's no reason to add a Delete button
-          if (_this._me.permissionLevel < 60)
-          {
-            return;
-          }
-
-          // Create the Delete button
-          butDelete = new qx.ui.form.Button("Delete");
-          butDelete.setWidth(60);
-
-          butDelete.addListener(
-            "execute",
-            () =>
-            {
-              let             confirm;
-
-               confirm = qxl.dialog.Dialog.confirm(
-                 "Are you absolutely sure you want to delete this item? ",
-                (result) =>
-                {
-                  // If they didn't confirm, we have nothing to do
-                  if (! result)
-                  {
-                    return;
-                  }
-
-                  // Do normal form cancellation
-                  form._cancelButton.execute();
-
-                  // Issue the request to delete this grocery item
-                  _this.rpc(
-                    "deleteGroceryItem",
-                    [
-                      {
-                        item  : itemInfo.item
-                      }
-                    ])
-                    .catch(
-                      (e) =>
-                      {
-                        console.warn("Error deleting grocery item:", e);
-                        qxl.dialog.Dialog.error(
-                          `Error deleting grocery item: ${e}`);
-                      })
-
-                    // Re-retrieve the grocery list
-                    .then(
-                      () =>
-                      {
-                        this.rpc("getGroceryList", [])
-                          .then(
-                            (result) =>
-                            {
-                              if (! result)
-                              {
-                                return;
-                              }
-
-                              // Add the provided grocery list, munging
-                              // column data as necessary
-                              result = result.map(
-                                (item) =>
-                                {
-                                  this._mungeGroceryItem(item);
-                                  return item;
-                                });
-
-                              // Add the provided grocery list
-                              this._tmGrocery.setDataAsMapArray(result, true);
-
-                              // Sort initially by the Item column
-                              this._tmGrocery.sortByColumn(
-                                this._tmGrocery.getColumnIndexById("item"),
-                                true);
-                            })
-                          .catch(
-                            (e) =>
-                            {
-                              console.warn("getGroceryList:", e);
-                              qxl.dialog.Dialog.alert(
-                                "Could not retrieve grocery list: " +
-                                  e.message);
-                            });
-                      });
-                },
-                null,
-                "Confirm");
-              confirm.setWidth(500);
-            });
-
-          // Add the delete button at far left, and add spacer to
-          // center Save/Cancel buttons
-          buttonBar.addAt(butDelete, 0);
-          buttonBar.addAt(new qx.ui.core.Spacer(), 1, { flex : 1 });
-        },
-        setupFormRendererFunction : function(form) {
-          var         renderer = new qxl.dialog.FormRenderer(form);
-          var         renderer = new qxl.dialog.MultiColumnFormRenderer(form);
-          var         layout = new qx.ui.layout.Grid();
-          const       col = renderer.column;
-
-          layout.setSpacing(6);
-
-          layout.setColumnMaxWidth(col(0), this.getLabelColumnWidth());
-          layout.setColumnWidth(col(0), this.getLabelColumnWidth());
-          layout.setColumnAlign(col(0), "right", "top");
-
-          layout.setColumnMaxWidth(col(1), 1);
-          layout.setColumnWidth(col(1), 10);
-          layout.setColumnAlign(col(1), "left", "top");
-
-          layout.setColumnFlex(col(2), 1);
-          layout.setColumnAlign(col(2), "left", "top");
-
-          renderer._setLayout(layout);
-
-          // Give 'em what they came for
-          return renderer;
-        }
-      });
-
-      form.set(
-        {
-          labelColumnWidth : 150,
-          formData         : formData,
-        });
-      form._okButton.set(
-        {
-          label   : "Save"
-        });
-      form.show();
-
-
-      // Focus the first field upon appear
-      form.addListener(
-        "appear",
-        () =>
-        {
-          // If the item field is enabled...
-          if (form._formElements["item"].getEnabled())
-          {
-            // ... then focus it
-            form._formElements["item"].focus();
-          }
-          else
-          {
-            // Otherwise, focus the default delivery address field
-            form._formElements["perishable"].focus();
-          }
-        },
-        this);
-
-      p = form.promise();
-
-      p.then(
-        (formValues) =>
-        {
-          // Cancelled?
-          if (! formValues)
-          {
-            // Yup. Nothing to do
-            return;
-          }
-
-          // Add the record name to be updated, in case of rename
-          formValues.item_update = itemInfo.item || formValues.item;
-
-          console.log("formValues=", formValues);
-
-          this.rpc("saveGroceryItem", [ formValues, bNew ])
-            .then(
-              (result) =>
+            // Build the form
+            formData =
               {
-                console.log(`saveGroceryItem result: ${result}`);
-
-                // A result means something failed.
-                if (result)
+                item :
                 {
-                  qxl.dialog.Dialog.error(result);
+                  type       : "TextField",
+                  label      : "Item Name",
+                  value      : itemInfo.item || "",
+                  validation :
+                  {
+                    required   : true
+                  },
+                  properties :
+                  {
+                    tabIndex   : 1
+                  },
+                  userdata :
+                  {
+                    row        : 1
+                  }
+                },
+                perishable :
+                {
+                  type       : "SelectBox",
+                  label      : "Perishable",
+                  value      : itemInfo.perishable ? 1 : 0,
+                  options :
+                  [
+                    { label : "No",    value : 0 },
+                    { label : "Yes",   value : 1 }
+                  ],
+                  properties :
+                  {
+                    maxWidth   : 60,
+                    tabIndex   : 2
+                  }
+                },
+                dist_aisle :
+                {
+                  type       : "SelectBox",
+                  label      : "Aisle",
+                  value      : itemInfo.dist_aisle || "",
+                  options :
+                  [
+                    { label : "A",    value : "A" },
+                    { label : "B",    value : "B" },
+                    { label : "C",    value : "C" },
+                    { label : "D",    value : "D" },
+                    { label : "E",    value : "E" },
+                    { label : "F",    value : "F" },
+                    { label : "G",    value : "G" },
+                    { label : "X",    value : "X" },
+                    { label : "Y",    value : "Y" },
+                    { label : "Z",    value : "Z" }
+                  ],
+                  properties :
+                  {
+                    maxWidth   : 60,
+                    tabIndex   : 3
+                  }
+                },
+                dist_unit :
+                {
+                  type       : "SelectBox",
+                  label      : "Shelf Unit #",
+                  value      : itemInfo.dist_unit || "",
+                  options :
+                  [
+                    { label : "1",    value : "1" },
+                    { label : "2",    value : "2" },
+                    { label : "3",    value : "3" },
+                    { label : "4",    value : "4" },
+                    { label : "5",    value : "5" },
+                    { label : "6",    value : "6" },
+                    { label : "10",    value : "10" },
+                    { label : "11",    value : "11" },
+                    { label : "12",    value : "12" },
+                    { label : "00",    value : "00" },
+                    { label : "01",    value : "01" },
+                    { label : "02",    value : "02" }
+                  ],
+                  properties :
+                  {
+                    maxWidth   : 60,
+                    tabIndex   : 4
+                  }
+                },
+                dist_side :
+                {
+                  type       : "SelectBox",
+                  label      : "Side of Aisle",
+                  value      : itemInfo.dist_side || "L",
+                  options :
+                  [
+                    { label : "Left",   value : "L" },
+                    { label : "Right",  value : "R" }
+                  ],
+                  properties :
+                  {
+                    maxWidth   : 60,
+                    tabIndex   : 5
+                  }
+                },
+                dist_shelf :
+                {
+                  type       : "SelectBox",
+                  label      : "Shelf #",
+                  value      : itemInfo.income_source || "",
+                  options :
+                  [
+                    { label : "a (top shelf)",  value : "a" },
+                    { label : "b",        value : "b" },
+                    { label : "c",        value : "c" },
+                    { label : "d",        value : "d" }
+                  ],
+                  properties :
+                  {
+                    maxWidth   : 110,
+                    tabIndex   : 6
+                  }
+                },
+                on_hand :
+                {
+                  type       : "SelectBox",
+                  label      : "Stock on hand",
+                  value      : itemInfo.dist_side || "L",
+                  options :
+                  [
+                    { label : "Plenty in stock",   value : "Plenty" },
+                    { label : "Re-order soon",     value : "Reorder" },
+                    { label : "Currently unused",  value : "Ignore" }
+                  ],
+                  properties :
+                  {
+                    tabIndex   : 7
+                  }
+                },
+                order_contact :
+                {
+                  type       : "TextArea",
+                  label      : "Vendor Contact Info",
+                  value      : itemInfo.order_contact || "",
+                  lines      : 3,
+                  userdata   :
+                  {
+                    rowspan    : 2
+                  },
+                  properties :
+                  {
+                    tabIndex   : 8
+                  }
+                },
+                category_label :
+                {
+                  type       : "Label",
+                  label      : "Category:",
+                  userdata   :
+                  {
+                    row        : 0,
+                    column     : 2
+                  }
+                },
+                category :
+                {
+                  type       : "groceryCategories",
+                  label      : null,
+                  value      : 0,
+                  userdata   :
+                  {
+                    row        : 1,
+                    column     : 1,
+                    rowspan    : 9,
+                    modelData  : categories
+                  }
+                }
+              };
+
+            form = new qxl.dialog.Form(
+            {
+              caption                   : caption,
+              message                   : message,
+              context                   : this,
+              afterButtonsFunction : function(buttonBar, form)
+              {
+                let             butDelete;
+
+                // If the user doesn't have permission to delete (level 60),
+                // then there's no reason to add a Delete button
+                if (_this._me.permissionLevel < 60)
+                {
                   return;
                 }
 
-                // Find this item in the table
-                row =
-                  this._tmGrocery
-                  .getDataAsMapArray()
-                  .map(rowData => rowData.item)
-                  .indexOf(formValues.item_update);
+                // Create the Delete button
+                butDelete = new qx.ui.form.Button("Delete");
+                butDelete.setWidth(60);
 
-                this._mungeGroceryItem(formValues);
-
-                // Does it already exist?
-                if (row >= 0)
-                {
-                  // Yup. Replace the data for that row
-                  this._tmGrocery.setRowsAsMapArray(
-                    [formValues], row, true, false);
-                }
-                else
-                {
-                  // It's new. Add it.
-                  this._tmGrocery.addRowsAsMapArray(
-                    [formValues], null, true, false);
-                }
-
-                // Resort  by the Item column
-                this._tmGrocery.sortByColumn(
-                  this._tmGrocery.getSortColumnIndex(), true);
-
-                // Let listeners know the grocery list changed
-                this.fireDataEvent(
-                  "groceryListChanged",
+                butDelete.addListener(
+                  "execute",
+                  () =>
                   {
-                    item : formValues.item
+                    let             confirm;
+
+                     confirm = qxl.dialog.Dialog.confirm(
+                       "Are you absolutely sure you want to delete this item? ",
+                      (result) =>
+                      {
+                        // If they didn't confirm, we have nothing to do
+                        if (! result)
+                        {
+                          return;
+                        }
+
+                        // Do normal form cancellation
+                        form._cancelButton.execute();
+
+                        // Issue the request to delete this grocery item
+                        _this.rpc(
+                          "deleteGroceryItem",
+                          [
+                            {
+                              item  : itemInfo.item
+                            }
+                          ])
+                          .catch(
+                            (e) =>
+                            {
+                              console.warn("Error deleting grocery item:", e);
+                              qxl.dialog.Dialog.error(
+                                `Error deleting grocery item: ${e}`);
+                            })
+
+                          // Re-retrieve the grocery list
+                          .then(
+                            () =>
+                            {
+                              this.rpc("getGroceryList", [])
+                                .then(
+                                  (result) =>
+                                  {
+                                    if (! result)
+                                    {
+                                      return;
+                                    }
+
+                                    // Add the provided grocery list, munging
+                                    // column data as necessary
+                                    result = result.map(
+                                      (item) =>
+                                      {
+                                        this._mungeGroceryItem(item);
+                                        return item;
+                                      });
+
+                                    // Add the provided grocery list
+                                    this._tmGrocery.setDataAsMapArray(result, true);
+
+                                    // Sort initially by the Item column
+                                    this._tmGrocery.sortByColumn(
+                                      this._tmGrocery.getColumnIndexById("item"),
+                                      true);
+                                  })
+                                .catch(
+                                  (e) =>
+                                  {
+                                    console.warn("getGroceryList:", e);
+                                    qxl.dialog.Dialog.alert(
+                                      "Could not retrieve grocery list: " +
+                                        e.message);
+                                  });
+                            });
+                      },
+                      null,
+                      "Confirm");
+                    confirm.setWidth(500);
                   });
 
-              })
-            .catch(
-              (e) =>
+                // Add the delete button at far left, and add spacer to
+                // center Save/Cancel buttons
+                buttonBar.addAt(butDelete, 0);
+                buttonBar.addAt(new qx.ui.core.Spacer(), 1, { flex : 1 });
+              },
+              setupFormRendererFunction : function(form) {
+                var         renderer = new qxl.dialog.FormRenderer(form);
+                var         renderer = new qxl.dialog.MultiColumnFormRenderer(form);
+                var         layout = new qx.ui.layout.Grid();
+                const       col = renderer.column;
+
+                layout.setSpacing(6);
+
+                layout.setColumnMaxWidth(col(0), this.getLabelColumnWidth());
+                layout.setColumnWidth(col(0), this.getLabelColumnWidth());
+                layout.setColumnAlign(col(0), "right", "top");
+
+                layout.setColumnMaxWidth(col(1), 1);
+                layout.setColumnWidth(col(1), 10);
+                layout.setColumnAlign(col(1), "left", "top");
+
+                layout.setColumnFlex(col(2), 1);
+                layout.setColumnAlign(col(2), "left", "top");
+
+                renderer._setLayout(layout);
+
+                // Give 'em what they came for
+                return renderer;
+              }
+            });
+
+            form.set(
               {
-                console.warn("Error saving changes:", e);
-                if (e.code == this.constructor.RpcError.AlreadyExists)
+                labelColumnWidth : 150,
+                formData         : formData,
+              });
+            form._okButton.set(
+              {
+                label   : "Save"
+              });
+            form.show();
+
+
+            // Focus the first field upon appear
+            form.addListener(
+              "appear",
+              () =>
+              {
+                // If the item field is enabled...
+                if (form._formElements["item"].getEnabled())
                 {
-                  qxl.dialog.Dialog.error(
-                    `Item "${formValues.item}" already exists`);
+                  // ... then focus it
+                  form._formElements["item"].focus();
                 }
                 else
                 {
-                  qxl.dialog.Dialog.error(`Error saving changes: ${e}`);
+                  // Otherwise, focus the default delivery address field
+                  form._formElements["perishable"].focus();
                 }
-              });
-        });
+              },
+              this);
+          })
+        .then(() => form.promise())
+
+        .then(
+          (formValues) =>
+          {
+            // Cancelled?
+            if (! formValues)
+            {
+              // Yup. Nothing to do
+              return;
+            }
+
+            // Add the record name to be updated, in case of rename
+            formValues.item_update = itemInfo.item || formValues.item;
+
+            // If the category changed, the value is just the new id
+            // number. If it didn't change, it's still the original
+            // array of map from which we should extract the id number.
+            if (Array.isArray(formValues.category))
+            {
+              formValues.category = formValues.category[0].id;
+            }
+
+            console.log("formValues=", formValues);
+
+            this.rpc("saveGroceryItem", [ formValues, bNew ])
+              .then(
+                (result) =>
+                {
+                  console.log(`saveGroceryItem result: ${result}`);
+
+                  // A result means something failed.
+                  if (result)
+                  {
+                    qxl.dialog.Dialog.error(result);
+                    return;
+                  }
+
+                  // Find this item in the table
+                  row =
+                    this._tmGrocery
+                    .getDataAsMapArray()
+                    .map(rowData => rowData.item)
+                    .indexOf(formValues.item_update);
+
+                  this._mungeGroceryItem(formValues);
+
+                  // Does it already exist?
+                  if (row >= 0)
+                  {
+                    // Yup. Replace the data for that row
+                    this._tmGrocery.setRowsAsMapArray(
+                      [formValues], row, true, false);
+                  }
+                  else
+                  {
+                    // It's new. Add it.
+                    this._tmGrocery.addRowsAsMapArray(
+                      [formValues], null, true, false);
+                  }
+
+                  // Resort  by the Item column
+                  this._tmGrocery.sortByColumn(
+                    this._tmGrocery.getSortColumnIndex(), true);
+
+                  // Let listeners know the grocery list changed
+                  this.fireDataEvent(
+                    "groceryListChanged",
+                    {
+                      item : formValues.item
+                    });
+
+                })
+              .catch(
+                (e) =>
+                {
+                  console.warn("Error saving changes:", e);
+                  if (e.code == this.constructor.RpcError.AlreadyExists)
+                  {
+                    qxl.dialog.Dialog.error(
+                      `Item "${formValues.item}" already exists`);
+                  }
+                  else
+                  {
+                    qxl.dialog.Dialog.error(`Error saving changes: ${e}`);
+                  }
+                });
+          });
     },
 
     async _getGroceryCategoryList()
