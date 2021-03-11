@@ -823,40 +823,6 @@ qx.Mixin.define("bcp.client.MClientMgmt",
                   type       : "groceryItems",
                   label      : null,
                   value      : groceryTreeData[0],
-                    // {
-                    //   open : true,
-                    //   label: "Root",
-                    //   checked : null,
-                    //   notes : "a",
-                    //   notesVisibility : "hidden",
-                    //   children :
-                    //   [
-                    //     {
-                    //       open : true,
-                    //       label: "Desktop",
-                    //       checked : null,
-                    //       notes : "b",
-                    //       notesVisibility : "hidden",
-                    //       children:
-                    //       [
-                    //         {
-                    //           open : false,
-                    //           label: "Files",
-                    //           checked : true,
-                    //           notes : "c",
-                    //           notesVisibility : "visible"
-                    //         },
-                    //         {
-                    //           open : false,
-                    //           label: "Folders",
-                    //           checked : false,
-                    //           notes : "d",
-                    //           notesVisibility : "visible"
-                    //         }
-                    //       ]
-                    //     }
-                    //   ]
-                    // },
                   properties :
                   {
                     tabIndex      : null

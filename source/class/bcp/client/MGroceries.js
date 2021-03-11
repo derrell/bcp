@@ -289,6 +289,12 @@ qx.Mixin.define("bcp.client.MGroceries",
       {
         item.perishable = null;
       }
+
+      // If no category name, put it into "Uncategorized"
+      if (item.category_name === null)
+      {
+        item.category_name = "Uncategorized";
+      }
     },
 
     /**
@@ -491,7 +497,7 @@ console.log("buildGroceryItemForm: categories=", categories);
                 {
                   type       : "groceryCategories",
                   label      : null,
-                  value      : 2,
+                  value      : itemInfo.category,
                   userdata   :
                   {
                     row        : 1,
@@ -800,8 +806,7 @@ console.log("buildGroceryItemForm: categories=", categories);
                 else
                 {
                   // It's an item
-
-                  parentItem = idMap[item.category];
+                  parentItem = idMap[item.category || 0];
                   item.parent = item.category;
                   item.label = item.item;
                   item.notesVisibility = "visible";
