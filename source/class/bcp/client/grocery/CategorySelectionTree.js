@@ -13,14 +13,19 @@
  */
 qx.Class.define("bcp.client.grocery.CategorySelectionTree",
 {
-  extend : qx.ui.tree.VirtualTree,
+  extend : qx.ui.container.Composite,
   include   : [ qx.ui.form.MForm ],
   implement : [ qx.ui.form.IForm, qx.ui.form.IField ],
 
   construct(model)
   {
-    this.base(arguments, model, "label", "children", "open");
-    this.set(
+    let             tree;
+
+    this.base(arguments, new qx.ui.layout.VBox());
+
+    tree = this._tree =
+      new qx.ui.tree.VirtualTree(model, "label", "children", "open");
+    tree.set(
       {
         width                      : 400,
         hideRoot                   : true,
@@ -28,52 +33,51 @@ qx.Class.define("bcp.client.grocery.CategorySelectionTree",
         selectionMode              : "one"
       });
 
-//    this.setDelegate(this);
+    tree.getSelection().addListener(
+      "change",
+      (e) =>
+      {
+        if (! this.__internalChange)
+        {
+          this.setValue(e.getData().added[0].getId());
+        }
+      });
+
+    this.add(tree);
+  },
+
+  properties :
+  {
+    value :
+    {
+      check     : "Number",
+      event     : "changeValue",
+      nullable  : false,
+      apply     : "_applyValue"
+    }
   },
 
   members :
   {
-//     // IField implementation: get the selected item
-//     getValue()
-//     {
-// console.log("getValue: getSelection=", this.getSelection());
-// console.log("getValue: native=", JSON.stringify(qx.util.Serializer.toNativeObject(this.getSelection())), null, "  ");
-//       return 23;
-//       return qx.util.Serializer.toNativeObject(this.getSelection())[0].id;
-//     },
+    _tree            : null,
+    __internalChange : false,
 
-    // IField implementation: set the specified item as selected
-    setValue(value)
+    // property apply
+    _applyValue(value, old)
     {
-      // We're called with an array containing the selected element
-      // index. Convert that to the element's id
-      if (Array.isArray(value))
-      {
-console.log("setValue value=", value);
-console.log("getValue[0].id=", this.getValue().getItem(0).getId());
-        this.fireDataEvent("changeValue", this.getValue().getItem(0).getId());
-      }
-    },
+      let             item;
+      let             lookupTable;
 
-//     // IField implementation: ignore
-//     resetValue()
-//     {
-//       // do nothing
-// console.log("resetValue called");
-//     },
+      // Get the tree's lookup table which is an easily searchable array
+      lookupTable = this._tree.getLookupTable();
 
+      // Filter out all but the item with the designated value (id)
+      item = lookupTable.filter((item) => item.getId() === value).getItem(0);
 
-    // delegate implementation
-    // bindItem(controller, item, id)
-    // {
-    //   controller.bindDefaultProperties(item, id);
-    //   controller.bindProperty("open", "open", null, item, id);
-    //   controller.bindProperty("checked", "checked", null, item, id);
-    //   controller.bindPropertyReverse("checked", "checked", null, item, id);
-    //   controller.bindProperty("notes", "notes", null, item, id);
-    //   controller.bindPropertyReverse("notes", "notes", null, item, id);
-    //   controller.bindProperty(
-    //     "notesVisibility", "notesVisibility", null, item, id);
-    // }
+      // That item gets selected. Protect from infinite recursion
+      this.__internalChange = true;
+      this._tree.setSelection( [ item ] );
+      this.__internalChange = false;
+    }
   }
 });

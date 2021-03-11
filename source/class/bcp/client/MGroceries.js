@@ -491,7 +491,7 @@ console.log("buildGroceryItemForm: categories=", categories);
                 {
                   type       : "groceryCategories",
                   label      : null,
-                  value      : 0,
+                  value      : 2,
                   userdata   :
                   {
                     row        : 1,
