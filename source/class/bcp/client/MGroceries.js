@@ -329,15 +329,6 @@ qx.Mixin.define("bcp.client.MGroceries",
           {
             // Save the category list
             categories = categoryList;
-console.log("buildGroceryItemForm: categories=", categories);
-            // categories[0].children.unshift(
-            //   {
-            //     id       : 0,
-            //     parent   : null,
-            //     name     : "*** Not yet categorized ***",
-            //     label    : "*** Not yet categorized ***",
-            //     children : []
-            //   });
 
             // Build the form
             formData =
@@ -494,12 +485,13 @@ console.log("buildGroceryItemForm: categories=", categories);
                 category_label :
                 {
                   type       : "Label",
-                  label      : "Category:",
+                  label      : "Category<span style='color: red;'>*</span>:",
+                  rich       : true,
                   userdata   :
                   {
                     row        : 0,
-                    column     : 2
-                  }
+                    column     : 1
+                  },
                 },
                 category :
                 {
@@ -512,14 +504,6 @@ console.log("buildGroceryItemForm: categories=", categories);
                     column     : 1,
                     rowspan    : 9,
                     modelData  : categories
-                  },
-                  validation :
-                  {
-                    required : true
-                    // validator : (value) =>
-                    // {
-                    //   return value > 0;
-                    // }
                   }
                 }
               };
@@ -592,7 +576,6 @@ console.log("buildGroceryItemForm: categories=", categories);
                                       return;
                                     }
 
-console.log("getGroceryList returned " + JSON.stringify(result, null, "  "));
                                     // Add the provided grocery list, munging
                                     // column data as necessary
                                     result = result.map(
@@ -630,9 +613,10 @@ console.log("getGroceryList returned " + JSON.stringify(result, null, "  "));
                 buttonBar.addAt(butDelete, 0);
                 buttonBar.addAt(new qx.ui.core.Spacer(), 1, { flex : 1 });
               },
-              setupFormRendererFunction : function(form) {
-//                var         renderer = new qxl.dialog.FormRenderer(form);
-                var         renderer = new qxl.dialog.MultiColumnFormRenderer(form);
+              setupFormRendererFunction : function(form)
+              {
+                var         renderer =
+                    new qxl.dialog.MultiColumnFormRenderer(form);
                 var         layout = new qx.ui.layout.Grid();
                 const       col = renderer.column;
 
@@ -653,6 +637,58 @@ console.log("getGroceryList returned " + JSON.stringify(result, null, "  "));
 
                 // Give 'em what they came for
                 return renderer;
+              },
+              finalizeFunction : function(form, formDialog)
+              {
+                let         f;
+                let         manager;
+
+                //
+                // Use a validation manager. Ensure that the entered data is
+                // consistent, and that all required fields are entered.
+                // When valid, enable the Save button.
+                //
+
+                // Instantiate a validation manager
+                form._validationManager = manager =
+                  new qx.ui.form.validation.Manager();
+
+                // Prepare a validation function
+                f = function()
+                {
+                  let             category;
+
+                  // Enable the Save button if the form validates
+                  manager.bind(
+                    "valid",
+                    formDialog._okButton,
+                    "enabled",
+                    {
+                      converter: function(value)
+                      {
+                        return value || false;
+                      }
+                    });
+
+                  category = formDialog._formElements["category"].getValue();
+                  if (category <= 0)
+                  {
+                    return false;
+                  }
+
+                  return true;
+                }.bind(this);
+
+                formDialog._formElements["category"].addListener(
+                  "changeCategory",
+                  (value) =>
+                  {
+                    form.validate();
+                  });
+
+                // Use that validator
+                manager.setValidator(f);
+                form.validate(manager);
               }
             });
 
@@ -785,7 +821,6 @@ console.log("getGroceryList returned " + JSON.stringify(result, null, "  "));
                     {
                       item : formValues.item
                     });
-
                 })
               .catch(
                 (e) =>

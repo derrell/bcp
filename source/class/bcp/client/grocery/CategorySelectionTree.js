@@ -39,12 +39,19 @@ qx.Class.define("bcp.client.grocery.CategorySelectionTree",
       {
         if (! this.__internalChange)
         {
-          this.setValue(e.getData().added[0].getId());
-console.log("change: new value is " + this.getValue());
+          let             id = e.getData().added[0].getId();
+
+          this.setValue(id);
+          this.fireDataEvent("changeCategory", id);
         }
       });
 
     this.add(tree);
+  },
+
+  events :
+  {
+    changeCategory : "qx.event.type.Data"
   },
 
   properties :
@@ -53,8 +60,9 @@ console.log("change: new value is " + this.getValue());
     {
       check     : "Number",
       event     : "changeValue",
-      nullable  : false,
-      apply     : "_applyValue"
+      nullable  : true,
+      apply     : "_applyValue",
+      transform : "_transformValue"
     }
   },
 
@@ -85,6 +93,12 @@ console.log("change: new value is " + this.getValue());
       this.__internalChange = true;
       this._tree.setSelection( [ item ] );
       this.__internalChange = false;
+    },
+
+    // property transform
+    _transformValue(value)
+    {
+      return value === null ? 0 : value;
     }
   }
 });
