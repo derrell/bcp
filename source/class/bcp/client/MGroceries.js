@@ -330,6 +330,14 @@ qx.Mixin.define("bcp.client.MGroceries",
             // Save the category list
             categories = categoryList;
 console.log("buildGroceryItemForm: categories=", categories);
+            // categories[0].children.unshift(
+            //   {
+            //     id       : 0,
+            //     parent   : null,
+            //     name     : "*** Not yet categorized ***",
+            //     label    : "*** Not yet categorized ***",
+            //     children : []
+            //   });
 
             // Build the form
             formData =
@@ -504,6 +512,14 @@ console.log("buildGroceryItemForm: categories=", categories);
                     column     : 1,
                     rowspan    : 9,
                     modelData  : categories
+                  },
+                  validation :
+                  {
+                    required : true
+                    // validator : (value) =>
+                    // {
+                    //   return value > 0;
+                    // }
                   }
                 }
               };
@@ -576,6 +592,7 @@ console.log("buildGroceryItemForm: categories=", categories);
                                       return;
                                     }
 
+console.log("getGroceryList returned " + JSON.stringify(result, null, "  "));
                                     // Add the provided grocery list, munging
                                     // column data as necessary
                                     result = result.map(
@@ -614,7 +631,7 @@ console.log("buildGroceryItemForm: categories=", categories);
                 buttonBar.addAt(new qx.ui.core.Spacer(), 1, { flex : 1 });
               },
               setupFormRendererFunction : function(form) {
-                var         renderer = new qxl.dialog.FormRenderer(form);
+//                var         renderer = new qxl.dialog.FormRenderer(form);
                 var         renderer = new qxl.dialog.MultiColumnFormRenderer(form);
                 var         layout = new qx.ui.layout.Grid();
                 const       col = renderer.column;
@@ -685,13 +702,40 @@ console.log("buildGroceryItemForm: categories=", categories);
             // Add the record name to be updated, in case of rename
             formValues.item_update = itemInfo.item || formValues.item;
 
-            // If the category changed, the value is just the new id
-            // number. If it didn't change, it's still the original
-            // array of map from which we should extract the id number.
-            if (Array.isArray(formValues.category))
+            // Figure out the category name, given the category
+            function findName(root, id)
             {
-              formValues.category = formValues.category[0].id;
+              let       name;
+              let       childrenLen = root.children ? root.children.length : 0;
+
+              // Base case: Did we find the specified ID?
+              if (root.id === id)
+              {
+                // Yup. Give 'em the name
+                return root.label;
+              }
+
+              // For each child...
+              for (let i = 0; i < childrenLen; i++)
+              {
+                // ... call recursively
+                name = findName(root.children[i], id);
+
+                // If we found the name, return it
+                if (name)
+                {
+                  return name;
+                }
+              }
+
+              return null;
             }
+
+            // Find the name corresponding to the selected id.
+            formValues.category_name =
+              findName(
+                categories[0],
+                formValues.category);
 
             console.log("formValues=", formValues);
 

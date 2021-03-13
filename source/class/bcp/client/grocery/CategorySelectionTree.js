@@ -30,7 +30,7 @@ qx.Class.define("bcp.client.grocery.CategorySelectionTree",
         width                      : 400,
         hideRoot                   : true,
         showTopLevelOpenCloseIcons : true,
-        selectionMode              : "one"
+        selectionMode              : "single"
       });
 
     tree.getSelection().addListener(
@@ -40,6 +40,7 @@ qx.Class.define("bcp.client.grocery.CategorySelectionTree",
         if (! this.__internalChange)
         {
           this.setValue(e.getData().added[0].getId());
+console.log("change: new value is " + this.getValue());
         }
       });
 
@@ -61,6 +62,12 @@ qx.Class.define("bcp.client.grocery.CategorySelectionTree",
   {
     _tree            : null,
     __internalChange : false,
+
+    _forwardStates :
+    {
+      focused : true,
+      invalid : true
+    },
 
     // property apply
     _applyValue(value, old)
