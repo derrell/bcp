@@ -60,6 +60,8 @@ qx.Class.define("bcp.client.grocery.CategoryEditor",
         let             newItem;
         let             model;
         let             name;
+        let             bNew;
+        let             extraArgs = {};
 
         // Get the dropped-on item
         item = e.getOriginalTarget();
@@ -87,12 +89,20 @@ qx.Class.define("bcp.client.grocery.CategoryEditor",
           newItem = e.getDragTarget().getModel();
           this.removeItem(tree.getModel(), newItem);
 
+          // It's not new
+          bNew = false;
+          extraArgs =
+            {
+              id     : newItem.getId()
+            };
+
           // There's nothing to wait on
           p = Promise.resolve(newItem);
         }
         else
         {
           // We're adding an item. Create its model
+          bNew = true;
           p = new Promise(
             (resolve, reject) =>
             {
@@ -127,11 +137,13 @@ qx.Class.define("bcp.client.grocery.CategoryEditor",
             return qx.core.Init.getApplication().rpc(
               "saveGroceryCategory",
               [
-                {
-                  parent : model.getId(),
-                  name   : newItem.getName()
-                },
-                true
+                Object.assign(
+                  {
+                    parent : model.getId(),
+                    name   : newItem.getName()
+                  },
+                  extraArgs),
+                bNew
               ])
               .catch(
                 (e) =>
