@@ -110,10 +110,11 @@ qx.Class.define("bcp.client.grocery.CategoryEditor",
 
                  newItem = qx.data.marshal.Json.createModel(
                    {
-                     "id": null,
-                     "name": name,
-                     "open": true,
-                     "children": []
+                     id        : null,
+                     name      : name,
+                     open      : true,
+                     parent    : model.getId(),
+                     children  : []
                    });
                  resolve(newItem);
                });
@@ -208,6 +209,11 @@ qx.Class.define("bcp.client.grocery.CategoryEditor",
                 `Rename '${label}' to:`,
                 (newName) =>
                 {
+                  if (! newName)
+                  {
+                    return;
+                  }
+
                   qx.core.Init.getApplication().rpc(
                     "renameGroceryCategory",
                     [
@@ -227,7 +233,33 @@ qx.Class.define("bcp.client.grocery.CategoryEditor",
                     .then(
                       () =>
                       {
+                        let             item;
+                        let             parent;
+                        let             lookupTable;
+
                         model.setName(newName);
+
+                        // Get the tree's lookup table which is an
+                        // easily searchable array
+                        lookupTable = tree.getLookupTable();
+
+                        // Find the parent id
+                        parent = model.getParent();
+
+                        // Filter out all but the item with the
+                        // designated value (id)
+                        item = lookupTable.filter(
+                          (item) => item.getId() === parent).getItem(0);
+
+                        // Resort our parent's children
+                        item.getChildren().sort(
+                          (a, b) =>
+                          {
+                            let             aName = a.getName();
+                            let             bName = b.getName();
+
+                            return aName < bName ? -1 : aName > bName ? 1 : 0;
+                          });
                       });
                 });
             });
