@@ -91,6 +91,7 @@ qx.Mixin.define("bcp.client.MClientMgmt",
           "# ?gender",
           "# veteran",
           "Notes",
+          "Food preferences",
           "Income source",
           "Income amount",
           "Pet types",
@@ -112,6 +113,7 @@ qx.Mixin.define("bcp.client.MClientMgmt",
           "count_sex_other",
           "count_veteran",
           "notes_default",
+          "food_preferences",
           "income_source",
           "income_amount",
           "pet_types",
@@ -186,6 +188,7 @@ qx.Mixin.define("bcp.client.MClientMgmt",
       behavior.setWidth(tm.getColumnIndexById("count_sex_other"), 70);
       behavior.setWidth(tm.getColumnIndexById("count_veteran"), 70);
       behavior.setWidth(tm.getColumnIndexById("notes_default"), 200);
+      behavior.setWidth(tm.getColumnIndexById("food_preferences"), 200);
       behavior.setWidth(tm.getColumnIndexById("income_source"), 100);
       behavior.setWidth(tm.getColumnIndexById("income_amount"), 100);
       behavior.setWidth(tm.getColumnIndexById("pet_types"), 100);
@@ -829,9 +832,24 @@ qx.Mixin.define("bcp.client.MClientMgmt",
                   },
                   userdata   :
                   {
-                    row      : 0,
-                    column   : 4,
-                    rowspan  : 20
+                    row        : 0,
+                    column     : 4,
+                    rowspan    : 17
+                  }
+                },
+                food_preferences :
+                {
+                  type       : "TextArea",
+                  label      : null,
+                  lines      : 3,
+                  value      : clientInfo.food_preferences || "",
+                  userdata   :
+                  {
+                    rowspan    : 3
+                  },
+                  properties :
+                  {
+                    placeholder  : "General food preferences"
                   }
                 }
               };
@@ -1199,6 +1217,9 @@ qx.Mixin.define("bcp.client.MClientMgmt",
 
             // Be sure notes_default is empty string if all whitespace
             formValues.notes_default = formValues.notes_default.trim();
+
+            // Ditto for food_preferences
+            formValues.food_preferences = formValues.food_preferences.trim();
 
             // Add the record name to be updated, in case of rename
             formValues.family_name_update =

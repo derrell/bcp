@@ -31,12 +31,14 @@ CREATE TABLE Client
   verified          BOOLEAN DEFAULT FALSE,
   archived          BOOLEAN DEFAULT FALSE,
   notes_default     VARCHAR NOT NULL DEFAULT '',
+  food_preferences  VARCHAR NOT NULL DEFAULT '',
   UNIQUE (family_name COLLATE NOCASE)
 );
 
 -- Changes from original to derive the above table
 --
 -- ALTER TABLE Client ADD COLUMN notes_default VARCHAR NOT NULL DEFAULT '';
+-- ALTER TABLE Client ADD COLUMN food_preferences VARCHAR NOT NULL DEFAULT '';
 
 
 CREATE TABLE Fulfillment
