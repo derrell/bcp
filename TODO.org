@@ -8,4 +8,6 @@
 *** Add column width configuration
 *** Consider multi-line single row
 *** Add converter function
-** TODO Appointments tab: search by name
+** TODO Appointments tab
+*** search by name
+*** allow choosing distribution start date
