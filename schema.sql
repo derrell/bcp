@@ -18,6 +18,7 @@ CREATE TABLE Client
   count_senior      INTEGER DEFAULT 0,  -- number of family members 65+
   count_adult       INTEGER DEFAULT 0,  -- number of family members 18-64
   count_child       INTEGER DEFAULT 0,  -- number of family members 0-17
+  count_child12     INTEGER DEFAULT 0,
   count_sex_male    INTEGER DEFAULT 0,
   count_sex_female  INTEGER DEFAULT 0,
   count_sex_other   INTEGER DEFAULT 0,
@@ -39,6 +40,7 @@ CREATE TABLE Client
 --
 -- ALTER TABLE Client ADD COLUMN notes_default VARCHAR NOT NULL DEFAULT '';
 -- ALTER TABLE Client ADD COLUMN food_preferences VARCHAR NOT NULL DEFAULT '';
+-- ALTER TABLE Client ADD COLUMN count_child12 INTEGER DEFAULT 0;
 
 
 CREATE TABLE Fulfillment

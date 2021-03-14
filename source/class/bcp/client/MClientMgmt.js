@@ -85,7 +85,8 @@ qx.Mixin.define("bcp.client.MClientMgmt",
           "Verified",
           "# seniors",
           "# adults",
-          "# children",
+          "# children <18",
+          "# children <12",
           "# male",
           "# female",
           "# ?gender",
@@ -108,6 +109,7 @@ qx.Mixin.define("bcp.client.MClientMgmt",
           "count_senior",
           "count_adult",
           "count_child",
+          "count_child12",
           "count_sex_male",
           "count_sex_female",
           "count_sex_other",
@@ -182,7 +184,8 @@ qx.Mixin.define("bcp.client.MClientMgmt",
       behavior.setWidth(tm.getColumnIndexById("verified"), 60);
       behavior.setWidth(tm.getColumnIndexById("count_senior"), 80);
       behavior.setWidth(tm.getColumnIndexById("count_adult"), 80);
-      behavior.setWidth(tm.getColumnIndexById("count_child"), 80);
+      behavior.setWidth(tm.getColumnIndexById("count_child"), 100);
+      behavior.setWidth(tm.getColumnIndexById("count_child12"), 100);
       behavior.setWidth(tm.getColumnIndexById("count_sex_male"), 60);
       behavior.setWidth(tm.getColumnIndexById("count_sex_female"), 60);
       behavior.setWidth(tm.getColumnIndexById("count_sex_other"), 70);
@@ -295,6 +298,7 @@ qx.Mixin.define("bcp.client.MClientMgmt",
         "count_senior",
         "count_adult",
         "count_child",
+        "count_child12",
         "count_sex_male",
         "count_sex_female",
         "count_sex_other",
@@ -742,6 +746,22 @@ qx.Mixin.define("bcp.client.MClientMgmt",
                     tabIndex   : 12
                   }
                 },
+                count_child12 :
+                {
+                  type      : "spinner",
+                  label     : "# of youngsters (age 0-12)",
+                  value     : clientInfo.count_child12 || 0,
+                  min       : 0,
+                  step      : 1,
+                  userdata   :
+                  {
+                    row       : 4
+                  },
+                  properties :
+                  {
+                    tabIndex   : 13
+                  }
+                },
                 count_sex_male :
                 {
                   type      : "spinner",
@@ -751,11 +771,11 @@ qx.Mixin.define("bcp.client.MClientMgmt",
                   step      : 1,
                   userdata  :
                   {
-                    row       : 4
+                    row       : 6
                   },
                   properties :
                   {
-                    tabIndex   : 13
+                    tabIndex   : 14
                   }
                 },
                 count_sex_female :
@@ -767,7 +787,7 @@ qx.Mixin.define("bcp.client.MClientMgmt",
                   step      : 1,
                   properties :
                   {
-                    tabIndex   : 14
+                    tabIndex   : 15
                   }
                 },
                 count_sex_other :
@@ -779,7 +799,7 @@ qx.Mixin.define("bcp.client.MClientMgmt",
                   step      : 1,
                   properties :
                   {
-                    tabIndex   : 15
+                    tabIndex   : 16
                   }
                 },
                 count_veteran :
@@ -791,11 +811,11 @@ qx.Mixin.define("bcp.client.MClientMgmt",
                   step      : 1,
                   userdata  :
                   {
-                    row       : 8
+                    row       : 10
                   },
                   properties :
                   {
-                    tabIndex   : 16
+                    tabIndex   : 17
                   }
                 },
                 default_appointment :
