@@ -89,7 +89,7 @@ qx.Mixin.define("bcp.client.MGroceries",
           "Aisle",
           "Shelf unit #",
           "Side of aisle",
-          "Shelf #",
+          "Level",
           "Stock on hand",
           "Vendor contact info"
         ],
@@ -407,6 +407,8 @@ qx.Mixin.define("bcp.client.MGroceries",
                     { label : "10",    value : "10" },
                     { label : "11",    value : "11" },
                     { label : "12",    value : "12" },
+                    { label : "13",    value : "13" },
+                    { label : "14",    value : "14" },
                     { label : "00",    value : "00" },
                     { label : "01",    value : "01" },
                     { label : "02",    value : "02" }
@@ -425,7 +427,8 @@ qx.Mixin.define("bcp.client.MGroceries",
                   options :
                   [
                     { label : "Left",   value : "L" },
-                    { label : "Right",  value : "R" }
+                    { label : "Right",  value : "R" },
+                    { label : "Wall",   value : ""  }
                   ],
                   properties :
                   {
