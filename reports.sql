@@ -723,22 +723,52 @@ REPLACE INTO Report
 );
 
 -
----
---- Query for a family name, all items, and exclusions and notes for
---- those items.
--
---- SELECT
----     c.family_name AS family_name,
----     gi.item AS item,
----     gi.perishable AS perishable,
----     CASE
----       WHEN cgp.exclude IS NULL THEN 1
----       ELSE NOT cgp.exclude
----     END AS wanted,
----     cgp.notes AS notes
----   FROM Client c
----   CROSS JOIN  GroceryItem gi
----   LEFT JOIN ClientGroceryPreference cgp
----     ON cgp.family_name = c.family_name AND cgp.grocery_item = gi.item
----    WHERE c.family_name = 'Abdelnasseh, Mikail';
+--
+-- Query for a family name, all items, and exclusions and notes for
+-- those items.
 
+REPLACE INTO Report
+(
+  name,
+  description,
+  landscape,
+  input_fields,
+  subtitle_field,
+  separate_by,
+  number_style,
+  number_remaining,
+  query
+)
+ VALUES
+(
+  'Groceries: shopping list',
+  'Shopping list for a family',
+  0,
+  '{
+     "$family_name" :
+     {
+       "type"  : "TextField",
+       "label" : "Family Name"
+     }
+   }',
+  '',
+  '',
+  '',
+  '',
+  'SELECT
+       c.family_name AS family_name,
+       gi.item AS item,
+       gi.perishable AS perishable,
+       CASE
+         WHEN cgp.exclude IS NULL THEN 1
+         ELSE NOT cgp.exclude
+       END AS wanted,
+       cgp.notes AS notes,
+       c.food_preferences AS food_preferences
+     FROM Client c
+     CROSS JOIN  GroceryItem gi
+     LEFT JOIN ClientGroceryPreference cgp
+       ON cgp.family_name = c.family_name AND cgp.grocery_item = gi.item
+      WHERE c.family_name = $family_name;
+  '
+);
