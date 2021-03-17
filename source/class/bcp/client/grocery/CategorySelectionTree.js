@@ -28,6 +28,7 @@ qx.Class.define("bcp.client.grocery.CategorySelectionTree",
     tree.set(
       {
         width                      : 400,
+        height                     : 500,
         hideRoot                   : true,
         showTopLevelOpenCloseIcons : true,
         selectionMode              : "single"
@@ -46,7 +47,7 @@ qx.Class.define("bcp.client.grocery.CategorySelectionTree",
         }
       });
 
-    this.add(tree);
+    this.add(tree, { flex : 1 });
   },
 
   events :

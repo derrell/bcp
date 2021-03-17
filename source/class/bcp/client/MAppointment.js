@@ -478,7 +478,7 @@ qx.Mixin.define("bcp.client.MAppointment",
                 notes :
                 {
                   type       : "TextArea",
-                  label      : "Notes",
+                  label      : "Notes (no monthly carryover)",
                   lines      : 3,
                   value      : (fulfillment.notes ||
                                 (bNew ? client.notes_default : "") ||
@@ -584,7 +584,7 @@ qx.Mixin.define("bcp.client.MAppointment",
             this._appointmentForm.set(
               {
                 message          : this.bold(familyName || ""),
-                labelColumnWidth : 150,
+                labelColumnWidth : 180,
                 formData         : formData
               });
 

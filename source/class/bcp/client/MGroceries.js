@@ -432,7 +432,7 @@ qx.Mixin.define("bcp.client.MGroceries",
                   ],
                   properties :
                   {
-                    maxWidth   : 60,
+                    maxWidth   : 80,
                     tabIndex   : 5
                   }
                 },
@@ -505,7 +505,7 @@ qx.Mixin.define("bcp.client.MGroceries",
                   {
                     row        : 1,
                     column     : 1,
-                    rowspan    : 9,
+                    rowspan    : 20,
                     modelData  : categories
                   }
                 }

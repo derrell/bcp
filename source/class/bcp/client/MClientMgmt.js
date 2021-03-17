@@ -91,7 +91,7 @@ qx.Mixin.define("bcp.client.MClientMgmt",
           "# female",
           "# ?gender",
           "# veteran",
-          "Notes",
+          "Notes (copied to new appt.)",
           "Food preferences",
           "Income source",
           "Income amount",
@@ -683,7 +683,7 @@ qx.Mixin.define("bcp.client.MClientMgmt",
                 notes_default :
                 {
                   type       : "TextArea",
-                  label      : "Notes",
+                  label      : "Notes (copied to new appt.)",
                   lines      : 3,
                   value      : clientInfo.notes_default || "",
                   userdata   :
@@ -1173,7 +1173,7 @@ qx.Mixin.define("bcp.client.MClientMgmt",
 
             form.set(
               {
-                labelColumnWidth : 150,
+                labelColumnWidth : 180,
                 formData         : formData,
               });
             form._okButton.set(
