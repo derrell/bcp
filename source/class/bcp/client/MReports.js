@@ -351,7 +351,8 @@ qx.Mixin.define("bcp.client.MReports",
                     this._reportWin,
                     result.name,
                     result[reportInfo.subtitle_field],
-                    reportInfo.landscape);
+                    reportInfo.landscape,
+                    reportInfo.columns || 1);
 
                   // Write the heading
                   this._reportWin.document.write("<thead><tr>");
@@ -365,6 +366,12 @@ qx.Mixin.define("bcp.client.MReports",
                   Object.keys(report[0]).forEach(
                     (heading) =>
                     {
+                      // Ignore column names beginning with underscore
+                      if (heading.charAt(0) == "_")
+                      {
+                        return;
+                      }
+
                       this._reportWin.document.write(`<th>${heading}</th>`);
                     });
                   this._reportWin.document.write("</tr></thead>");
@@ -469,6 +476,12 @@ qx.Mixin.define("bcp.client.MReports",
                       Object.keys(report[0]).forEach(
                         (heading) =>
                         {
+                          // Ignore column names beginning with underscore
+                          if (heading.charAt(0) == "_")
+                          {
+                            return;
+                          }
+
                           // Convert times to 12-hour format
                           if (heading == "Time")
                           {
@@ -493,7 +506,7 @@ qx.Mixin.define("bcp.client.MReports",
       this._reportForm.show();
     },
 
-    _insertPrefix(win, title, subtitle, bLandscape)
+    _insertPrefix(win, title, subtitle, bLandscape, columns)
     {
       let             separatorHeight = 48 / 2; // separators always in pairs
       let             media =
@@ -525,11 +538,16 @@ qx.Mixin.define("bcp.client.MReports",
           "        background: white;",
           "        border: 0px;'",
           "      }",
+          "      .multicolumn {",
+          `        -webkit-column-count: ${columns};`,
+          `        -moz-column-count: ${columns};`,
+          `        column-count: ${columns};`,
+          "      }",
           "    </style>",
           "  </head>",
           "  <body>",
           `    <h1>${title}</h1>`
-        ].join(""));
+        ].join("\n"));
 
       if (subtitle)
       {
@@ -543,7 +561,8 @@ qx.Mixin.define("bcp.client.MReports",
 
       win.document.write(
         [
-          "    <table>"
+          "    <div class='multicolumn'>",
+          "      <table>"
         ].join(""));
     },
 
@@ -551,7 +570,8 @@ qx.Mixin.define("bcp.client.MReports",
     {
       win.document.write(
         [
-          "    </table>",
+          "      </table>",
+          "    </div>",
           "  </body>",
           "</html>"
         ].join(""));

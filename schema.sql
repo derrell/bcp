@@ -97,6 +97,7 @@ CREATE TABLE Report
   landscape         BOOLEAN DEFAULT 0,
   number_style      VARCHAR,
   number_remaining  VARCHAR,
+  columns           INTEGER DEFAULT 1,
   UNIQUE (name COLLATE NOCASE)
 );
 
@@ -112,10 +113,10 @@ CREATE TABLE GroceryItem
 (
   item              VARCHAR PRIMARY KEY NOT NULL,
   perishable        BOOLEAN NOT NULL DEFAULT 0,
-  dist_aisle        VARCHAR DEFAULT '',    -- A, B, ...
-  dist_unit         VARCHAR DEFAULT '',    -- 0=north 1-9=shelves 10=south
+  dist_aisle        INTEGER DEFAULT '',    -- A, B, ...
+  dist_unit         INTEGER DEFAULT '',    -- 0=north 1-9=shelves 10=south
   dist_side         VARCHAR DEFAULT '',    -- L=left R=right
-  dist_shelf        VARCHAR DEFAULT '',    -- 1=top, 2=second-from-top, etc.
+  dist_shelf        VARCHAR DEFAULT '',    -- a=top, b=second-from-top, etc.
   on_hand           VARCHAR,    -- "plenty", "reorder", "ignore"
   order_contact     VARCHAR,    -- who to contact for reorder
   category          INTEGER REFERENCES GroceryCategory

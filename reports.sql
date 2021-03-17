@@ -737,6 +737,7 @@ REPLACE INTO Report
   separate_by,
   number_style,
   number_remaining,
+  columns,
   query
 )
  VALUES
@@ -751,24 +752,33 @@ REPLACE INTO Report
        "label" : "Family Name"
      }
    }',
+  '$family_name',
+  '_aisle',
   '',
   '',
-  '',
-  '',
+  2,
   'SELECT
-       c.family_name AS family_name,
-       gi.item AS item,
-       gi.perishable AS perishable,
+       gi.dist_aisle || "/" ||
+         gi.dist_unit ||
+         dist_side ||
+         CASE
+           WHEN dist_shelf IS NULL THEN ""
+           ELSE "-" || dist_shelf
+         END AS Location,
+       gi.item AS Item,
+       COALESCE(cgp.notes, "") AS Notes,
        CASE
          WHEN cgp.exclude IS NULL THEN 1
          ELSE NOT cgp.exclude
-       END AS wanted,
-       cgp.notes AS notes,
-       c.food_preferences AS food_preferences
+       END AS _wanted,
+       c.food_preferences AS _food_preferences,
+       c.family_name AS _family_name,
+       "Aisle " || gi.dist_aisle AS _aisle
      FROM Client c
      CROSS JOIN  GroceryItem gi
      LEFT JOIN ClientGroceryPreference cgp
        ON cgp.family_name = c.family_name AND cgp.grocery_item = gi.item
-      WHERE c.family_name = $family_name;
+     WHERE c.family_name = $family_name
+     ORDER BY gi.dist_aisle, gi.dist_unit, gi.dist_side;
   '
 );
