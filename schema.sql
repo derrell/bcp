@@ -98,6 +98,7 @@ CREATE TABLE Report
   number_style      VARCHAR,
   number_remaining  VARCHAR,
   columns           INTEGER DEFAULT 1,
+  munge_function    VARCHAR,
   UNIQUE (name COLLATE NOCASE)
 );
 

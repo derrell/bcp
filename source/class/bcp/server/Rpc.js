@@ -1121,7 +1121,8 @@ qx.Class.define("bcp.server.Rpc",
                 "landscape",
                 "number_style",
                 "number_remaining",
-                "columns"
+                "columns",
+                "munge_function"
               ].join(", "),
               "FROM Report",
               "ORDER BY name"

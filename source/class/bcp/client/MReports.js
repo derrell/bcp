@@ -291,6 +291,7 @@ qx.Mixin.define("bcp.client.MReports",
               .then(
                 (report) =>
                 {
+                  let             fMunge;
                   let             heading;
                   let             headings;
                   let             lineNumber = 0;
@@ -304,6 +305,16 @@ qx.Mixin.define("bcp.client.MReports",
                     // If there is no data, let 'em know
                     qxl.dialog.Dialog.alert("Nothing to report");
                     return;
+                  }
+
+                  // If there's text of a data munging function...
+                  if (reportInfo.munge_function)
+                  {
+                    // ... create the function
+                    fMunge =
+                      new Function("type", "data", reportInfo.munge_function);
+
+                    fMunge("incoming", { reportInfo, report });
                   }
 
                   // If there's a prior report window, close it
@@ -352,7 +363,10 @@ qx.Mixin.define("bcp.client.MReports",
                     result.name,
                     result[reportInfo.subtitle_field],
                     reportInfo.landscape,
-                    reportInfo.columns || 1);
+                    reportInfo.columns,
+                    fMunge,
+                    reportInfo,
+                    report);
 
                   // Write the heading
                   this._reportWin.document.write("<thead><tr>");
@@ -381,6 +395,8 @@ qx.Mixin.define("bcp.client.MReports",
                   report.forEach(
                     (row, index) =>
                     {
+                      fMunge && fMunge("item", { row });
+
                       // If we're showing remaining entries, and were
                       // told to restart numbering when some field
                       // changes...
@@ -499,18 +515,22 @@ qx.Mixin.define("bcp.client.MReports",
                   this._reportWin.document.write("</tbody>");
 
                   // Insert the common suffix HTML code
-                  this._insertSuffix(this._reportWin);
+                  this._insertSuffix(
+                    this._reportWin, fMunge, reportInfo, report);
                 });
           });
 
       this._reportForm.show();
     },
 
-    _insertPrefix(win, title, subtitle, bLandscape, columns)
+    _insertPrefix(win, title, subtitle, bLandscape, columns,
+                  fMunge, reportInfo, report)
     {
       let             separatorHeight = 48 / 2; // separators always in pairs
       let             media =
           bLandscape ? "@media print{@page {size: landscape}}" : "";
+
+      fMunge && fMunge("beforeTitle", { reportInfo, report });
 
       // Write the boilerplate prefix stuff
       win.document.write(
@@ -549,32 +569,49 @@ qx.Mixin.define("bcp.client.MReports",
           `    <h1>${title}</h1>`
         ].join("\n"));
 
+      fMunge && fMunge("beforeSubtitle", { reportInfo, report });
+
       if (subtitle)
       {
         win.document.write(`<h2>${subtitle}</h2>`);
       }
+
+      fMunge && fMunge("beforeSpecialSiteId", { reportInfo, report });
 
       if (this._specialSiteId)
       {
         win.document.write(`<h2>${this._specialSiteId}</h2>`);
       }
 
+      fMunge && fMunge("beforeMulticolumn", { reportInfo, report });
+
       win.document.write(
         [
           "    <div class='multicolumn'>",
           "      <table>"
-        ].join(""));
+        ].join("\n"));
     },
 
-    _insertSuffix(win)
+    _insertSuffix(win, fMunge, reportInfo, report)
     {
+
+      fMunge && fMunge("beforeSuffix", { reportInfo, report });
+
       win.document.write(
         [
           "      </table>",
-          "    </div>",
+          "    </div>"
+        ].join("\n"));
+
+      fMunge && fMunge("afterMulticolumn", { reportInfo, report });
+
+      win.document.write(
+        [
           "  </body>",
           "</html>"
         ].join(""));
+
+      fMunge && fMunge("reportEnd", { reportInfo, report });
     }
   }
 });

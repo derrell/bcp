@@ -738,6 +738,7 @@ REPLACE INTO Report
   number_style,
   number_remaining,
   columns,
+  munge_function,
   query
 )
  VALUES
@@ -757,6 +758,28 @@ REPLACE INTO Report
   '',
   '',
   2,
+  '
+  {
+    if (type == "item")
+    {
+      if (! data.row._wanted)
+      {
+        data.row.Item =
+          [
+            `<span style="text-decoration: line-through;">`,
+            `${data.row.Item}`,
+            `</span>`
+          ].join("");
+        data.row.Location =
+          [
+            `<span style="text-decoration: line-through;">`,
+            `${data.row.Location}`,
+            `</span>`
+          ].join("");
+      }
+    }
+  }
+  ',
   'SELECT
        gi.dist_aisle || "/" ||
          gi.dist_unit ||
