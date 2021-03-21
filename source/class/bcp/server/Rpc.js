@@ -412,6 +412,10 @@ qx.Class.define("bcp.server.Rpc",
       const           clientInfo = args[0];
       const           bNew = args[1];
 
+      p =
+        this._db.prepare("BEGIN;")
+        .then((stmt) => stmt.run());
+
       if (! bNew)
       {
         prepare = this._db.prepare(
@@ -504,7 +508,8 @@ qx.Class.define("bcp.server.Rpc",
       }
 
       // TODO: move prepared statements to constructor
-      p = prepare
+      return p.then(
+        () => prepare)
         .then(stmt => stmt.run(
           Object.assign(
             {
@@ -533,7 +538,7 @@ qx.Class.define("bcp.server.Rpc",
             addlArgs)))
 
         .then(
-          function (result)
+          (result) =>
           {
             // Ensure that a request to edit actually edited something
             if (! bNew && result.changes != 1)
@@ -544,8 +549,73 @@ qx.Class.define("bcp.server.Rpc",
             return result;
           })
 
-        // Give 'em what they came for!
+        // Delete all grocery items for this family
+        .then(
+          () => this._db.prepare(
+            [
+              "DELETE FROM ClientGroceryPreference",
+              "  WHERE family_name = $family_name;"
+            ].join("")))
+        .then((stmt) =>
+          {
+            return stmt.run(
+              {
+                $family_name : clientInfo.family_name
+              });
+          })
+
+        // Add each of the selected/unselected grocery items
+        .then(
+          () =>
+          {
+            return this._db.prepare(
+              [
+                "INSERT INTO ClientGroceryPreference",
+                "  (",
+                "    family_name,",
+                "    grocery_item,",
+                "    exclude,",
+                "    notes",
+                "  )",
+                "  VALUES",
+                "  (",
+                "    $family_name,",
+                "    $grocery_item,",
+                "    $exclude,",
+                "    $notes",
+                "  );"
+              ].join(""));
+          })
+        .then(
+          (stmt) =>
+          {
+            let             promises = [];
+
+            // For each grocery item...
+            for (let item of clientInfo.groceryItems)
+            {
+              // ... begin the INSERT and save its promise
+              promises.push(
+                stmt.run(
+                  {
+                    $family_name : item.family_name,
+                    $grocery_item : item.grocery_item,
+                    $exclude      : item.exclude,
+                    $notes        : item.notes
+                  }));
+            }
+
+            // We're done here when when all INSERTs have completed
+            return Promise.all(promises);
+          })
+
+        // Commit the transaction
+        .then(() => this._db.prepare("COMMIT;"))
+        .then((stmt) => stmt.run())
+
         .then((result) => callback(null, null))
+
+        // Give 'em what they came for!
         .catch((e) =>
           {
             let             error = { message : e.toString() };
@@ -562,9 +632,11 @@ qx.Class.define("bcp.server.Rpc",
             }
 
             callback(error);
-          });
 
-      return p;
+            return Promise.resolve()
+              .then(() => this._db.prepare("ROLLBACK;"))
+              .then((stmt) => stmt.run());
+          });
     },
 
     /**

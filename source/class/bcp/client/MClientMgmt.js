@@ -1268,7 +1268,7 @@ qx.Mixin.define("bcp.client.MClientMgmt",
               {
                 groceryItems.push(
                   {
-                    grocery_item : root.id,
+                    grocery_item : root.label,
                     family_name  : formValues.family_name_update,
                     exclude      : ! root.checked,
                     notes        : root.notes
