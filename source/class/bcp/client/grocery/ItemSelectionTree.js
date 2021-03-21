@@ -13,49 +13,58 @@
  */
 qx.Class.define("bcp.client.grocery.ItemSelectionTree",
 {
-  extend : qx.ui.tree.VirtualTree,
+  extend : qx.ui.container.Composite,
   include   : [ qx.ui.form.MForm ],
   implement : [ qx.ui.form.IForm, qx.ui.form.IField ],
 
-  construct()
+  construct(model)
   {
-    this.base(arguments, null, "label", "children", "open");
-    this.set(
+    let             tree;
+
+    this.base(arguments, new qx.ui.layout.VBox());
+
+    this.configureTriState(model);
+    this.initValue(model);
+
+    this._tree = tree =
+      new qx.ui.tree.VirtualTree(model, "label", "children", "open");
+    tree.set(
       {
         width                      : 400,
         hideRoot                   : true,
         showTopLevelOpenCloseIcons : true
       });
-
-    this.setDelegate(this);
+    tree.setDelegate(this);
 
     // Don't allow any selection
-    this._provider.isSelectable = () => false;
+    tree._provider.isSelectable = () => false;
+
+    // As model changes, track in in our value
+    tree.getModel().addListener(
+      "changeBubble",
+      (e) =>
+      {
+        let             model = tree.getModel();
+
+        this.setValue(model);
+      });
+
+    this.add(tree, { flex : 1 });
+  },
+
+  properties :
+  {
+    value :
+    {
+      check     : "Object",
+      event     : "changeValue",
+      nullable  : true
+    }
   },
 
   members :
   {
-    // IField implementation: simulate property getter, retrieving from model
-    getValue()
-    {
-      return qx.util.Serializer.toNativeObject(this.getModel());
-    },
-
-    // IField implementation: simulate property setter, saving to model
-    setValue(value)
-    {
-      let             model = qx.data.marshal.Json.createModel(value, true);
-
-      this.configureTriState(model);
-      this.setModel(model);
-      this.openViaModelChanges("open");
-    },
-
-    // IField implementation: ignore
-    resetValue()
-    {
-      // do nothing
-    },
+    _tree : null,
 
     /**
      * If all children of all children are checked, containing branch is

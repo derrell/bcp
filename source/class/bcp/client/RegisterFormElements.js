@@ -51,7 +51,10 @@ qx.Class.define("bcp.client.RegisterFormElements",
       {
         initElement : function(fieldType, fieldData, key)
         {
-          let formElement = new bcp.client.grocery.ItemSelectionTree();
+          let formElement =
+              new bcp.client.grocery.ItemSelectionTree(
+                qx.data.marshal.Json.createModel(
+                  fieldData.userdata.modelData, true).getItem(0));
           return formElement;
         },
 

@@ -845,7 +845,7 @@ qx.Mixin.define("bcp.client.MClientMgmt",
                 {
                   type       : "groceryItems",
                   label      : null,
-                  value      : groceryTreeData[0],
+                  value      : groceryTreeData,
                   properties :
                   {
                     tabIndex      : null
@@ -854,7 +854,8 @@ qx.Mixin.define("bcp.client.MClientMgmt",
                   {
                     row        : 0,
                     column     : 4,
-                    rowspan    : 17
+                    rowspan    : 17,
+                    modelData  : groceryTreeData,
                   }
                 },
                 food_preferences :
@@ -1213,6 +1214,8 @@ qx.Mixin.define("bcp.client.MClientMgmt",
         .then(
           (formValues) =>
           {
+            let             groceryItems = [];
+
             // Cancelled?
             if (! formValues)
             {
@@ -1244,6 +1247,39 @@ qx.Mixin.define("bcp.client.MClientMgmt",
             // Add the record name to be updated, in case of rename
             formValues.family_name_update =
               clientInfo.family_name || formValues.family_name;
+
+            // Convert the grocery_items from a tree to a list
+            // containing only items (no 'children' member) that have
+            // notes or are unchecked
+            function groceryTreeToList(root)
+            {
+              // If it's not an item, just (recursively) process each
+              // of its children
+              if (root.children)
+              {
+                root.children.forEach(child => groceryTreeToList(child));
+                return;
+              }
+
+              // It's an item. If it's excluded (not checked) or has
+              // notes, add its data to the grocery items list
+              if (! root.checked ||
+                  (typeof root.notes == "string" && root.notes.length > 0))
+              {
+                groceryItems.push(
+                  {
+                    grocery_item : root.id,
+                    family_name  : formValues.family_name_update,
+                    exclude      : ! root.checked,
+                    notes        : root.notes
+                  });
+              }
+            }
+            groceryTreeToList(formValues.grocery_items);
+
+            // Replace the grocery item tree with the just-created list
+            formValues.groceryItems = groceryItems;
+            delete formValues.grocery_items;
 
             console.log("formValues=", formValues);
 
