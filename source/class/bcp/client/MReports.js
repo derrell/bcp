@@ -361,9 +361,17 @@ qx.Mixin.define("bcp.client.MReports",
                   this._insertPrefix(
                     this._reportWin,
                     result.name,
-                    result[reportInfo.subtitle_field],
                     reportInfo.landscape,
                     reportInfo.columns,
+                    fMunge,
+                    reportInfo,
+                    report);
+
+                  // Begin a new page
+                  this._beginPage(
+                    this._reportWin,
+                    result.name,
+                    result[reportInfo.subtitle_field],
                     fMunge,
                     reportInfo,
                     report);
@@ -523,14 +531,13 @@ qx.Mixin.define("bcp.client.MReports",
       this._reportForm.show();
     },
 
-    _insertPrefix(win, title, subtitle, bLandscape, columns,
-                  fMunge, reportInfo, report)
+    _insertPrefix(win, title, bLandscape, columns, fMunge, reportInfo, report)
     {
       let             separatorHeight = 48 / 2; // separators always in pairs
       let             media =
           bLandscape ? "@media print{@page {size: landscape}}" : "";
 
-      fMunge && fMunge("beforeTitle", { reportInfo, report });
+      fMunge && fMunge("beforeHtml", { reportInfo, report });
 
       // Write the boilerplate prefix stuff
       win.document.write(
@@ -571,6 +578,11 @@ qx.Mixin.define("bcp.client.MReports",
           "  </head>",
           "  <body>"
         ].join("\n"));
+    },
+
+    _beginPage(win, title, subtitle, fMunge, reportInfo, report)
+    {
+      fMunge && fMunge("beforeTitle", { reportInfo, report });
 
       if (! reportInfo.bNoTitle)
       {
