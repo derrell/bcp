@@ -314,6 +314,9 @@ qx.Mixin.define("bcp.client.MReports",
                     fMunge =
                       new Function("type", "data", reportInfo.munge_function);
 
+                    // Allow access to this report instance, in munge function
+                    fMunge = fMunge.bind(this);
+
                     fMunge("incoming", { reportInfo, report });
                   }
 
@@ -376,34 +379,13 @@ qx.Mixin.define("bcp.client.MReports",
                     reportInfo,
                     report);
 
-                  // Write the heading
-                  this._reportWin.document.write("<thead><tr>");
-
-                  // If numbers are requested...
-                  if (reportInfo.number_style)
-                  {
-                    this._reportWin.document.write(
-                      "<th>#</th>");
-                  }
-                  Object.keys(report[0]).forEach(
-                    (heading) =>
-                    {
-                      // Ignore column names beginning with underscore
-                      if (heading.charAt(0) == "_")
-                      {
-                        return;
-                      }
-
-                      this._reportWin.document.write(`<th>${heading}</th>`);
-                    });
-                  this._reportWin.document.write("</tr></thead>");
-
                   // Write the body
                   this._reportWin.document.write("<tbody>");
                   report.forEach(
                     (row, index) =>
                     {
-                      fMunge && fMunge("item", { row });
+                      fMunge && fMunge("item",
+                                       { report, reportInfo, row, index });
 
                       // If we're showing remaining entries, and were
                       // told to restart numbering when some field
@@ -582,7 +564,9 @@ qx.Mixin.define("bcp.client.MReports",
 
     _beginPage(win, title, subtitle, fMunge, reportInfo, report)
     {
-      fMunge && fMunge("beforeTitle", { reportInfo, report });
+      fMunge && fMunge("pageBeginning", { reportInfo, report });
+
+      win.document.write("<div style='page-break-before: always;'>");
 
       if (! reportInfo.bNoTitle)
       {
@@ -627,20 +611,50 @@ qx.Mixin.define("bcp.client.MReports",
           "    <div class='multicolumn'>",
           "      <table>"
         ].join("\n"));
+
+
+      // Write the heading
+      this._reportWin.document.write("<thead><tr>");
+
+      // If numbers are requested...
+      if (reportInfo.number_style)
+      {
+        this._reportWin.document.write(
+          "<th>#</th>");
+      }
+      Object.keys(report[0]).forEach(
+        (heading) =>
+        {
+          // Ignore column names beginning with underscore
+          if (heading.charAt(0) == "_")
+          {
+            return;
+          }
+
+          this._reportWin.document.write(`<th>${heading}</th>`);
+        });
+      this._reportWin.document.write("</tr></thead>");
+
+      fMunge && fMunge("pageBegun", { reportInfo, report });
+    },
+
+    _endPage(win, fMunge, reportInfo, report)
+    {
+      fMunge && fMunge("pageEnding", { reportInfo, report });
+
+      win.document.write(
+        [
+          "        </table>",
+          "      </div>",         // multicolumn
+          "    </div>"          // page-break-before
+        ].join("\n"));
+
+      fMunge && fMunge("pageEnd", { reportInfo, report });
     },
 
     _insertSuffix(win, fMunge, reportInfo, report)
     {
-
-      fMunge && fMunge("beforeSuffix", { reportInfo, report });
-
-      win.document.write(
-        [
-          "      </table>",
-          "    </div>"
-        ].join("\n"));
-
-      fMunge && fMunge("afterMulticolumn", { reportInfo, report });
+      fMunge && fMunge("reportEnding", { reportInfo, report });
 
       win.document.write(
         [

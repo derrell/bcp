@@ -722,11 +722,6 @@ REPLACE INTO Report
   '
 );
 
--
---
--- Query for a family name, all items, and exclusions and notes for
--- those items.
-
 REPLACE INTO Report
 (
   name,
@@ -743,7 +738,7 @@ REPLACE INTO Report
 )
  VALUES
 (
-  'Groceries: shopping list',
+  'Groceries: shopping list, client complete',
   'Shopping list for a family',
   0,
   '{
@@ -760,26 +755,25 @@ REPLACE INTO Report
   2,
   '
   {
-    if (type == "beforeTitle")
+    if (type == "pageBeginning")
     {
       data.reportInfo.bNoTitle = true;
       data.reportInfo.afterSubtitle = "<h3>" + data.report[0]._family_size;
+
       if (data.report[0]._youngsters > 0)
       {
         data.reportInfo.afterSubtitle +=
           `<br>Youngsters: ${data.report[0]._youngsters}`;
       }
       data.reportInfo.afterSubtitle += "</h3>";
-    }
-    else if (type == "beforeMulticolumn")
-    {
+
       if (data.report[0]._food_preferences)
       {
         data.reportInfo.extraContent =
           [
             `<div style="`,
             "    border: 1px solid black;",
-            "    position: fixed;",
+            "    position: absolute;",
             "    top: 20;",
             "    height: 80;",
             "    left: 50%;",
@@ -849,10 +843,6 @@ REPLACE INTO Report
   '
 );
 
--
---
--- Query for a family name, all items with exclusions or notes
-
 REPLACE INTO Report
 (
   name,
@@ -869,7 +859,7 @@ REPLACE INTO Report
 )
  VALUES
 (
-  'Groceries: shopping list brief',
+  'Groceries: shopping list, client, brief',
   'Shopping list exclusions/notes for a family',
   0,
   '{
@@ -886,26 +876,25 @@ REPLACE INTO Report
   2,
   '
   {
-    if (type == "beforeTitle")
+    if (type == "pageBeginning")
     {
       data.reportInfo.bNoTitle = true;
       data.reportInfo.afterSubtitle = "<h3>" + data.report[0]._family_size;
+
       if (data.report[0]._youngsters > 0)
       {
         data.reportInfo.afterSubtitle +=
           `<br>Youngsters: ${data.report[0]._youngsters}`;
       }
       data.reportInfo.afterSubtitle += "</h3>";
-    }
-    else if (type == "beforeMulticolumn")
-    {
+
       if (data.report[0]._food_preferences)
       {
         data.reportInfo.extraContent =
           [
             `<div style="`,
             "    border: 1px solid black;",
-            "    position: fixed;",
+            "    position: absolute;",
             "    top: 20;",
             "    height: 80;",
             "    left: 50%;",
