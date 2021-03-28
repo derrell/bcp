@@ -370,22 +370,27 @@ qx.Mixin.define("bcp.client.MReports",
                     reportInfo,
                     report);
 
-                  // Begin a new page
-                  this._beginPage(
-                    this._reportWin,
-                    result.name,
-                    result[reportInfo.subtitle_field],
-                    fMunge,
-                    reportInfo,
-                    report);
+                  // Unless we were told not to by a munge function,
+                  // begin a new page
+                  if (! reportInfo.bExcludeInitialBeginPage)
+                  {
+                    this._beginPage(
+                      this._reportWin,
+                      result.name,
+                      result[reportInfo.subtitle_field],
+                      fMunge,
+                      reportInfo,
+                      report);
+                  }
 
                   // Write the body
                   this._reportWin.document.write("<tbody>");
                   report.forEach(
                     (row, index) =>
                     {
-                      fMunge && fMunge("item",
-                                       { report, reportInfo, row, index });
+                      fMunge &&
+                        fMunge("item",
+                               { report, reportInfo, row, index, fMunge });
 
                       // If we're showing remaining entries, and were
                       // told to restart numbering when some field
@@ -548,7 +553,7 @@ qx.Mixin.define("bcp.client.MReports",
           "        border: 0px;'",
           "      }",
           "      .multicolumn {",
-          "        height: 100%;",
+          "        height: 80%;",
           `        -webkit-column-count: ${columns};`,
           `        -moz-column-count: ${columns};`,
           `        column-count: ${columns};`,
@@ -562,11 +567,12 @@ qx.Mixin.define("bcp.client.MReports",
         ].join("\n"));
     },
 
-    _beginPage(win, title, subtitle, fMunge, reportInfo, report)
+    _beginPage(win, title, subtitle, fMunge, reportInfo, report, index)
     {
-      fMunge && fMunge("pageBeginning", { reportInfo, report });
+      fMunge && fMunge("pageBeginning", { reportInfo, report, index });
 
-      win.document.write("<div style='page-break-before: always;'>");
+      win.document.write(
+        "<div style='page-break-before: always; position: relative;'>");
 
       if (! reportInfo.bNoTitle)
       {
@@ -574,7 +580,7 @@ qx.Mixin.define("bcp.client.MReports",
           `    <h1>${title}</h1>`);
       }
 
-      fMunge && fMunge("beforeSubtitle", { reportInfo, report });
+      fMunge && fMunge("beforeSubtitle", { reportInfo, report, index });
 
       if (reportInfo.beforeSubtitle)
       {
@@ -591,14 +597,14 @@ qx.Mixin.define("bcp.client.MReports",
         win.document.write(reportInfo.afterSubtitle);
       }
 
-      fMunge && fMunge("beforeSpecialSiteId", { reportInfo, report });
+      fMunge && fMunge("beforeSpecialSiteId", { reportInfo, report, index });
 
       if (this._specialSiteId)
       {
         win.document.write(`<h2>${this._specialSiteId}</h2>`);
       }
 
-      fMunge && fMunge("beforeMulticolumn", { reportInfo, report });
+      fMunge && fMunge("beforeMulticolumn", { reportInfo, report, index });
 
       // If the munge function created extra content, display it
       if (reportInfo.extraContent)
@@ -635,7 +641,7 @@ qx.Mixin.define("bcp.client.MReports",
         });
       this._reportWin.document.write("</tr></thead>");
 
-      fMunge && fMunge("pageBegun", { reportInfo, report });
+      fMunge && fMunge("pageBegun", { reportInfo, report, index });
     },
 
     _endPage(win, fMunge, reportInfo, report)
