@@ -585,6 +585,12 @@ qx.Mixin.define("bcp.client.MReports",
 
       fMunge && fMunge("beforeMulticolumn", { reportInfo, report });
 
+      // If the munge function created extra content, display it
+      if (reportInfo.extraContent)
+      {
+        win.document.write(reportInfo.extraContent);
+      }
+
       win.document.write(
         [
           "    <div class='multicolumn'>",

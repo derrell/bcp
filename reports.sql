@@ -760,13 +760,37 @@ REPLACE INTO Report
   2,
   '
   {
-    if (type == "item")
+    if (type == "beforeMulticolumn")
+    {
+      if (data.report[0]._food_preferences)
+      {
+        data.reportInfo.extraContent =
+          [
+            `<div style="`,
+            "    border: 1px solid black;",
+            "    position: fixed;",
+            "    top: 20;",
+            "    height: 80;",
+            "    left: 50%;",
+            "    right: 60;",
+            `    ">`,
+            `  <div style="font-weight: bold; padding: 6px;">`,
+            "    General Food Preferences & Notes",
+            "  </div>",
+            `  <div style="padding-left: 12px;">`,
+                 data.report[0]._food_preferences,
+            "  </div>",
+            "</div>"
+          ].join("");
+      }
+    }
+    else if (type == "item")
     {
       if (! data.row._wanted)
       {
         data.row.Item =
           [
-            `<span style="text-decoration: line-through;">`,
+            `<span style="font-weight: bold; text-decoration: line-through;">`,
             `${data.row.Item}`,
             `</span>`
           ].join("");
