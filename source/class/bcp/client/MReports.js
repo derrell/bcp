@@ -559,21 +559,40 @@ qx.Mixin.define("bcp.client.MReports",
           "        border: 0px;'",
           "      }",
           "      .multicolumn {",
+          "        height: 100%;",
           `        -webkit-column-count: ${columns};`,
           `        -moz-column-count: ${columns};`,
           `        column-count: ${columns};`,
+          `        -webkit-column-fill: auto;`,
+          `        -moz-column-fill: auto;`,
+          `        column-fill: auto;`,
           "      }",
           "    </style>",
           "  </head>",
-          "  <body>",
-          `    <h1>${title}</h1>`
+          "  <body>"
         ].join("\n"));
 
+      if (! reportInfo.bNoTitle)
+      {
+        win.document.write(
+          `    <h1>${title}</h1>`);
+      }
+
       fMunge && fMunge("beforeSubtitle", { reportInfo, report });
+
+      if (reportInfo.beforeSubtitle)
+      {
+        win.document.write(reportInfo.beforeSubtitle);
+      }
 
       if (subtitle)
       {
         win.document.write(`<h2>${subtitle}</h2>`);
+      }
+
+      if (reportInfo.afterSubtitle)
+      {
+        win.document.write(reportInfo.afterSubtitle);
       }
 
       fMunge && fMunge("beforeSpecialSiteId", { reportInfo, report });

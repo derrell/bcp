@@ -760,7 +760,18 @@ REPLACE INTO Report
   2,
   '
   {
-    if (type == "beforeMulticolumn")
+    if (type == "beforeTitle")
+    {
+      data.reportInfo.bNoTitle = true;
+      data.reportInfo.afterSubtitle = "<h3>" + data.report[0]._family_size;
+      if (data.report[0]._youngsters > 0)
+      {
+        data.reportInfo.afterSubtitle +=
+          `<br>Youngsters: ${data.report[0]._youngsters}`;
+      }
+      data.reportInfo.afterSubtitle += "</h3>";
+    }
+    else if (type == "beforeMulticolumn")
     {
       if (data.report[0]._food_preferences)
       {
@@ -818,6 +829,14 @@ REPLACE INTO Report
          WHEN cgp.exclude IS NULL THEN 1
          ELSE NOT cgp.exclude
        END AS _wanted,
+       CASE
+         WHEN c.count_senior + c.count_adult + c.count_child >= 4
+           THEN "Family size: Large"
+         WHEN c.count_senior + c.count_adult + c.count_child = 1
+           THEN "Family size: Single"
+         ELSE "Family size: Small"
+       END AS _family_size,
+       c.count_child12 AS _youngsters,
        c.food_preferences AS _food_preferences,
        c.family_name AS _family_name,
        "Aisle " || gi.dist_aisle AS _aisle
@@ -826,6 +845,128 @@ REPLACE INTO Report
      LEFT JOIN ClientGroceryPreference cgp
        ON cgp.family_name = c.family_name AND cgp.grocery_item = gi.item
      WHERE c.family_name = $family_name
+     ORDER BY gi.dist_aisle, gi.dist_unit, gi.dist_side;
+  '
+);
+
+-
+--
+-- Query for a family name, all items with exclusions or notes
+
+REPLACE INTO Report
+(
+  name,
+  description,
+  landscape,
+  input_fields,
+  subtitle_field,
+  separate_by,
+  number_style,
+  number_remaining,
+  columns,
+  munge_function,
+  query
+)
+ VALUES
+(
+  'Groceries: shopping list brief',
+  'Shopping list exclusions/notes for a family',
+  0,
+  '{
+     "$family_name" :
+     {
+       "type"  : "TextField",
+       "label" : "Family Name"
+     }
+   }',
+  '$family_name',
+  '_aisle',
+  '',
+  '',
+  2,
+  '
+  {
+    if (type == "beforeTitle")
+    {
+      data.reportInfo.bNoTitle = true;
+      data.reportInfo.afterSubtitle = "<h3>" + data.report[0]._family_size;
+      if (data.report[0]._youngsters > 0)
+      {
+        data.reportInfo.afterSubtitle +=
+          `<br>Youngsters: ${data.report[0]._youngsters}`;
+      }
+      data.reportInfo.afterSubtitle += "</h3>";
+    }
+    else if (type == "beforeMulticolumn")
+    {
+      if (data.report[0]._food_preferences)
+      {
+        data.reportInfo.extraContent =
+          [
+            `<div style="`,
+            "    border: 1px solid black;",
+            "    position: fixed;",
+            "    top: 20;",
+            "    height: 80;",
+            "    left: 50%;",
+            "    right: 60;",
+            `    ">`,
+            `  <div style="font-weight: bold; padding: 6px;">`,
+            "    General Food Preferences & Notes",
+            "  </div>",
+            `  <div style="padding-left: 12px;">`,
+                 data.report[0]._food_preferences,
+            "  </div>",
+            "</div>"
+          ].join("");
+      }
+    }
+    else if (type == "item")
+    {
+      if (! data.row._wanted)
+      {
+        data.row.Item =
+          [
+            `<span style="text-decoration: line-through;">`,
+            `${data.row.Item}`,
+            `${data.row.Location}`,
+            `</span>`
+          ].join("");
+      }
+    }
+  }
+  ',
+  'SELECT
+       gi.dist_aisle || "/" ||
+         gi.dist_unit ||
+         dist_side ||
+         CASE
+           WHEN dist_shelf IS NULL THEN ""
+           ELSE "-" || dist_shelf
+         END AS Location,
+       gi.item AS Item,
+       COALESCE(cgp.notes, "") AS Notes,
+       CASE
+         WHEN cgp.exclude IS NULL THEN 1
+         ELSE NOT cgp.exclude
+       END AS _wanted,
+       CASE
+         WHEN c.count_senior + c.count_adult + c.count_child >= 4
+           THEN "Family size: Large"
+         WHEN c.count_senior + c.count_adult + c.count_child = 1
+           THEN "Family size: Single"
+         ELSE "Family size: Small"
+       END AS _family_size,
+       c.count_child12 AS _youngsters,
+       c.food_preferences AS _food_preferences,
+       c.family_name AS _family_name,
+       "Aisle " || gi.dist_aisle AS _aisle
+     FROM Client c
+     CROSS JOIN  GroceryItem gi
+     LEFT JOIN ClientGroceryPreference cgp
+       ON cgp.family_name = c.family_name AND cgp.grocery_item = gi.item
+     WHERE c.family_name = $family_name
+       AND (NOT _wanted OR Notes <> "")
      ORDER BY gi.dist_aisle, gi.dist_unit, gi.dist_side;
   '
 );
