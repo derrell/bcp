@@ -1,13 +1,8 @@
 * Tasks
-** TODO Distribution report
-*** Change Appointment number from green to bold black
-*** Change Appointments Remaining from gray to black
-*** Remove phone number
-*** Add Verified indicator
 ** TODO Reports infrastructure
 *** Add column width configuration
 *** Consider multi-line single row
-*** Add converter function
+*** DONE Add converter function
 ** TODO Appointments tab
 *** search by name
 *** allow choosing distribution start date
