@@ -139,8 +139,27 @@ CREATE TABLE ClientGroceryPreference
                             ON DELETE CASCADE
                             ON UPDATE CASCADE,
   exclude           BOOLEAN NOT NULL DEFAULT 0,
-  notes             VARCHAR
+  notes             VARCHAR,
+  timestamp         DATETIME
 );
+
+CREATE TRIGGER tr_ai_ClientGroceryPreference_timestamp
+AFTER INSERT ON ClientGroceryPreference
+BEGIN
+   UPDATE ClientGroceryPreference
+     SET timestamp = strftime('%Y-%m-%d %H:%M:%S', 'now')
+     WHERE family_name = new.family_name
+       AND grocery_item = new.grocery_item;
+END;
+
+CREATE TRIGGER tr_au_ClientGroceryPreference_timestamp
+AFTER UPDATE On ClientGroceryPreference
+BEGIN
+   UPDATE ClientGroceryPreference
+     SET timestamp = strftime('%Y-%m-%d %H:%M:%S', 'now')
+     WHERE family_name = new.family_name
+       AND grocery_item = new.grocery_item;
+END;
 
 CREATE TABLE GroceryCategory
 (
