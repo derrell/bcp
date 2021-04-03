@@ -839,6 +839,7 @@ REPLACE INTO Report
      LEFT JOIN ClientGroceryPreference cgp
        ON cgp.family_name = c.family_name AND cgp.grocery_item = gi.item
      WHERE c.family_name = $family_name
+       AND length(gi.item) > 0
      ORDER BY gi.dist_aisle, gi.dist_unit, gi.dist_side;
   '
 );
@@ -960,162 +961,165 @@ REPLACE INTO Report
   '
 );
 
--- REPLACE INTO Report
--- (
---   name,
---   description,
---   landscape,
---   input_fields,
---   subtitle_field,
---   separate_by,
---   number_style,
---   number_remaining,
---   columns,
---   munge_function,
---   query
--- )
---  VALUES
--- (
---   'Groceries: shopping list, dist, brief',
---   'Shopping list for all families signed up for a distribution, showing only unwanted items and notes',
---   0,
---   '{
---      "$distribution" :
---      {
---        "type"  : "SelectBox",
---        "label" : "Distribution Date"
---      }
---    }',
---   '',
---   '_aisle',
---   '',
---   '',
---   2,
---   '
---   {
---     if (type == "incoming")
---     {
---       data.reportInfo.bExcludeInitialBeginPage = true;
---     }
---     else if (type == "item")
---     {
---       if (data.index == 0 ||
---           data.row._family_name != data.report[data.index - 1]._family_name)
---       {
---         if (data.index != 0)
---         {
---           this._endPage(this._reportWin,
---                         data.fMunge,
---                         data.reportInfo,
---                         data.report);
---         }
---         this._beginPage(this._reportWin,
---                         "",
---                         data.row._family_name,
---                         data.fMunge,
---                         data.reportInfo,
---                         data.report,
---                         data.index);
---       }
---     }
---     else if (type == "pageBeginning")
---     {
---       let index = data.index || 0;
+REPLACE INTO Report
+(
+  name,
+  description,
+  landscape,
+  input_fields,
+  subtitle_field,
+  separate_by,
+  number_style,
+  number_remaining,
+  columns,
+  munge_function,
+  query
+)
+ VALUES
+(
+  'Groceries: shopping list, dist, brief',
+  'Shopping list for all families signed up for a distribution, showing only unwanted items and notes',
+  0,
+  '{
+     "$distribution" :
+     {
+       "type"  : "SelectBox",
+       "label" : "Distribution Date"
+     }
+   }',
+  '',
+  '_aisle',
+  '',
+  '',
+  2,
+  '
+  {
+    if (type == "incoming")
+    {
+      data.reportInfo.bExcludeInitialBeginPage = true;
+    }
+    else if (type == "item")
+    {
+      data.reportInfo.bSkip = data.row.Item.length === 0;
 
---       data.reportInfo.bNoTitle = true;
+      if (data.index == 0 ||
+          data.row._family_name != data.report[data.index - 1]._family_name)
+      {
+        if (data.index != 0)
+        {
+          this._endPage(this._reportWin,
+                        data.fMunge,
+                        data.reportInfo,
+                        data.report);
+        }
+        this._beginPage(this._reportWin,
+                        "",
+                        data.row._family_name,
+                        data.fMunge,
+                        data.reportInfo,
+                        data.report,
+                        data.index);
+      }
+    }
+    else if (type == "pageBeginning")
+    {
+      let index = data.index || 0;
 
---       data.reportInfo.afterSubtitle = "<h3>" + data.report[index]._family_size;
+      data.reportInfo.bNoTitle = true;
 
---       if (data.report[index]._youngsters > 0)
---       {
---         data.reportInfo.afterSubtitle +=
---           `<br>Youngsters: ${data.report[index]._youngsters}`;
---       }
---       data.reportInfo.afterSubtitle += "</h3>";
+      data.reportInfo.afterSubtitle = "<h3>" + data.report[index]._family_size;
 
---       if (data.report[index]._food_preferences)
---       {
---         data.reportInfo.extraContent =
---           [
---             `<div style="`,
---             "    border: 1px solid black;",
---             "    position: absolute;",
---             "    top: 20;",
---             "    height: 80;",
---             "    left: 50%;",
---             "    right: 60;",
---             `    ">`,
---             `  <div style="font-weight: bold; padding: 6px;">`,
---             "    General Food Preferences & Notes",
---             "  </div>",
---             `  <div style="padding-left: 12px;">`,
---                  data.report[index]._food_preferences,
---             "  </div>",
---             "</div>"
---           ].join("");
---       }
---       else
---       {
---         data.reportInfo.extraContent = null;
---       }
---     }
---     else if (type == "item")
---     {
---       if (! data.row._wanted)
---       {
---         data.row.Item =
---           [
---             `<span style="font-weight: bold; text-decoration: line-through;">`,
---             `${data.row.Item}`,
---             `</span>`
---           ].join("");
---         data.row.Location =
---           [
---             `<span style="text-decoration: line-through;">`,
---             `${data.row.Location}`,
---             `</span>`
---           ].join("");
---       }
---     }
---   }
---   ',
---   'SELECT
---        gi.dist_aisle || "/" ||
---          gi.dist_unit ||
---          dist_side ||
---          CASE
---            WHEN dist_shelf IS NULL THEN ""
---            ELSE "-" || dist_shelf
---          END AS Location,
---        gi.item AS Item,
---        COALESCE(cgp.notes, "") AS Notes,
---        CASE
---          WHEN cgp.exclude IS NULL THEN 1
---          ELSE NOT cgp.exclude
---        END AS _wanted,
---        CASE
---          WHEN c.count_senior + c.count_adult + c.count_child >= 4
---            THEN "Family size: Large"
---          WHEN c.count_senior + c.count_adult + c.count_child = 1
---            THEN "Family size: Single"
---          ELSE "Family size: Small"
---        END AS _family_size,
---        c.count_child12 AS _youngsters,
---        c.food_preferences AS _food_preferences,
---        c.family_name AS _family_name,
---        "Aisle " || gi.dist_aisle AS _aisle
---      FROM Client c
---      CROSS JOIN  GroceryItem gi
---      LEFT JOIN ClientGroceryPreference cgp
---        ON cgp.family_name = c.family_name AND cgp.grocery_item = gi.item
---      WHERE c.family_name IN
---           (SELECT family_name
---             FROM Fulfillment
---             WHERE distribution = $distribution)
---        AND (NOT _wanted OR Notes <> "")
---      ORDER BY c.family_name, gi.dist_aisle, gi.dist_unit, gi.dist_side;
---   '
--- );
+      if (data.report[index]._youngsters > 0)
+      {
+        data.reportInfo.afterSubtitle +=
+          `<br>Youngsters: ${data.report[index]._youngsters}`;
+      }
+      data.reportInfo.afterSubtitle += "</h3>";
+
+      if (data.report[index]._food_preferences)
+      {
+        data.reportInfo.extraContent =
+          [
+            `<div style="`,
+            "    border: 1px solid black;",
+            "    position: absolute;",
+            "    top: 20;",
+            "    height: 80;",
+            "    left: 50%;",
+            "    right: 60;",
+            `    ">`,
+            `  <div style="font-weight: bold; padding: 6px;">`,
+            "    General Food Preferences & Notes",
+            "  </div>",
+            `  <div style="padding-left: 12px;">`,
+                 data.report[index]._food_preferences,
+            "  </div>",
+            "</div>"
+          ].join("");
+      }
+      else
+      {
+        data.reportInfo.extraContent = null;
+      }
+    }
+    else if (type == "item")
+    {
+      if (! data.row._wanted)
+      {
+        data.row.Item =
+          [
+            `<span style="font-weight: bold; text-decoration: line-through;">`,
+            `${data.row.Item}`,
+            `</span>`
+          ].join("");
+        data.row.Location =
+          [
+            `<span style="text-decoration: line-through;">`,
+            `${data.row.Location}`,
+            `</span>`
+          ].join("");
+      }
+    }
+  }
+  ',
+  'SELECT
+       gi.dist_aisle || "/" ||
+         gi.dist_unit ||
+         dist_side ||
+         CASE
+           WHEN dist_shelf IS NULL THEN ""
+           ELSE "-" || dist_shelf
+         END AS Location,
+       gi.item AS Item,
+       COALESCE(cgp.notes, "") AS Notes,
+       CASE
+         WHEN cgp.exclude IS NULL THEN 1
+         ELSE NOT cgp.exclude
+       END AS _wanted,
+       CASE
+         WHEN c.count_senior + c.count_adult + c.count_child >= 4
+           THEN "Family size: Large"
+         WHEN c.count_senior + c.count_adult + c.count_child = 1
+           THEN "Family size: Single"
+         ELSE "Family size: Small"
+       END AS _family_size,
+       c.count_child12 AS _youngsters,
+       c.food_preferences AS _food_preferences,
+       c.family_name AS _family_name,
+       "Aisle " || gi.dist_aisle AS _aisle
+     FROM Client c
+     CROSS JOIN  GroceryItem gi
+     LEFT JOIN ClientGroceryPreference cgp
+       ON cgp.family_name = c.family_name AND cgp.grocery_item = gi.item
+     WHERE c.family_name IN
+          (SELECT family_name
+            FROM Fulfillment
+            WHERE distribution = $distribution)
+       AND (   (NOT _wanted OR Notes <> "")
+            OR gi.item = "")
+     ORDER BY c.family_name, gi.dist_aisle, gi.dist_unit, gi.dist_side;
+  '
+);
 
 REPLACE INTO Report
 (
@@ -1269,6 +1273,7 @@ REPLACE INTO Report
           (SELECT family_name
             FROM Fulfillment
             WHERE distribution = $distribution)
+       AND length(Item) > 0
      ORDER BY c.family_name, gi.dist_aisle, gi.dist_unit, gi.dist_side;
   '
 );

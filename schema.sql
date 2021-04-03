@@ -125,6 +125,11 @@ CREATE TABLE GroceryItem
   UNIQUE (item COLLATE NOCASE)
 );
 
+-- Item always present to allow distribution "brief" report to include everyone
+-- The item with emtpy name is explicitly ignored in grocery lists.
+REPLACE INTO GroceryItem (item) VALUES ('');
+
+
 CREATE TABLE ClientGroceryPreference
 (
   family_name       VARCHAR REFERENCES Client

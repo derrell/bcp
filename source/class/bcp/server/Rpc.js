@@ -1562,10 +1562,11 @@ qx.Class.define("bcp.server.Rpc",
           "      WHEN 0 THEN '*** Not yet categorized ***'",
           "      ELSE gc.name",
           "    END AS category_name",
-          "FROM GroceryItem gi",
-          "LEFT JOIN GroceryCategory gc",
-          "  ON gc.id = category",
-          "ORDER BY gi.item"
+          "  FROM GroceryItem gi",
+          "  LEFT JOIN GroceryCategory gc",
+          "    ON gc.id = category",
+          "  WHERE length(item) != 0",
+          "  ORDER BY gi.item"
         ].join(" "))
         .then(
           (stmt) =>
@@ -1729,6 +1730,13 @@ qx.Class.define("bcp.server.Rpc",
       let             p;
       let             prepare;
       const           itemInfo = args[0];
+
+      // Ignore deleting the internally-used item with empty item name
+      if (itemInfo.item.length === 0)
+      {
+        callback(null, null);
+        return Promise.resolve(null);
+      }
 
       // TODO: move prepared statements to constructor
       prepare = this._db.prepare(
@@ -2046,7 +2054,8 @@ qx.Class.define("bcp.server.Rpc",
                 "  LEFT JOIN ClientGroceryPreference cgp",
                 "    ON     cgp.family_name = c.family_name",
                 "       AND cgp.grocery_item = gi.item",
-                "   WHERE c.family_name = $family_name;"
+                "  WHERE c.family_name = $family_name",
+                "    AND length(gi.item) != 0;"
               ].join(" "));
           })
         .then(stmt => stmt.all(

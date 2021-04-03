@@ -392,6 +392,12 @@ qx.Mixin.define("bcp.client.MReports",
                         fMunge("item",
                                { report, reportInfo, row, index, fMunge });
 
+                      // If we were asked to skip this row, skip it
+                      if (reportInfo.bSkip)
+                      {
+                        return;
+                      }
+
                       // If we're showing remaining entries, and were
                       // told to restart numbering when some field
                       // changes...
