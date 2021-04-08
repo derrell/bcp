@@ -61,7 +61,7 @@ qx.Mixin.define("bcp.client.MReports",
       this._reports = new qx.ui.form.List();
       this._reports.set(
         {
-          width : 240
+          width : 300
         });
       vBox.add(this._reports, { flex : 1 });
 
@@ -279,6 +279,18 @@ qx.Mixin.define("bcp.client.MReports",
 
               // ... and get outta Dodge!
               return Promise.resolve();
+            }
+
+            if (result.$changes_since instanceof Date)
+            {
+              result.$changes_since =
+                result.$changes_since.getUTCFullYear() +
+                "-" +
+                ("0" + (result.$changes_since.getUTCMonth() + 1)).substr(-2) +
+                "-" +
+                ("0" + result.$changes_since.getUTCDate()).substr(-2) +
+                " " +
+                "00:00:00";
             }
 
             return this.rpc("generateReport", [ result ])

@@ -83,7 +83,7 @@ qx.Class.define("bcp.client.grocery.Item",
         });
       notes.set(
         {
-          width      : 200,
+          width      : 160,
           height     : 22,
           liveUpdate : true
         });
