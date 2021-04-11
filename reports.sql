@@ -775,7 +775,7 @@ REPLACE INTO Report
         "    position: absolute;",
         "    top: 0;",
         "    height: 80;",
-        "    left: 50%;",
+        "    left: 60%;",
         "    right: 60;",
         `    ">`,
         "Printed: ",
@@ -918,7 +918,7 @@ REPLACE INTO Report
         "    position: absolute;",
         "    top: 0;",
         "    height: 80;",
-        "    left: 50%;",
+        "    left: 60%;",
         "    right: 60;",
         `    ">`,
         "Printed: ",
@@ -955,13 +955,14 @@ REPLACE INTO Report
     }
     else if (type == "item")
     {
+      data.reportInfo.bSkip = data.row.Item.length === 0;
+
       if (! data.row._wanted)
       {
         data.row.Item =
           [
             `<span style="text-decoration: line-through;">`,
             `${data.row.Item}`,
-            `${data.row.Location}`,
             `</span>`
           ].join("");
       }
@@ -998,7 +999,7 @@ REPLACE INTO Report
      LEFT JOIN ClientGroceryPreference cgp
        ON cgp.family_name = c.family_name AND cgp.grocery_item = gi.item
      WHERE c.family_name = $family_name
-       AND (NOT _wanted OR Notes <> "")
+       AND (NOT _wanted OR Notes <> "" OR length(gi.item) == 0)
      ORDER BY gi.dist_aisle, gi.dist_unit, gi.dist_side;
   '
 );
@@ -1085,7 +1086,7 @@ REPLACE INTO Report
         "    position: absolute;",
         "    top: 0;",
         "    height: 80;",
-        "    left: 50%;",
+        "    left: 60%;",
         "    right: 60;",
         `    ">`,
         "Printed: ",
@@ -1259,7 +1260,7 @@ REPLACE INTO Report
         "    position: absolute;",
         "    top: 0;",
         "    height: 80;",
-        "    left: 50%;",
+        "    left: 60%;",
         "    right: 60;",
         `    ">`,
         "Printed: ",
@@ -1434,7 +1435,7 @@ REPLACE INTO Report
         "    position: absolute;",
         "    top: 0;",
         "    height: 80;",
-        "    left: 50%;",
+        "    left: 60%;",
         "    right: 60;",
         `    ">`,
         "Printed: ",
@@ -1603,7 +1604,7 @@ REPLACE INTO Report
         "    position: absolute;",
         "    top: 0;",
         "    height: 80;",
-        "    left: 50%;",
+        "    left: 60%;",
         "    right: 60;",
         `    ">`,
         "Printed: ",
