@@ -8,4 +8,23 @@
 *** Add column width configuration
 *** Consider multi-line single row
 *** Add converter function
-** TODO Appointments tab: search by name
+** TODO Appointments tab
+*** search by name
+*** allow choosing distribution start date
+** TODO Client tab
+*** HIGH 1: DOB field in lieu of ages fields
+*** Add archive feature
+*** HIGH 2: Create client number for each client (in place of report client #)
+*** HIGH 3: Add addtional Notes field for food/perishable-related info
+**** Need a report of perishables
+***** Client number, name, appointment time, family size, perishables notes
+*** Notes fields need to be able to have linefeeds (create a list)
+** TODO Groceries
+*** "Brief" reports in larger font
+** TODO Editor features
+*** Be able to highlight portions of notes fields
+** TODO Reports
+*** Distribution report with Pets should have pets and phone numbers
+*** Other Distribution reports need not have Pets or phone numbers
+*** Person outside and computer person need a report without perishables
+*** See above Client tab persihables report
