@@ -664,7 +664,7 @@ qx.Mixin.define("bcp.client.MClientMgmt",
                 {
                   type       : "TextField",
                   label      : "Income amount",
-                  value      : clientInfo.income_amount || "",
+                  value      : (clientInfo.income_amount || "").toString(),
                   properties :
                   {
                     tabIndex   : 7
