@@ -365,6 +365,12 @@ qx.Mixin.define("bcp.client.MReports",
                   Object.keys(report[0]).forEach(
                     (heading) =>
                     {
+                      // Ignore column names beginning with underscore
+                      if (heading.charAt(0) == "_")
+                      {
+                        return;
+                      }
+
                       this._reportWin.document.write(`<th>${heading}</th>`);
                     });
                   this._reportWin.document.write("</tr></thead>");
