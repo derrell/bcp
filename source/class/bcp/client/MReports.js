@@ -493,6 +493,12 @@ qx.Mixin.define("bcp.client.MReports",
                       Object.keys(report[0]).forEach(
                         (heading) =>
                         {
+                          // Ignore column names beginning with underscore
+                          if (heading.charAt(0) == "_")
+                          {
+                            return;
+                          }
+
                           // Convert times to 12-hour format
                           if (heading == "Time")
                           {
