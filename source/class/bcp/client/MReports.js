@@ -444,11 +444,29 @@ qx.Mixin.define("bcp.client.MReports",
 
                       if (reportInfo.number_style)
                       {
+                        // Use provided Id if available
+                        let         digits0 = "ABCDEFGHIJ".split("");
+                        let         digits1 = "KLMNOPQRST".split("");
+                        let         num = "_id" in row ? row._id : lineNumber;
+
+                        // Format it as four digits
+                        num = ("000" + num).substr(-4);
+
+                        // Use letters in place of first two digits
+                        num = num.split("").map(n => +n);
+                        num[0] = digits0[num[0]];
+                        num[1] = digits1[num[1]];
+                        num = num.join("");
+
+                        // Increment line number regardless of whether
+                        // it was used or not
+                        ++lineNumber;
+
                         this._reportWin.document.write(
                           [
                             "<td>",
                             "<span style='font-weight: bold;'>",
-                            `#${++lineNumber}`,
+                            `#${num}`,
                             "</span>"
                           ].join(""));
                         if (reportInfo.number_remaining)

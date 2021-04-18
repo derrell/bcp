@@ -28,6 +28,7 @@ REPLACE INTO Report
   'Day',
   '
    SELECT
+       ci.id AS _id,
        f.appt_day as Day,
        f.appt_time AS Time,
        c.family_name || CASE c.verified WHEN 1 THEN "&check;" ELSE "" END
@@ -42,10 +43,13 @@ REPLACE INTO Report
          END AS "Family size",
        COALESCE(pet_types, "") AS Pets,
        COALESCE(notes, "") AS Notes
-     FROM Fulfillment f, Client c
+     FROM Fulfillment f
+     LEFT JOIN Client c
+       ON c.family_name = f.family_name
+     LEFT JOIN ClientId ci
+       ON ci.family_name = c.family_name
      WHERE f.distribution = $distribution
        AND length(COALESCE(f.appt_time, "")) > 0
-       AND c.family_name = f.family_name
      ORDER BY Day, Time, "Family name";
   '
 );
@@ -80,6 +84,7 @@ REPLACE INTO Report
   'Day',
   '
    SELECT
+       ci.id AS _id,
        f.appt_day as Day,
        f.appt_time AS Time,
        c.family_name || CASE c.verified WHEN 1 THEN "&check;" ELSE "" END
@@ -95,10 +100,13 @@ REPLACE INTO Report
        COALESCE(pet_types, "") AS Pets,
        COALESCE(phone, "") AS Phone,
        COALESCE(notes, "") AS Notes
-     FROM Fulfillment f, Client c
+     FROM Fulfillment f
+     LEFT JOIN Client c
+       ON c.family_name = f.family_name
+     LEFT JOIN ClientId ci
+       ON ci.family_name = c.family_name
      WHERE f.distribution = $distribution
        AND length(COALESCE(f.appt_time, "")) > 0
-       AND c.family_name = f.family_name
      ORDER BY Day, Time, "Family name";
   '
 );
@@ -133,6 +141,7 @@ REPLACE INTO Report
   'Day',
   '
    SELECT
+       ci.id as _id,
        f.appt_day as Day,
        f.appt_time AS Time,
        CASE c.verified WHEN 1 THEN "&check;" ELSE "" END AS V,
@@ -146,10 +155,13 @@ REPLACE INTO Report
          END AS "Family size",
        COALESCE(pet_types, "") AS Pets,
        COALESCE(notes, "") AS Notes
-     FROM Fulfillment f, Client c
+     FROM Fulfillment f
+     LEFT JOIN Client c
+       ON c.family_name = f.family_name
+     LEFT JOIN ClientId ci
+       ON ci.family_name = c.family_name
      WHERE f.distribution = $distribution
        AND length(COALESCE(f.appt_time, "")) > 0
-       AND c.family_name = f.family_name
      ORDER BY Day, Time, c.family_name;
   '
 );

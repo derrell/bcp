@@ -39,6 +39,24 @@ CREATE TABLE Client
 -- ALTER TABLE Client ADD COLUMN notes_default VARCHAR NOT NULL DEFAULT '';
 
 
+CREATE TABLE ClientId
+(
+  id                INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+  family_name       VARCHAR REFERENCES Client
+                            ON DELETE CASCADE
+                            ON UPDATE CASCADE
+);
+
+CREATE TRIGGER tr_ai_Client
+AFTER INSERT ON Client
+BEGIN
+   INSERT INTO ClientId (family_name) VALUES (new.family_name);
+END;
+
+-- To prepopulate ClientId with existing family names:
+-- INSERT INTO ClientId (family_name) SELECT family_name FROM Client;
+
+
 CREATE TABLE Fulfillment
 (
   distribution      VARCHAR REFERENCES DistributionPeriod
