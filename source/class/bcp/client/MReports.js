@@ -455,14 +455,8 @@ qx.Mixin.define("bcp.client.MReports",
                         let         digits1 = "KLMNOPQRST".split("");
                         let         num = "_id" in row ? row._id : lineNumber;
 
-                        // Format it as four digits
-                        num = ("000" + num).substr(-4);
-
-                        // Use letters in place of first two digits
-                        num = num.split("").map(n => +n);
-                        num[0] = digits0[num[0]];
-                        num[1] = digits1[num[1]];
-                        num = num.join("");
+                        // Format it as three dash-separated digits
+                        num = ("000" + num).substr(-3).split("").join("-");
 
                         // Increment line number regardless of whether
                         // it was used or not

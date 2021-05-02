@@ -47,14 +47,6 @@ CREATE TABLE ClientId
                             ON UPDATE CASCADE
 );
 
-CREATE TRIGGER tr_ai_Client
-AFTER INSERT ON Client
-BEGIN
-   INSERT INTO ClientId (family_name) VALUES (new.family_name);
-END;
-
--- To prepopulate ClientId with existing family names:
--- INSERT INTO ClientId (family_name) SELECT family_name FROM Client;
 
 
 CREATE TABLE Fulfillment
@@ -75,6 +67,17 @@ CREATE TABLE Fulfillment
 
 CREATE INDEX Fulfillment_appt_idx
   ON Fulfillment(distribution, appt_day, appt_time);
+
+CREATE TRIGGER tr_ai_Fulfillment
+AFTER INSERT ON Fulfillment
+BEGIN
+   INSERT INTO ClientId (family_name) VALUES (new.family_name);
+END;
+
+-- To prepopulate ClientId with existing family names:
+-- INSERT INTO ClientId (family_name)
+--   SELECT DISTINCT(family_name) FROM Fulfillment;
+
 
 
 CREATE TABLE DistributionPeriod
