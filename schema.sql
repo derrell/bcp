@@ -39,13 +39,23 @@ CREATE TABLE Client
 -- ALTER TABLE Client ADD COLUMN notes_default VARCHAR NOT NULL DEFAULT '';
 
 
+
 CREATE TABLE ClientId
 (
-  id                INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
   family_name       VARCHAR REFERENCES Client
                             ON DELETE CASCADE
-                            ON UPDATE CASCADE
+                            ON UPDATE CASCADE,
+  id                INTEGER,    -- Don't manually manipulate; edited by trigger
+  PRIMARY KEY (family_name)
 );
+
+CREATE TRIGGER tr_ai_ClientId
+AFTER INSERT ON ClientId
+BEGIN
+  UPDATE ClientId
+    SET id = new.rowid
+    WHERE family_name = new.family_name;
+END;
 
 
 
@@ -68,15 +78,27 @@ CREATE TABLE Fulfillment
 CREATE INDEX Fulfillment_appt_idx
   ON Fulfillment(distribution, appt_day, appt_time);
 
+-- We need to add a ClientId record if it doesn't exist... and leave
+-- an existing one entirely unaltered.
+-- INSERT OR IGNORE seems to actually delete the row and recreate it,
+-- changing the row id. Instead, we'll see if it exists and leave the
+-- trigger early if so. If we don't leave the trigger, we know we can
+-- insert a new record because the family name was not previously found.
 CREATE TRIGGER tr_ai_Fulfillment
 AFTER INSERT ON Fulfillment
 BEGIN
-   INSERT INTO ClientId (family_name) VALUES (new.family_name);
+  SELECT CASE
+    WHEN
+      (SELECT COUNT(*)
+        FROM ClientId
+        WHERE family_name = new.family_name) > 0 THEN
+      RAISE (IGNORE)
+  END;
+  INSERT INTO ClientId (family_name) VALUES (new.family_name);
 END;
 
 -- To prepopulate ClientId with existing family names:
--- INSERT INTO ClientId (family_name)
---   SELECT DISTINCT(family_name) FROM Fulfillment;
+-- INSERT INTO ClientId (family_name) SELECT DISTINCT(family_name) FROM Fulfillment;
 
 
 
