@@ -489,6 +489,20 @@ qx.Mixin.define("bcp.client.MAppointment",
                   }
                 },
 
+                perishables :
+                {
+                  type       : "TextArea",
+                  label      : "Perishables",
+                  lines      : 3,
+                  value      : (fulfillment.perishables ||
+                                (bNew ? client.perishables_default : "") ||
+                                ""),
+                  properties :
+                  {
+                    height     : 70
+                  }
+                },
+
                 default_apointment_label :
                 {
                   type       : "Label",

@@ -91,6 +91,7 @@ qx.Mixin.define("bcp.client.MClientMgmt",
           "# ?gender",
           "# veteran",
           "Notes",
+          "Perishables",
           "Income source",
           "Income amount",
           "Pet types",
@@ -112,6 +113,7 @@ qx.Mixin.define("bcp.client.MClientMgmt",
           "count_sex_other",
           "count_veteran",
           "notes_default",
+          "perishables_default",
           "income_source",
           "income_amount",
           "pet_types",
@@ -186,6 +188,7 @@ qx.Mixin.define("bcp.client.MClientMgmt",
       behavior.setWidth(tm.getColumnIndexById("count_sex_other"), 70);
       behavior.setWidth(tm.getColumnIndexById("count_veteran"), 70);
       behavior.setWidth(tm.getColumnIndexById("notes_default"), 200);
+      behavior.setWidth(tm.getColumnIndexById("perishables_default"), 200);
       behavior.setWidth(tm.getColumnIndexById("income_source"), 100);
       behavior.setWidth(tm.getColumnIndexById("income_amount"), 100);
       behavior.setWidth(tm.getColumnIndexById("pet_types"), 100);
@@ -664,6 +667,21 @@ qx.Mixin.define("bcp.client.MClientMgmt",
               tabIndex   : 9
             }
           },
+          perishables_default :
+          {
+            type       : "TextArea",
+            label      : "Perishables",
+            lines      : 3,
+            value      : clientInfo.perishables_default || "",
+            userdata   :
+            {
+              rowspan    : 2
+            },
+            properties :
+            {
+              tabIndex   : 10
+            }
+          },
           verified :
           {
             type       : "Checkbox",
@@ -688,7 +706,7 @@ qx.Mixin.define("bcp.client.MClientMgmt",
             },
             properties :
             {
-              tabIndex   : 10
+              tabIndex   : 11
             }
           },
           count_adult :
@@ -700,7 +718,7 @@ qx.Mixin.define("bcp.client.MClientMgmt",
             step      : 1,
             properties :
             {
-              tabIndex   : 11
+              tabIndex   : 12
             }
           },
           count_child :
@@ -712,7 +730,7 @@ qx.Mixin.define("bcp.client.MClientMgmt",
             step      : 1,
             properties :
             {
-              tabIndex   : 12
+              tabIndex   : 13
             }
           },
           count_sex_male :
@@ -728,7 +746,7 @@ qx.Mixin.define("bcp.client.MClientMgmt",
             },
             properties :
             {
-              tabIndex   : 13
+              tabIndex   : 14
             }
           },
           count_sex_female :
@@ -740,7 +758,7 @@ qx.Mixin.define("bcp.client.MClientMgmt",
             step      : 1,
             properties :
             {
-              tabIndex   : 14
+              tabIndex   : 15
             }
           },
           count_sex_other :
@@ -752,7 +770,7 @@ qx.Mixin.define("bcp.client.MClientMgmt",
             step      : 1,
             properties :
             {
-              tabIndex   : 15
+              tabIndex   : 16
             }
           },
           count_veteran :
@@ -768,7 +786,7 @@ qx.Mixin.define("bcp.client.MClientMgmt",
             },
             properties :
             {
-              tabIndex   : 16
+              tabIndex   : 17
             }
           },
           default_appointment :
@@ -1146,6 +1164,10 @@ qx.Mixin.define("bcp.client.MClientMgmt",
 
           // Be sure notes_default is empty string if all whitespace
           formValues.notes_default = formValues.notes_default.trim();
+
+          // Similarly for perishables
+          formValues.perishables_default =
+            formValues.perishables_default.trim();
 
           // Add the record name to be updated, in case of rename
           formValues.family_name_update =

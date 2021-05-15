@@ -11,32 +11,34 @@ CREATE TABLE User
 
 CREATE TABLE Client
 (
-  family_name       VARCHAR PRIMARY KEY NOT NULL,
-  phone             VARCHAR,
-  email             VARCHAR,
-  ethnicity         VARCHAR,
-  count_senior      INTEGER DEFAULT 0,  -- number of family members 65+
-  count_adult       INTEGER DEFAULT 0,  -- number of family members 18-64
-  count_child       INTEGER DEFAULT 0,  -- number of family members 0-17
-  count_sex_male    INTEGER DEFAULT 0,
-  count_sex_female  INTEGER DEFAULT 0,
-  count_sex_other   INTEGER DEFAULT 0,
-  count_veteran     INTEGER DEFAULT 0,
-  income_source     VARCHAR,
-  income_amount     REAL,
-  pet_types         VARCHAR,
-  address_default   VARCHAR, -- default address for delivery
-  appt_day_default  INTEGER, -- default appt day, 1-relative to Distr start
-  appt_time_default VARCHAR, -- default appt time HH:MM,
-  verified          BOOLEAN DEFAULT FALSE,
-  archived          BOOLEAN DEFAULT FALSE,
-  notes_default     VARCHAR NOT NULL DEFAULT '',
+  family_name         VARCHAR PRIMARY KEY NOT NULL,
+  phone               VARCHAR,
+  email               VARCHAR,
+  ethnicity           VARCHAR,
+  count_senior        INTEGER DEFAULT 0,  -- number of family members 65+
+  count_adult         INTEGER DEFAULT 0,  -- number of family members 18-64
+  count_child         INTEGER DEFAULT 0,  -- number of family members 0-17
+  count_sex_male      INTEGER DEFAULT 0,
+  count_sex_female    INTEGER DEFAULT 0,
+  count_sex_other     INTEGER DEFAULT 0,
+  count_veteran       INTEGER DEFAULT 0,
+  income_source       VARCHAR,
+  income_amount       REAL,
+  pet_types           VARCHAR,
+  address_default     VARCHAR, -- default address for delivery
+  appt_day_default    INTEGER, -- default appt day, 1-relative to Distr start
+  appt_time_default   VARCHAR, -- default appt time HH:MM,
+  verified            BOOLEAN DEFAULT FALSE,
+  archived            BOOLEAN DEFAULT FALSE,
+  notes_default       VARCHAR NOT NULL DEFAULT '',
+  perishables_default VARCHAR NOT NULL DEFAULT '',
   UNIQUE (family_name COLLATE NOCASE)
 );
 
 -- Changes from original to derive the above table
 --
 -- ALTER TABLE Client ADD COLUMN notes_default VARCHAR NOT NULL DEFAULT '';
+-- ALTER TABLE Client ADD COLUMN perishables_default VARCHAR NOT NULL DEFAULT '';
 
 
 
@@ -72,8 +74,12 @@ CREATE TABLE Fulfillment
   fulfilled         BOOLEAN DEFAULT FALSE,  -- has been picked up or delivered
   fulfillment_time  VARCHAR,                -- %Y-%m-%d %H:%M:%S
   notes             VARCHAR,
+  perishables       VARCHAR,
   PRIMARY KEY (distribution, family_name)
 );
+
+-- ALTER TABLE Fulfillment ADD COLUMN perishables VARCHAR;
+
 
 CREATE INDEX Fulfillment_appt_idx
   ON Fulfillment(distribution, appt_day, appt_time);

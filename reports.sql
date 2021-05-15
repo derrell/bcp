@@ -12,6 +12,62 @@ REPLACE INTO Report
 )
  VALUES
 (
+  'Distribution appointments perishables',
+  'Schedule of appointments for a specified distribution, with perishables',
+  1,
+  '{
+     "$distribution" :
+     {
+       "type"  : "SelectBox",
+       "label" : "Distribution Date"
+     }
+   }',
+  '$distribution',
+  'Time',
+  '$remaining',
+  'Day',
+  '
+   SELECT
+       ci.id AS _id,
+       f.appt_day as Day,
+       f.appt_time AS Time,
+       c.family_name || CASE c.verified WHEN 1 THEN "&check;" ELSE "" END
+          AS "Family name",
+       (c.count_senior + c.count_adult + c.count_child) ||
+         CASE
+           WHEN c.count_senior + c.count_adult + c.count_child >= 4
+             THEN " (Large)"
+           WHEN c.count_senior + c.count_adult + c.count_child = 1
+             THEN " (Single)"
+           ELSE " (Small)"
+         END AS "Family size",
+       COALESCE(perishables, "") AS Perishables,
+       COALESCE(notes, "") AS Notes
+     FROM Fulfillment f
+     LEFT JOIN Client c
+       ON c.family_name = f.family_name
+     LEFT JOIN ClientId ci
+       ON ci.family_name = c.family_name
+     WHERE f.distribution = $distribution
+       AND length(COALESCE(f.appt_time, "")) > 0
+     ORDER BY Day, Time, "Family name";
+  '
+);
+
+REPLACE INTO Report
+(
+  name,
+  description,
+  landscape,
+  input_fields,
+  subtitle_field,
+  separate_by,
+  number_style,
+  number_remaining,
+  query
+)
+ VALUES
+(
   'Distribution appointments with name',
   'Schedule of appointments for a specified distribution, including family name',
   1,
