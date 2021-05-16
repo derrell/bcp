@@ -13,9 +13,6 @@
 ** TODO Client tab
 *** HIGH: DOB field in lieu of ages fields
 *** Add archive feature
-*** HIGH: Add addtional Notes field for food/perishable-related info
-**** Need a report of perishables
-***** Client number, name, appointment time, family size, perishables notes
 *** Notes fields need to be able to have linefeeds (create a list)
 ** TODO Groceries
 *** "Brief" reports in larger font
