@@ -1,24 +1,25 @@
 * Tasks
-** TODO Distribution report
+** Distribution report
 *** Change Appointment number from green to bold black
 *** Change Appointments Remaining from gray to black
 *** Remove phone number
 *** Add Verified indicator
-** TODO Reports infrastructure
+** Reports infrastructure
 *** Add column width configuration
 *** Consider multi-line single row
-** TODO Appointments tab
+** Appointments tab
+*** TODO HIGH: reduce height of page per Mary's email https://mail.google.com/mail/u/0/?zx=pdct8z7svz#inbox/FMfcgzGkXSZGQwxcMxhCSMKVnKnMBjfg
 *** search by name
 *** allow choosing distribution start date
-** TODO Client tab
-*** HIGH: DOB field in lieu of ages fields
+** Client tab
+*** TODO HIGH: DOB field in lieu of ages fields
 *** Add archive feature
 *** Notes fields need to be able to have linefeeds (create a list)
-** TODO Groceries
+** Groceries
 *** "Brief" reports in larger font
-** TODO Editor features
+** Editor features
 *** Be able to highlight portions of notes fields
-** TODO Reports
+** Reports
 *** Distribution report with Pets should have pets and phone numbers
 *** Other Distribution reports need not have Pets or phone numbers
 *** Person outside and computer person need a report without perishables
