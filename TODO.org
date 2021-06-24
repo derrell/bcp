@@ -17,6 +17,17 @@
 *** Notes fields need to be able to have linefeeds (create a list)
 ** Groceries
 *** "Brief" reports in larger font
+*** From Taryn:
+    I asked Kim about the food part of the database. Kim would use the
+database if it could calculate. She'd like there to be columns for
+price, weight, and one for notes. She'd want to be able to indicate
+specific foods that don't show up every month that should be ordered
+if available. She would use it so that she has her process written
+down in the database so that it's there if shes not available. She
+would also use it to be able to budget what food will cost for a month
+or a year, and she'd also like to be able to report how much a certain
+food has cost over the course of a year. None of this has any urgency
+    Consider https://jspreadsheets.com/x-spreadsheet/
 ** Editor features
 *** Be able to highlight portions of notes fields
 ** Reports
