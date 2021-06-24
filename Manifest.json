@@ -1,5 +1,5 @@
 {
-  "$schema": "https://qooxdoo.org/schema/Manifest-1-0-0.json",
+  "$schema": "https://qooxdoo.org/schema/Manifest-2-0-0.json",
   "info": {
     "name": "bcp.server",
     "summary": "",
@@ -22,14 +22,13 @@
     "translation": "source/translation"
   },
   "requires": {
-    "@qooxdoo/framework": "^6.0.0-beta-20201127-1243",
-    "@qooxdoo/compiler": "^1.0.0-beta-20201127-1243"
+    "@qooxdoo/framework": "^7.0.0-beta"
   },
   "externalResources": {
     "script": [
       // To update, from top-level:
       // `npm i --save trie-search`, then
-      // `browserify -r trie-search > source/resource/script/triesearch.js`
+      // `browserify -r trie-search > source-browser/resource/script/triesearch.js`
       "script/triesearch.js"
     ]
   }
