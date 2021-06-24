@@ -39,7 +39,7 @@ qx.Class.define("bcp.server.Gui",
           "bcp.target",
           {
             "build"  : "",
-            "source" : `${process.cwd()}/output/source/`
+            "source" : `${process.cwd()}/output/source-browser/`
           });
 
       this.debug(`Got request for GUI; using path ${path}`);

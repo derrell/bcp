@@ -986,10 +986,12 @@ qx.Mixin.define("bcp.client.MClientMgmt",
           this._veteranWarning.exclude();
         },
         setupFormRendererFunction : function(form) {
-          var         renderer = new qxl.dialog.MultiColumnFormRenderer(form);
-          var         layout = new qx.ui.layout.Grid();
-          const       col = renderer.column;
+          let         layout;
+          let         renderer;
+          let         tabInfo = [];
+          const       col = qxl.dialog.TabbedMultiColumnFormRenderer.column;
 
+          layout = new qx.ui.layout.Grid();
           layout.setSpacing(6);
 
           layout.setColumnMaxWidth(col(0), this.getLabelColumnWidth());
@@ -1013,7 +1015,20 @@ qx.Mixin.define("bcp.client.MClientMgmt",
           layout.setColumnFlex(col(5), 1);
           layout.setColumnAlign(col(5), "left", "top");
 
-          renderer._setLayout(layout);
+          tabInfo.push(
+            {
+              name   : "Family",
+              layout : layout
+            });
+
+
+
+          tabInfo.push(
+            {
+              name   : "Members"
+            });
+
+          renderer = new qxl.dialog.TabbedMultiColumnFormRenderer(form, tabInfo);
 
           // Give 'em what they came for
           return renderer;
