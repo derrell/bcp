@@ -3,7 +3,7 @@
   "targets": [
     {
       "type": "source",
-      "outputPath": "output/source",
+      "outputPath": "output/source-browser",
       "bundle": {
         "include": "qx.*"
       },
@@ -25,7 +25,7 @@
     },
     {
       "type": "build",
-      "outputPath": "output/build",
+      "outputPath": "output/build-browser",
       "addCreatedAt": true,
       "deployPath": "deploy",
       "application-types": [
@@ -38,7 +38,7 @@
     },
     {
       "type": "source",
-      "outputPath": "output/source",
+      "outputPath": "output/source-node",
       "bundle": {
         "include": "qx.*"
       },
@@ -56,7 +56,7 @@
     },
     {
       "type": "build",
-      "outputPath": "output/build",
+      "outputPath": "output/build-node",
       "addCreatedAt": true,
       "deployPath": "deploy",
       "application-types": [
@@ -136,8 +136,16 @@
     }
   ],
   "libraries": [
+    "../../qooxdoo.git",
     "../../qxl.dialog.git",
     "../../incubator.qx.io.jsonrpc.git",
     "."
-  ]
+  ],
+  "eslintConfig": {
+    "extends": [
+      "@qooxdoo/qx/browser",
+      "@qooxdoo/qx",
+      "@qooxdoo/jsdoc-disable"
+    ]
+  }
 }
