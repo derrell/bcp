@@ -19,6 +19,12 @@ qx.Mixin.define("bcp.client.MClientMgmt",
     clientListChanged : "qx.event.type.Event"
   },
 
+  statics :
+  {
+    /** The maximum number of family members we support */
+    MAX_MEMBERS      : 14
+  },
+
   members :
   {
     /** The client table */
@@ -537,6 +543,7 @@ qx.Mixin.define("bcp.client.MClientMgmt",
     _buildClientForm(clientInfo, row)
     {
       let             p;
+      let             col;
       let             form;
       let             formData;
       let             message;
@@ -554,6 +561,10 @@ qx.Mixin.define("bcp.client.MClientMgmt",
 
       formData =
         {
+          //
+          // Family
+          //
+
           family_name:
           {
             type       : "TextField",
@@ -706,7 +717,7 @@ qx.Mixin.define("bcp.client.MClientMgmt",
             },
             properties :
             {
-              tabIndex   : 11
+              enabled    : false
             }
           },
           count_adult :
@@ -718,7 +729,7 @@ qx.Mixin.define("bcp.client.MClientMgmt",
             step      : 1,
             properties :
             {
-              tabIndex   : 12
+              enabled    : false
             }
           },
           count_child :
@@ -730,7 +741,7 @@ qx.Mixin.define("bcp.client.MClientMgmt",
             step      : 1,
             properties :
             {
-              tabIndex   : 13
+              enabled    : false
             }
           },
           count_sex_male :
@@ -746,7 +757,7 @@ qx.Mixin.define("bcp.client.MClientMgmt",
             },
             properties :
             {
-              tabIndex   : 14
+              enabled    : false
             }
           },
           count_sex_female :
@@ -758,7 +769,7 @@ qx.Mixin.define("bcp.client.MClientMgmt",
             step      : 1,
             properties :
             {
-              tabIndex   : 15
+              enabled    : false
             }
           },
           count_sex_other :
@@ -770,7 +781,7 @@ qx.Mixin.define("bcp.client.MClientMgmt",
             step      : 1,
             properties :
             {
-              tabIndex   : 16
+              enabled    : false
             }
           },
           count_veteran :
@@ -786,7 +797,7 @@ qx.Mixin.define("bcp.client.MClientMgmt",
             },
             properties :
             {
-              tabIndex   : 17
+              enabled    : false
             }
           },
           default_appointment :
@@ -811,8 +822,176 @@ qx.Mixin.define("bcp.client.MClientMgmt",
               column   : 4,
               rowspan  : 20
             }
+          },
+
+          //
+          // Individuals
+          //
+          nameHeading :
+          {
+            type       : "label",
+            label      : "Name (optional)",
+            userdata   :
+            {
+              page       : 1,
+              row        : 0,
+              column     : (col = 0)
+            }
+          },
+
+          dobHeading :
+          {
+            type       : "label",
+            label      : "Date of Birth",
+            userdata   :
+            {
+              row        : 0,
+              column     : ++col
+            }
+          },
+
+          genderHeading :
+          {
+            type       : "label",
+            label      : "Gender",
+            userdata   :
+            {
+              row        : 0,
+              column     : ++col
+            }
+          },
+
+          veteranHeading :
+          {
+            type       : "label",
+            label      : "Military status",
+            userdata   :
+            {
+              row        : 0,
+              column     : ++col
+            }
           }
         };
+
+      // Additional rows on Individuals page
+console.log("this=" + this + ", max_members=" + bcp.client.MClientMgmt.MAX_MEMBERS);
+      for (let row = 1, col = 0, tabIndex = 100;
+           row <= bcp.client.MClientMgmt.MAX_MEMBERS;
+           row++, col = 0, tabIndex++)
+      {
+        formData[`name${row}`] =
+          {
+            type       : "TextField",
+            label      : "",
+            value      : "",
+            properties :
+            {
+              tabIndex   : tabIndex++
+            },
+            userdata   :
+            {
+              row        : row,
+              column     : col++
+            }
+          };
+
+        formData[`dob${row}`] =
+          {
+            type       : "TextField",
+            label      : "",
+            properties :
+            {
+              placeholder : "YYYY-MM-DD",
+              tabIndex    : tabIndex++
+            },
+            validation :
+            {
+              validator   : (value, formItem, errorMessage) =>
+              {
+                let             fields;
+                const           daysPerMonth = [ 0, 31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 ];
+
+                // Convert null to empty string
+                value = value || "";
+
+                // Empty field is ok
+                if (value.trim().length == 0)
+                {
+                  return;
+                }
+
+                // Check for bad input data
+                fields = /([0-9][0-9][0-9][0-9])-([0-9][0-9])-([0-9][0-9])/.exec(value);
+                if (! fields ||
+                    fields.length != 4 ||
+                    fields[1] < 1900 || fields[1] > (new Date()).getFullYear() ||
+                    fields[2] < 1 || fields[2] > 12 ||
+                    fields[3] < 1 || fields[3] > daysPerMonth[fields[3]] ||
+                    isNaN(Date.parse(value)))
+                {
+                  throw new qx.core.ValidationError("Validation Error", "Invalid date");
+                }
+
+                // Valid date
+                return;
+              },
+            },
+            userdata   :
+            {
+              row        : row,
+              column     : col++
+            }
+          };
+
+        formData[`gender${row}`] =
+          {
+            type        : "SelectBox",
+            label       : "",
+            value       : "M",
+            properties :
+            {
+              tabIndex   : tabIndex++
+            },
+            options     :
+            [
+              { label : "Male",   value : "M" },
+              { label : "Female", value : "F" },
+              { label : "Other",  value : "O" }
+            ],
+            userdata    :
+            {
+              row        : row,
+              column     : col++
+            }
+          };
+
+        formData[`veteran${row}`] =
+          {
+            type       : "CheckBox",
+            label      : "Not a veteran",
+            value      : false,
+            properties :
+            {
+              width      : 200,
+              appearance : "toggle-button",
+              tabIndex   : tabIndex++
+            },
+            events     :
+            {
+              changeValue : function(e)
+              {
+                const           value = e.getData();
+
+                this.setLabel(value ? "Veteran" : "Not a veteran");
+              }
+            },
+            userdata   :
+            {
+              row        : row,
+              column     : col++
+            }
+          };
+      }
 
       form = new qxl.dialog.Form(
       {
@@ -845,6 +1024,10 @@ qx.Mixin.define("bcp.client.MClientMgmt",
                   value : null
                 });
             });
+
+          // Provide access to the button, for hiding it when not on
+          // Family tab
+          _this._butClearAppointment = clearAppointment;
         },
         afterButtonsFunction : function(buttonBar, form)
         {
@@ -968,7 +1151,7 @@ qx.Mixin.define("bcp.client.MClientMgmt",
           this._noCountsWarning = new qx.ui.basic.Label(
             [
               "<span style='color: red;'>",
-              "Family counts have not yet been entered",
+              "Family members have not yet been entered",
               "</span>"
             ].join(""));
           container.add(this._noCountsWarning);
@@ -989,7 +1172,11 @@ qx.Mixin.define("bcp.client.MClientMgmt",
           let         layout;
           let         renderer;
           let         tabInfo = [];
-          const       col = qxl.dialog.TabbedMultiColumnFormRenderer.column;
+          let         col = qxl.dialog.TabbedMultiColumnFormRenderer.column;
+
+          //
+          // Family page
+          //
 
           layout = new qx.ui.layout.Grid();
           layout.setSpacing(6);
@@ -1022,13 +1209,137 @@ qx.Mixin.define("bcp.client.MClientMgmt",
             });
 
 
+          //
+          // Members page
+          //
+
+          layout = new qx.ui.layout.Grid();
+          layout.setSpacing(6);
+
+          col = n => n;
+
+          layout.setColumnMaxWidth(col(0), 1);
+          layout.setColumnWidth(col(0), 1);
+          layout.setColumnAlign(col(0), "center", "middle");
+
+          layout.setColumnMaxWidth(col(1), 200);
+          layout.setColumnWidth(col(1), 200);
+          layout.setColumnAlign(col(1), "center", "middle");
+
+          layout.setColumnMaxWidth(col(2), 1);
+          layout.setColumnWidth(col(2), 1);
+          layout.setColumnAlign(col(2), "center", "middle");
+
+          layout.setColumnMaxWidth(col(3), 200);
+          layout.setColumnWidth(col(3), 200);
+          layout.setColumnAlign(col(3), "center", "middle");
+
+          layout.setColumnMaxWidth(col(4), 1);
+          layout.setColumnWidth(col(4), 1);
+          layout.setColumnAlign(col(4), "center", "middle");
+
+          layout.setColumnMaxWidth(col(5), 200);
+          layout.setColumnWidth(col(5), 200);
+          layout.setColumnAlign(col(5), "center", "middle");
+
+          layout.setColumnMaxWidth(col(6), 1);
+          layout.setColumnWidth(col(6), 1);
+          layout.setColumnAlign(col(6), "center", "middle");
+
+          layout.setColumnMaxWidth(col(7), 200);
+          layout.setColumnWidth(col(7), 200);
+          layout.setColumnAlign(col(7), "center", "middle");
 
           tabInfo.push(
             {
-              name   : "Members"
+              name   : "Members",
+              layout : layout
             });
 
           renderer = new qxl.dialog.TabbedMultiColumnFormRenderer(form, tabInfo);
+
+          // We want to know when a tab switch occurs
+          renderer.addListener(
+            "changeTab",
+            (e) =>
+            {
+              let             i;
+              let             value;
+              let             seniors = 0;
+              let             adults = 0;
+              let             children = 0;
+              let             males = 0;
+              let             females = 0;
+              let             others = 0;
+              let             veterans = 0;
+              const           tabViewInfo = form.getTabViewInfo();
+              const           newTabIndex = tabViewInfo.pages.indexOf(e.getData());
+
+              // If we're not viewing the family tab, hide the 'Remove
+              // default appointment' button
+              _this._butClearAppointment.setVisibility(newTabIndex === 0 ? "visible" : "hidden");
+
+              function getAge(dateString, todayString = "")
+              {
+                let             today = todayString ? new Date(todayString) : new Date();
+                let             birthDate = new Date(dateString);
+                let             age = today.getFullYear() - birthDate.getFullYear();
+                let             m = today.getMonth() - birthDate.getMonth();
+
+                if (m < 0 || (m === 0 && today.getDate() <= birthDate.getDate()))
+                {
+                  age--;
+                }
+
+                return age;
+              }
+
+              // Are we switching to the Family tab?
+              if (newTabIndex === 0)
+              {
+                // Yup. Calculate numbers of each age group, gender, veterans
+                for (i = 1; i <= bcp.client.MClientMgmt.MAX_MEMBERS; i++)
+                {
+                  // Is there a date in this dob field?
+                  value = this._formElements[`dob${i}`].getValue();
+                  if (value)
+                  {
+                    // Yup. Add each age group
+                    getAge(value) >= 65 && ++seniors;
+                    getAge(value) >= 18 && getAge(value) <= 64 && ++adults;
+                    getAge(value) <= 17 && ++children;
+
+                    // Add genders
+                    switch(this._formElements[`gender${i}`].getSelection()[0].getModel().getValue())
+                    {
+                    case "M" :
+                      ++males;
+                      break;
+
+                    case "F" :
+                      ++females;
+                      break;
+
+                    case "O" :
+                      ++others;
+                      break;
+                    }
+
+                    // Add veterans
+                    this._formElements[`veteran${i}`].getValue() && ++veterans;
+                  }
+                }
+
+                // Update the Family page
+                this._formElements["count_senior"].setValue(seniors);
+                this._formElements["count_adult"].setValue(adults);
+                this._formElements["count_child"].setValue(children);
+                this._formElements["count_sex_male"].setValue(males);
+                this._formElements["count_sex_female"].setValue(females);
+                this._formElements["count_sex_other"].setValue(others);
+                this._formElements["count_veteran"].setValue(veterans);
+              }
+            });
 
           // Give 'em what they came for
           return renderer;
@@ -1037,16 +1348,12 @@ qx.Mixin.define("bcp.client.MClientMgmt",
         {
           let         f;
           let         manager;
+          let         tabViewInfo
 
-          //
-          // Use a validation manager. Ensure that the entered data is
-          // consistent, and that all required fields are entered.
+          // Get the validation manager. Ensure that the entered data
+          // is consistent, and that all required fields are entered.
           // When valid, enable the Save button.
-          //
-
-          // Instantiate a validation manager
-          form._validationManager = manager =
-            new qx.ui.form.validation.Manager();
+          manager = form.getValidationManager();;
 
           // Prepare a validation function
           f = function()
@@ -1114,6 +1421,12 @@ qx.Mixin.define("bcp.client.MClientMgmt",
 
             return true;
           }.bind(this);
+
+          // Switch to tab 1 and then to tab 0, to force recalculation
+          // of age, gender, veteran counts
+          tabViewInfo = form.getTabViewInfo();
+          tabViewInfo.tabView.setSelection( [ tabViewInfo.pages[1] ] );
+          tabViewInfo.tabView.setSelection( [ tabViewInfo.pages[0] ] );
 
           // Use that validator
           manager.setValidator(f);
