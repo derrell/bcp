@@ -228,6 +228,64 @@ BEGIN
     WHERE family_name = new.family_name
       AND member_name = new.member_name;
 
+  --
+  -- update the client with counts based on FamilyMember entries
+  --
+  -- This is slow, Slow, SLOW, as it recalculates counts after each
+  -- family member age is calculated, rather than once after all
+  -- family members' ages are calculated. There is no current
+  -- implementation to do the latter, though, and this should be fast
+  -- enough for ~1000 clients totalling ~4000 family members. We'll see.
+  --
+  UPDATE Client
+    SET count_senior =
+      (SELECT COUNT(*)
+         FROM FamilyMember
+         WHERE family_name = new.family_name
+           AND age >= 65);
+
+  UPDATE Client
+    SET count_adult =
+      (SELECT COUNT(*)
+         FROM FamilyMember
+         WHERE family_name = new.family_name
+           AND age >= 18 AND age < 65);
+
+  UPDATE Client
+    SET count_child =
+      (SELECT COUNT(*)
+         FROM FamilyMember
+         WHERE family_name = new.family_name
+           AND age < 18);
+
+  UPDATE Client
+    SET count_sex_male =
+      (SELECT COUNT(*)
+         FROM FamilyMember
+         WHERE family_name = new.family_name
+           AND gender = 'M');
+
+  UPDATE Client
+    SET count_sex_female =
+      (SELECT COUNT(*)
+         FROM FamilyMember
+         WHERE family_name = new.family_name
+           AND gender = 'F');
+
+  UPDATE Client
+    SET count_sex_other =
+      (SELECT COUNT(*)
+         FROM FamilyMember
+         WHERE family_name = new.family_name
+           AND gender = 'O');
+
+  UPDATE Client
+    SET count_veteran =
+      (SELECT COUNT(*)
+         FROM FamilyMember
+         WHERE family_name = new.family_name
+           AND is_veteran = 1);
+
   DELETE FROM StoredProc_UpdateAge
     WHERE id = new.rowid;
 END;

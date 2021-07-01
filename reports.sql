@@ -8,6 +8,7 @@ REPLACE INTO Report
   separate_by,
   number_style,
   number_remaining,
+  pre_query,
   query
 )
  VALUES
@@ -26,6 +27,13 @@ REPLACE INTO Report
   'Time',
   '$remaining',
   'Day',
+  '
+   INSERT INTO StoredProc_UpdateAge
+       (birthday, asOf, family_name, member_name)
+     SELECT
+         date_of_birth, $distribution, family_name, member_name
+       FROM FamilyMember;
+  ',
   '
    SELECT
        ci.id AS _id,
@@ -64,6 +72,7 @@ REPLACE INTO Report
   separate_by,
   number_style,
   number_remaining,
+  pre_query,
   query
 )
  VALUES
@@ -82,6 +91,13 @@ REPLACE INTO Report
   'Time',
   '$remaining',
   'Day',
+  '
+   INSERT INTO StoredProc_UpdateAge
+       (birthday, asOf, family_name, member_name)
+     SELECT
+         date_of_birth, $distribution, family_name, member_name
+       FROM FamilyMember;
+  ',
   '
    SELECT
        ci.id AS _id,
@@ -120,6 +136,7 @@ REPLACE INTO Report
   separate_by,
   number_style,
   number_remaining,
+  pre_query,
   query
 )
  VALUES
@@ -138,6 +155,13 @@ REPLACE INTO Report
   'Time',
   '$remaining',
   'Day',
+  '
+   INSERT INTO StoredProc_UpdateAge
+       (birthday, asOf, family_name, member_name)
+     SELECT
+         date_of_birth, $distribution, family_name, member_name
+       FROM FamilyMember;
+  ',
   '
    SELECT
        ci.id AS _id,
@@ -177,6 +201,7 @@ REPLACE INTO Report
   separate_by,
   number_style,
   number_remaining,
+  pre_query,
   query
 )
  VALUES
@@ -195,6 +220,13 @@ REPLACE INTO Report
   'Time',
   '$remaining',
   'Day',
+  '
+   INSERT INTO StoredProc_UpdateAge
+       (birthday, asOf, family_name, member_name)
+     SELECT
+         date_of_birth, $distribution, family_name, member_name
+       FROM FamilyMember;
+  ',
   '
    SELECT
        ci.id as _id,
@@ -230,6 +262,7 @@ REPLACE INTO Report
   input_fields,
   subtitle_field,
   separate_by,
+  pre_query,
   query
 )
  VALUES
@@ -246,6 +279,13 @@ REPLACE INTO Report
    }',
   '$distribution',
   'Ethnicity',
+  '
+   INSERT INTO StoredProc_UpdateAge
+       (birthday, asOf, family_name, member_name)
+     SELECT
+         date_of_birth, $distribution, family_name, member_name
+       FROM FamilyMember;
+  ',
   '
    SELECT
        c.ethnicity AS Ethnicity,
@@ -317,6 +357,7 @@ REPLACE INTO Report
   input_fields,
   subtitle_field,
   separate_by,
+  pre_query,
   query
 )
  VALUES
@@ -333,6 +374,13 @@ REPLACE INTO Report
    }',
   '$distribution',
   '',
+  '
+   INSERT INTO StoredProc_UpdateAge
+       (birthday, asOf, family_name, member_name)
+     SELECT
+         date_of_birth, $distribution, family_name, member_name
+       FROM FamilyMember;
+  ',
   '
    SELECT
        c.family_name as "Family name",
@@ -354,6 +402,7 @@ REPLACE INTO Report
   input_fields,
   subtitle_field,
   separate_by,
+  pre_query,
   query
 )
  VALUES
@@ -374,6 +423,13 @@ REPLACE INTO Report
    }',
   '$year',
   '',
+  '
+   INSERT INTO StoredProc_UpdateAge
+       (birthday, asOf, family_name, member_name)
+     SELECT
+         date_of_birth, $distribution, family_name, member_name
+       FROM FamilyMember;
+  ',
   '
     SELECT
         COALESCE(SUM(Total), 0) AS Total,
@@ -411,6 +467,7 @@ REPLACE INTO Report
   input_fields,
   subtitle_field,
   separate_by,
+  pre_query,
   query
 )
  VALUES
@@ -431,6 +488,13 @@ REPLACE INTO Report
    }',
   '$year',
   '',
+  '
+   INSERT INTO StoredProc_UpdateAge
+       (birthday, asOf, family_name, member_name)
+     SELECT
+         date_of_birth, $distribution, family_name, member_name
+       FROM FamilyMember;
+  ',
   '
     SELECT
         COALESCE(SUM(Total), 0) AS Total,
@@ -468,6 +532,7 @@ REPLACE INTO Report
   input_fields,
   subtitle_field,
   separate_by,
+  pre_query,
   query
 )
  VALUES
@@ -484,6 +549,13 @@ REPLACE INTO Report
    }',
   '$distribution',
   'day',
+  '
+   INSERT INTO StoredProc_UpdateAge
+       (birthday, asOf, family_name, member_name)
+     SELECT
+         date_of_birth, $distribution, family_name, member_name
+       FROM FamilyMember;
+  ',
   '
     SELECT day, size, SUM(count) AS count FROM
       (SELECT appt_day AS day, "c-Large" AS size, COUNT(*) AS count
@@ -591,6 +663,7 @@ REPLACE INTO Report
   landscape,
   input_fields,
   separate_by,
+  pre_query,
   query
 )
  VALUES
@@ -600,6 +673,13 @@ REPLACE INTO Report
   0,
   '',
   '',
+  '
+   INSERT INTO StoredProc_UpdateAge
+       (birthday, asOf, family_name, member_name)
+     SELECT
+         date_of_birth, $distribution, family_name, member_name
+       FROM FamilyMember;
+  ',
   '
    SELECT family_name
      FROM Client
@@ -691,6 +771,7 @@ REPLACE INTO Report
   separate_by,
   number_style,
   number_remaining,
+  pre_query,
   query
 )
  VALUES
@@ -703,6 +784,13 @@ REPLACE INTO Report
   'Time',
   '',
   '',
+  '
+   INSERT INTO StoredProc_UpdateAge
+       (birthday, asOf, family_name, member_name)
+     SELECT
+         date_of_birth, $distribution, family_name, member_name
+       FROM FamilyMember;
+  ',
   '
    SELECT
        c.appt_day_default as Day,
@@ -736,6 +824,7 @@ REPLACE INTO Report
   separate_by,
   number_style,
   number_remaining,
+  pre_query,
   query
 )
  VALUES
@@ -748,6 +837,13 @@ REPLACE INTO Report
   '',
   '',
   '',
+  '
+   INSERT INTO StoredProc_UpdateAge
+       (birthday, asOf, family_name, member_name)
+     SELECT
+         date_of_birth, $distribution, family_name, member_name
+       FROM FamilyMember;
+  ',
   '
    SELECT
        c.family_name as "Family name",
