@@ -60,6 +60,24 @@ BEGIN
 END;
 
 
+CREATE TABLE FamilyMember
+(
+  family_name     VARCHAR REFERENCES Client
+                          ON DELETE CASCADE
+                          ON UPDATE CASCADE,
+  member_name     VARCHAR NOT NULL,
+  date_of_birth   VARCHAR NOT NULL, -- in format YYYY-MM-DD
+  gender          VARCHAR NOT NULL, -- M, F, O
+  is_veteran      BOOLEAN NOT NULL, -- 0=false, 1=true,
+
+  -- transient:
+  -- updated as needed by StoredProc_UpdateAge, with an as-of date
+  age             INTEGER,
+
+  UNIQUE (member_name COLLATE NOCASE),
+  PRIMARY KEY (family_name, member_name)
+);
+
 
 CREATE TABLE Fulfillment
 (
@@ -135,6 +153,7 @@ CREATE TABLE Report
 (
   name              VARCHAR PRIMARY KEY NOT NULL,
   description       VARCHAR NOT NULL,
+  pre_query         VARCHAR,
   query             VARCHAR NOT NULL,
   input_fields      VARCHAR,
   subtitle_field    VARCHAR,
@@ -151,3 +170,70 @@ CREATE TABLE KeyValueStore
   key               VARCHAR PRIMARY KEY NOT NULL,
   value             VARCHAR
 );
+
+
+--
+-- "Stored Procedures"
+--
+
+-- Update a family member's age as of a given date
+-- The AFTER INSERT trigger modifies table FamilyMember
+CREATE TABLE StoredProc_UpdateAge
+(
+  id              INTEGER PRIMARY KEY,
+
+  -- parameters
+  birthday        TEXT,
+  asOf            TEXT,
+  family_name     TEXT,
+  member_name     TEXT,
+
+  -- "local variables"
+  age             INTEGER,
+  mDiff           INTEGER
+);
+
+CREATE TRIGGER tr_ai_StoredProc_UpdateAge
+AFTER INSERT ON StoredProc_UpdateAge
+BEGIN
+  -- age = today.year - birthday.year
+  UPDATE StoredProc_UpdateAge
+    SET age =
+      (SELECT strftime('%Y', new.asOf)) -
+      (SELECT strftime('%Y', new.birthday))
+    WHERE id = new.rowid;
+
+  -- mDiff = today.month - birthday.month
+  -- (see if birthday month has passed yet)
+  UPDATE StoredProc_UpdateAge
+    SET mDiff =
+      (SELECT strftime('%m', new.asOf)) -
+      (SELECT strftime('%m', new.birthday))
+    WHERE id = new.rowid;
+
+  -- if (mDiff < 0 || (mDiff === 0 && today.day <= birthday.day)) --age;
+  UPDATE StoredProc_UpdateAge
+    SET age = age - 1
+    WHERE id == new.rowid
+      AND ((SELECT mDiff FROM StoredProc_UpdateAge WHERE id = new.rowid) < 0
+           OR (    (SELECT mDiff FROM StoredProc_UpdateAge WHERE id = new.rowid) = 0
+               AND (SELECT
+                      strftime('%d', new.asOf)
+                      <=
+                      strftime('%d', new.birthday))));
+
+  -- update the specified family member record
+  UPDATE FamilyMember
+    SET age = (SELECT age FROM StoredProc_UpdateAge WHERE id = new.rowid)
+    WHERE family_name = new.family_name
+      AND member_name = new.member_name;
+
+  DELETE FROM StoredProc_UpdateAge
+    WHERE id = new.rowid;
+END;
+
+-- To update all FamilyMember records with current age:
+-- INSERT INTO StoredProc_UpdateAge
+--     (birthday, asOf, family_name, member_name)
+--   SELECT date_of_birth, strftime('%Y-%m-%d', 'now'), family_name, member_name
+--     FROM FamilyMember;

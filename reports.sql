@@ -266,6 +266,7 @@ REPLACE INTO Report
   input_fields,
   subtitle_field,
   separate_by,
+  pre_query,
   query
 )
  VALUES
@@ -282,6 +283,13 @@ REPLACE INTO Report
    }',
   '$distribution',
   '',
+  '
+   INSERT INTO StoredProc_UpdateAge
+       (birthday, asOf, family_name, member_name)
+     SELECT
+         date_of_birth, $distribution, family_name, member_name
+       FROM FamilyMember;
+  ',
   '
    SELECT
        COALESCE((SUM(count_senior) + SUM(count_adult) + SUM(count_child)), 0)
