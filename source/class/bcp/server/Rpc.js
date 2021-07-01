@@ -75,6 +75,12 @@ qx.Class.define("bcp.server.Rpc",
             permission_level    : 50
           },
 
+          getFamilyMembers    :
+          {
+            handler             : this._getFamilyMembers.bind(this),
+            permission_level    : 50
+          },
+
           saveClient          :
           {
             handler             : this._saveClient.bind(this),
@@ -342,6 +348,58 @@ qx.Class.define("bcp.server.Rpc",
     },
 
     /**
+     * Retrieve the list of family members for a client
+     *
+     * @param args {Array}
+     *   args[0] {String}
+     *     The client name whose family members are requested
+     *
+     * @param callback {Function}
+     *   @signature(err, result)
+     */
+    _getFamilyMembers(args, callback)
+    {
+      // TODO: move prepared statements to constructor
+      return this._db.prepare(
+        [
+          "SELECT",
+          [
+            "member_name",
+            "date_of_birth",
+            "gender",
+            "is_veteran"
+          ].join(", "),
+          "FROM FamilyMember",
+          "WHERE family_name = $family_name",
+          "ORDER BY date_of_birth DESC, member_name ASC"
+        ].join(" "))
+        .then(
+          (stmt) =>
+          {
+            return stmt.all(
+              {
+                $family_name : args[0]
+              });
+          })
+        .then(
+          (result) =>
+          {
+            // Convert 0/1 value for is_veteran to boolean
+            result.forEach(
+              (memberInfo) =>
+              {
+                memberInfo.is_veteran = memberInfo.is_veteran == 0 ? false : true;
+              });
+            callback(null, result);
+          })
+        .catch((e) =>
+          {
+            console.warn("Error in getFamilyMembers", e);
+            callback( { message : e.toString() } );
+          });
+    },
+
+    /**
      * Save a new or updated client. When updating the record is replaced in
      * its entirety.
      *
@@ -361,7 +419,8 @@ qx.Class.define("bcp.server.Rpc",
       let             addlArgs = {};
       let             prepare;
       const           clientInfo = args[0];
-      const           bNew = args[1];
+      const           familyMembers = args[1];
+      const           bNew = args[2];
 
       if (! bNew)
       {
@@ -452,7 +511,21 @@ qx.Class.define("bcp.server.Rpc",
       }
 
       // TODO: move prepared statements to constructor
-      p = prepare
+      p = Promise.resolve()
+        // Begin a transaction
+        .then(
+          () =>
+          {
+            return this._db.prepare("BEGIN;");
+          })
+        .then(stmt => stmt.run())
+
+        // Insert or update this client
+        .then(
+          () =>
+          {
+            return prepare;
+          })
         .then(stmt => stmt.run(
           Object.assign(
             {
@@ -480,7 +553,7 @@ qx.Class.define("bcp.server.Rpc",
             addlArgs)))
 
         .then(
-          function (result)
+          (result) =>
           {
             // Ensure that a request to edit actually edited something
             if (! bNew && result.changes != 1)
@@ -490,6 +563,76 @@ qx.Class.define("bcp.server.Rpc",
 
             return result;
           })
+
+        // Delete all family member records for this client
+        .then(
+          () =>
+          {
+            return this._db.prepare(
+              [
+                "DELETE FROM FamilyMember",
+                "  WHERE family_name = $family_name;"
+              ].join(" "));
+          })
+        .then(
+          (stmt) => stmt.run(
+            {
+              $family_name         : clientInfo.family_name,
+            }))
+
+        // Insert each provided family member
+        .then(
+          () =>
+          {
+            return this._db.prepare(
+              [
+                "INSERT INTO FamilyMember",
+                "    (",
+                "      family_name,",
+                "      member_name,",
+                "      date_of_birth,",
+                "      gender,",
+                "      is_veteran",
+                "    )",
+                "  VALUES",
+                "    (",
+                "      $family_name,",
+                "      $member_name,",
+                "      $date_of_birth,",
+                "      $gender,",
+                "      $is_veteran",
+                "    );"
+              ].join(" "));
+          })
+        .then(
+          (stmt) =>
+          {
+            let             promises = [];
+
+            familyMembers.forEach(
+              (member) =>
+              {
+                promises.push(
+                  stmt.run(
+                    {
+                      $family_name         : clientInfo.family_name,
+                      $member_name         : member.name,
+                      $date_of_birth       : member.dob,
+                      $gender              : member.gender,
+                      $is_veteran          : member.veteran ? 1 : 0
+                    }));
+              });
+
+            return Promise.all(promises);
+          })
+
+        // Commit the transaction
+        .then(
+          () =>
+          {
+            return this._db.prepare("COMMIT;");
+          })
+        .then(stmt => stmt.run())
 
         // Give 'em what they came for!
         .then((result) => callback(null, null))
@@ -1123,14 +1266,27 @@ qx.Class.define("bcp.server.Rpc",
      */
     _generateReport(args, callback)
     {
+      let             query;
+      let             preQuery;
+
       // TODO: move prepared statements to constructor
       return Promise.resolve()
         .then(
           () =>
           {
+            // Begin a transaction so that any pre-query, e.g.,
+            // updating family member ages, doesn't get overwritten by
+            // a different report request.
+            return this._db.prepare("BEGIN;").then(stmt => stmt.run());
+          })
+        .then(
+          () =>
+          {
             return this._db.prepare(
               [
-                "SELECT query",
+                "SELECT ",
+                "    query,",
+                "    pre_query",
                 "  FROM Report",
                 "  WHERE name = $name;"
               ].join(" "));
@@ -1143,23 +1299,71 @@ qx.Class.define("bcp.server.Rpc",
         .then(
           (result) =>
           {
-            return this._db.prepare(result[0].query);
+            query = result[0].query;
+            preQuery = result[0].pre_query;
+
+            // If no pre-query is defined...
+            if (! result[0].pre_query)
+            {
+              // ... then (of course), don't try to run it
+              return null;
+            }
+
+            // prepare pre-query
+            return this._db.prepare(result[0].pre_query);
           })
         .then(
           (stmt) =>
           {
             let             key;
-            let             queryArgs = Object.assign({}, args[0]);
+            let             queryArgs;
+
+            // If there was no pre-query, we have nothing to do here
+            if (! stmt)
+            {
+              return null;
+            }
+
+            queryArgs = Object.assign({}, args[0]);
 
             // Delete keys that don't begin with '$'
+            // Delete keys that aren't in pre-query
             for (key in queryArgs)
             {
-              if (! key.startsWith("$"))
+              if (! key.startsWith("$") || ! preQuery.includes(key))
               {
                 delete queryArgs[key];
               }
             }
 
+            // run pre-query
+            return stmt.run(queryArgs);
+          })
+        .then(
+          (result) =>
+          {
+            // prepare the report query
+            return this._db.prepare(query);
+          })
+        .then(
+          (stmt) =>
+          {
+            let             key;
+            let             queryArgs;
+
+            queryArgs = Object.assign({}, args[0]);
+
+            // Delete keys that don't begin with '$'
+            // Delete keys that aren't in query
+            for (key in queryArgs)
+            {
+              if (! key.startsWith("$") || ! query.includes(key))
+              {
+                delete queryArgs[key];
+              }
+            }
+
+            // run the report query
             return stmt.all(queryArgs);
           })
         .then(
@@ -1167,9 +1371,15 @@ qx.Class.define("bcp.server.Rpc",
           {
             callback(null, result);
           })
+        .then(
+          () =>
+          {
+            return this._db.prepare("COMMIT;").then(stmt => stmt.run());
+          })
         .catch((e) =>
           {
-            console.warn("Error in getDistributionList", e);
+            console.warn("Error in generateReport", e);
+            this._db.prepare("ROLLBACK;").then(stmt => stmt.run());
             callback( { message : e.toString() } );
           });
     },

@@ -22,7 +22,10 @@ qx.Mixin.define("bcp.client.MClientMgmt",
   statics :
   {
     /** The maximum number of family members we support */
-    MAX_MEMBERS      : 14
+    MAX_MEMBERS      : 14,
+
+    /** Number of days in each month, 1-relative (ignore index 0) */
+    DAYS_PER_MONTH   : [ 0, 31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 ]
   },
 
   members :
@@ -334,7 +337,7 @@ qx.Mixin.define("bcp.client.MClientMgmt",
         (e) =>
         {
           let             row = e.getRow();
-          this._buildClientForm(tm.getDataAsMapArray()[row], row);
+          this._prepareForClientForm(tm.getDataAsMapArray()[row], row);
           table.getSelectionModel().resetSelection();
         });
 
@@ -346,7 +349,7 @@ qx.Mixin.define("bcp.client.MClientMgmt",
         "execute",
         function()
         {
-          this._buildClientForm();
+          this._prepareForClientForm();
         },
         this);
 
@@ -465,7 +468,7 @@ qx.Mixin.define("bcp.client.MClientMgmt",
           if (row !== null)
           {
             // ... then open that row
-            this._buildClientForm(tm.getDataAsMapArray()[row], row);
+            this._prepareForClientForm(tm.getDataAsMapArray()[row], row);
           }
           else
           {
@@ -535,18 +538,52 @@ qx.Mixin.define("bcp.client.MClientMgmt",
     },
 
     /**
+     * Retrieve family memberrs in preparation for building the client form
+     *
+     * @return {Promise}
+     *   The returned promise resolves with the data from the forms submission
+     */
+    _prepareForClientForm(clientInfo, row)
+    {
+      return Promise.resolve()
+        .then(
+          () =>
+          {
+            return this.rpc("getFamilyMembers", [ clientInfo.family_name ]);
+          })
+        .then(
+          (familyMembers) =>
+          {
+            if (! familyMembers)
+            {
+              familyMembers = [];
+            }
+
+            return this._buildClientForm(clientInfo, row, familyMembers);
+          })
+        .catch(
+          (e) =>
+          {
+            console.warn("Error obtaining family members:", e);
+            qxl.dialog.Dialog.error(
+              `Error obtaining family members: ${e}`);
+          });
+    },
+
+    /**
      * Build the New/Edit Client form.
      *
      * @return {Promise}
      *   The returned promise resolves with the data from the forms submission
      */
-    _buildClientForm(clientInfo, row)
+    _buildClientForm(clientInfo, row, familyMembers)
     {
       let             p;
       let             col;
       let             form;
       let             formData;
       let             message;
+      let             familyMember;
       const           bNew = ! clientInfo;
       const           caption = "Client Detail";
       const           _this = this;
@@ -830,7 +867,7 @@ qx.Mixin.define("bcp.client.MClientMgmt",
           nameHeading :
           {
             type       : "label",
-            label      : "Name (optional)",
+            label      : "Name",
             userdata   :
             {
               page       : 1,
@@ -874,16 +911,23 @@ qx.Mixin.define("bcp.client.MClientMgmt",
         };
 
       // Additional rows on Individuals page
-console.log("this=" + this + ", max_members=" + bcp.client.MClientMgmt.MAX_MEMBERS);
       for (let row = 1, col = 0, tabIndex = 100;
            row <= bcp.client.MClientMgmt.MAX_MEMBERS;
            row++, col = 0, tabIndex++)
       {
+        familyMember = familyMembers[row - 1] ||
+          {
+            member_name   : "",
+            date_of_birth : "",
+            gender        : "M",
+            is_veteran    : false
+          };
+
         formData[`name${row}`] =
           {
             type       : "TextField",
             label      : "",
-            value      : "",
+            value      : familyMember.member_name,
             properties :
             {
               tabIndex   : tabIndex++
@@ -899,43 +943,13 @@ console.log("this=" + this + ", max_members=" + bcp.client.MClientMgmt.MAX_MEMBE
           {
             type       : "TextField",
             label      : "",
+            value      : familyMember.date_of_birth,
             properties :
             {
               placeholder : "YYYY-MM-DD",
               tabIndex    : tabIndex++
             },
-            validation :
-            {
-              validator   : (value, formItem, errorMessage) =>
-              {
-                let             fields;
-                const           daysPerMonth = [ 0, 31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 ];
-
-                // Convert null to empty string
-                value = value || "";
-
-                // Empty field is ok
-                if (value.trim().length == 0)
-                {
-                  return;
-                }
-
-                // Check for bad input data
-                fields = /([0-9][0-9][0-9][0-9])-([0-9][0-9])-([0-9][0-9])/.exec(value);
-                if (! fields ||
-                    fields.length != 4 ||
-                    fields[1] < 1900 || fields[1] > (new Date()).getFullYear() ||
-                    fields[2] < 1 || fields[2] > 12 ||
-                    fields[3] < 1 || fields[3] > daysPerMonth[fields[3]] ||
-                    isNaN(Date.parse(value)))
-                {
-                  throw new qx.core.ValidationError("Validation Error", "Invalid date");
-                }
-
-                // Valid date
-                return;
-              },
-            },
+            // validation : handled in form validation
             userdata   :
             {
               row        : row,
@@ -947,7 +961,7 @@ console.log("this=" + this + ", max_members=" + bcp.client.MClientMgmt.MAX_MEMBE
           {
             type        : "SelectBox",
             label       : "",
-            value       : "M",
+            value       : familyMember.gender,
             properties :
             {
               tabIndex   : tabIndex++
@@ -968,8 +982,8 @@ console.log("this=" + this + ", max_members=" + bcp.client.MClientMgmt.MAX_MEMBE
         formData[`veteran${row}`] =
           {
             type       : "CheckBox",
-            label      : "Not a veteran",
-            value      : false,
+            label      : familyMember.is_veteran ? "Veteran" : "Not a veteran",
+            value      : familyMember.is_veteran,
             properties :
             {
               width      : 200,
@@ -1138,6 +1152,26 @@ console.log("this=" + this + ", max_members=" + bcp.client.MClientMgmt.MAX_MEMBE
         },
         afterFormFunction : function(container, form)
         {
+          this._nameAndDobRequiredWarning = new qx.ui.basic.Label(
+            [
+              "<span style='color: red;'>",
+              "Family members must have both name and date of birth.",
+              "</span>"
+            ].join(""));
+          container.add(this._nameAndDobRequiredWarning);
+          this._nameAndDobRequiredWarning.setRich(true);
+          this._nameAndDobRequiredWarning.exclude();
+
+          this._nameUniqueWarning = new qx.ui.basic.Label(
+            [
+              "<span style='color: red;'>",
+              "Family members names must be unique.",
+              "</span>"
+            ].join(""));
+          container.add(this._nameUniqueWarning);
+          this._nameUniqueWarning.setRich(true);
+          this._nameUniqueWarning.exclude();
+
           this._wrongCountsWarning = new qx.ui.basic.Label(
             [
               "<span style='color: red;'>",
@@ -1348,17 +1382,18 @@ console.log("this=" + this + ", max_members=" + bcp.client.MClientMgmt.MAX_MEMBE
         {
           let         f;
           let         manager;
-          let         tabViewInfo
+          let         tabViewInfo;
 
           // Get the validation manager. Ensure that the entered data
           // is consistent, and that all required fields are entered.
           // When valid, enable the Save button.
-          manager = form.getValidationManager();;
+          manager = form.getValidationManager();
 
           // Prepare a validation function
           f = function()
           {
             let             familyName;
+            let             memberNames;
             let             ageSenior;
             let             ageAdult;
             let             ageChild;
@@ -1388,14 +1423,77 @@ console.log("this=" + this + ", max_members=" + bcp.client.MClientMgmt.MAX_MEMBE
             sexOther = formDialog._formElements["count_sex_other"].getValue();
             veteran = formDialog._formElements["count_veteran"].getValue();
 
-            // If there's text in Family Name, it's valid
-            formDialog._formElements["family_name"].setValid(!! familyName);
-            manager.add(formDialog._formElements["family_name"]);
-
             // Reset warnings
+            _this._nameAndDobRequiredWarning.exclude();
             _this._wrongCountsWarning.exclude();
             _this._noCountsWarning.exclude();
             _this._veteranWarning.exclude();
+
+            // Ensure that if there's a birth date, there's also a
+            // member name. Store member names for additional
+            // validation
+            memberNames = [];
+            for (let i = 1; i <= bcp.client.MClientMgmt.MAX_MEMBERS; i++)
+            {
+              let             fields;
+              let             nameElem = formDialog._formElements[`name${i}`];
+              let             dobElem = formDialog._formElements[`dob${i}`];
+              let             name = nameElem.getValue() || "";
+              let             dob = dobElem.getValue() || "";
+
+              manager.add(nameElem);
+              manager.add(dobElem);
+
+              // If one of family member name and family member birth
+              // date is present, both must be present.
+              nameElem.setValid(!! ((! name && ! dob) || (name && dob)));
+
+              fields = /([0-9][0-9][0-9][0-9])-([0-9][0-9])-([0-9][0-9])/.exec(dob);
+              if ((! dob && name) || (dob && ! name))
+              {
+                dobElem.setValid(false);
+              }
+              else if (! dob)
+              {
+                dobElem.setValid(true);
+              }
+              else if (! fields ||
+                       fields.length != 4 ||
+                       fields[1] < 1900 || fields[1] > (new Date()).getFullYear() ||
+                       fields[2] < 1 || fields[2] > 12 ||
+                       fields[3] < 1 || fields[3] > bcp.client.MClientMgmt.DAYS_PER_MONTH[fields[3]] ||
+                       isNaN(Date.parse(dob)))
+              {
+                dobElem.setValid(false);
+              }
+              else
+              {
+                dobElem.setValid(true);
+              }
+
+              if ((name && ! dob) || (! name && dob))
+              {
+                this._nameAndDobRequiredWarning.show();
+                return false;
+              }
+
+              // We'll want to ensure these names are unique, so make a list of them
+              memberNames.push(name.trim().toLowerCase());
+            }
+
+            // Filter out empty member names
+            memberNames = memberNames.filter(s => s.length > 0);
+
+            // Are all members unique?
+            if ((new Set(memberNames)).size != memberNames.length)
+            {
+              this._nameUniqueWarning.show();
+              return false;
+            }
+
+            // If there's text in Family Name, it's valid
+            formDialog._formElements["family_name"].setValid(!! familyName);
+            manager.add(formDialog._formElements["family_name"]);
 
             // Sums of by-age and by-sex must match
             if (ageSenior + ageAdult + ageChild !=
@@ -1470,6 +1568,8 @@ console.log("this=" + this + ", max_members=" + bcp.client.MClientMgmt.MAX_MEMBE
       p.then(
         (formValues) =>
         {
+          let             familyMembers;
+
           // Cancelled?
           if (! formValues)
           {
@@ -1501,9 +1601,40 @@ console.log("this=" + this + ", max_members=" + bcp.client.MClientMgmt.MAX_MEMBE
           formValues.family_name_update =
             clientInfo.family_name || formValues.family_name;
 
-          console.log("formValues=", formValues);
+          // Move family members to a separate array, and delete
+          // superfluous data
+          familyMembers = [];
+          for (let i = 1; i <= bcp.client.MClientMgmt.MAX_MEMBERS; i++)
+          {
+            // Add this family member to its list
+            if (formValues[`name${i}`])
+            {
+              familyMembers.push(
+                {
+                  name    : formValues[`name${i}`],
+                  dob     : formValues[`dob${i}`],
+                  gender  : formValues[`gender${i}`],
+                  veteran : formValues[`veteran${i}`]
+                });
+            }
 
-          this.rpc("saveClient", [ formValues, bNew ])
+            // Delete member-specific data from family data
+            delete formValues[`name${i}`];
+            delete formValues[`dob${i}`];
+            delete formValues[`gender${i}`];
+            delete formValues[`veteran${i}`];
+          }
+
+          // Delete headings from family data
+          delete formValues["nameHeading"];
+          delete formValues["dobHeading"];
+          delete formValues["genderHeading"];
+          delete formValues["veteranHeading"];
+
+          console.log("formValues=", formValues);
+          console.log("familyMembers=", familyMembers);
+
+          this.rpc("saveClient", [ formValues, familyMembers, bNew ])
             .then(
               (result) =>
               {
