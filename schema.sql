@@ -242,49 +242,56 @@ BEGIN
       (SELECT COUNT(*)
          FROM FamilyMember
          WHERE family_name = new.family_name
-           AND age >= 65);
+           AND age >= 65)
+      WHERE family_name = new.family_name;
 
   UPDATE Client
     SET count_adult =
       (SELECT COUNT(*)
          FROM FamilyMember
          WHERE family_name = new.family_name
-           AND age >= 18 AND age < 65);
+           AND age >= 18 AND age < 65)
+      WHERE family_name = new.family_name;
 
   UPDATE Client
     SET count_child =
       (SELECT COUNT(*)
          FROM FamilyMember
          WHERE family_name = new.family_name
-           AND age < 18);
+           AND age < 18)
+      WHERE family_name = new.family_name;
 
   UPDATE Client
     SET count_sex_male =
       (SELECT COUNT(*)
          FROM FamilyMember
          WHERE family_name = new.family_name
-           AND gender = 'M');
+           AND gender = 'M')
+      WHERE family_name = new.family_name;
 
   UPDATE Client
     SET count_sex_female =
       (SELECT COUNT(*)
          FROM FamilyMember
          WHERE family_name = new.family_name
-           AND gender = 'F');
+           AND gender = 'F')
+      WHERE family_name = new.family_name;
 
   UPDATE Client
     SET count_sex_other =
       (SELECT COUNT(*)
          FROM FamilyMember
          WHERE family_name = new.family_name
-           AND gender = 'O');
+           AND gender = 'O')
+      WHERE family_name = new.family_name;
 
   UPDATE Client
     SET count_veteran =
       (SELECT COUNT(*)
          FROM FamilyMember
          WHERE family_name = new.family_name
-           AND is_veteran = 1);
+           AND is_veteran = 1)
+      WHERE family_name = new.family_name;
 
   DELETE FROM StoredProc_UpdateAge
     WHERE id = new.rowid;
