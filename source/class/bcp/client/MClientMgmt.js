@@ -92,13 +92,6 @@ qx.Mixin.define("bcp.client.MClientMgmt",
           "Email",
           "Ethnicity",
           "Verified",
-          "# seniors",
-          "# adults",
-          "# children",
-          "# male",
-          "# female",
-          "# ?gender",
-          "# veteran",
           "Notes",
           "Perishables",
           "Income source",
@@ -114,13 +107,6 @@ qx.Mixin.define("bcp.client.MClientMgmt",
           "email",
           "ethnicity",
           "verified",
-          "count_senior",
-          "count_adult",
-          "count_child",
-          "count_sex_male",
-          "count_sex_female",
-          "count_sex_other",
-          "count_veteran",
           "notes_default",
           "perishables_default",
           "income_source",
@@ -189,13 +175,6 @@ qx.Mixin.define("bcp.client.MClientMgmt",
       behavior.setWidth(tm.getColumnIndexById("email"), 100);
       behavior.setWidth(tm.getColumnIndexById("ethnicity"), 80);
       behavior.setWidth(tm.getColumnIndexById("verified"), 60);
-      behavior.setWidth(tm.getColumnIndexById("count_senior"), 80);
-      behavior.setWidth(tm.getColumnIndexById("count_adult"), 80);
-      behavior.setWidth(tm.getColumnIndexById("count_child"), 80);
-      behavior.setWidth(tm.getColumnIndexById("count_sex_male"), 60);
-      behavior.setWidth(tm.getColumnIndexById("count_sex_female"), 60);
-      behavior.setWidth(tm.getColumnIndexById("count_sex_other"), 70);
-      behavior.setWidth(tm.getColumnIndexById("count_veteran"), 70);
       behavior.setWidth(tm.getColumnIndexById("notes_default"), 200);
       behavior.setWidth(tm.getColumnIndexById("perishables_default"), 200);
       behavior.setWidth(tm.getColumnIndexById("income_source"), 100);
@@ -298,22 +277,6 @@ qx.Mixin.define("bcp.client.MClientMgmt",
           iconTrue  : "qxl.dialog.icon.ok"
         });
       tcm.setDataCellRenderer(tm.getColumnIndexById("verified"), cellRenderer);
-
-      // Users requested that numeric columns be centered
-      [
-        "count_senior",
-        "count_adult",
-        "count_child",
-        "count_sex_male",
-        "count_sex_female",
-        "count_sex_other",
-        "count_veteran"
-      ].forEach(
-        (id) =>
-        {
-          cellRenderer = new bcp.client.CenterCellRenderer();
-          tcm.setDataCellRenderer(tm.getColumnIndexById(id), cellRenderer);
-        });
 
       // Appointment time gets a renderer that converts from 24 to 12-hour time
       cellRenderer = new bcp.client.TimeCellRenderer();
@@ -742,11 +705,10 @@ qx.Mixin.define("bcp.client.MClientMgmt",
           },
           count_senior :
           {
-            type      : "spinner",
+            type      : "TextField",
             label     : "# of seniors (age 65+)",
-            value     : clientInfo.count_senior || 0,
-            min       : 0,
-            step      : 1,
+            value     : (clientInfo.count_senior || 0).toString(),
+            width     : 40,
             userdata  :
             {
               row       : 0,
@@ -759,11 +721,10 @@ qx.Mixin.define("bcp.client.MClientMgmt",
           },
           count_adult :
           {
-            type      : "spinner",
+            type      : "TextField",
             label     : "# of adults (age 18-64)",
-            value     : clientInfo.count_adult || 0,
-            min       : 0,
-            step      : 1,
+            value     : (clientInfo.count_adult || 0).toString(),
+            width     : 40,
             properties :
             {
               enabled    : false
@@ -771,11 +732,10 @@ qx.Mixin.define("bcp.client.MClientMgmt",
           },
           count_child :
           {
-            type      : "spinner",
+            type      : "TextField",
             label     : "# of children (age 0-17)",
-            value     : clientInfo.count_child || 0,
-            min       : 0,
-            step      : 1,
+            value     : (clientInfo.count_child || 0).toString(),
+            width     : 40,
             properties :
             {
               enabled    : false
@@ -783,11 +743,10 @@ qx.Mixin.define("bcp.client.MClientMgmt",
           },
           count_sex_male :
           {
-            type      : "spinner",
+            type      : "TextField",
             label     : "# of males",
-            value     : clientInfo.count_sex_male || 0,
-            min       : 0,
-            step      : 1,
+            value     : (clientInfo.count_sex_male || 0).toString(),
+            width     : 40,
             userdata  :
             {
               row       : 4
@@ -799,11 +758,10 @@ qx.Mixin.define("bcp.client.MClientMgmt",
           },
           count_sex_female :
           {
-            type      : "spinner",
+            type      : "TextField",
             label     : "# of females",
-            value     : clientInfo.count_sex_female || 0,
-            min       : 0,
-            step      : 1,
+            value     : (clientInfo.count_sex_female || 0).toString(),
+            width     : 40,
             properties :
             {
               enabled    : false
@@ -811,11 +769,10 @@ qx.Mixin.define("bcp.client.MClientMgmt",
           },
           count_sex_other :
           {
-            type      : "spinner",
+            type      : "TextField",
             label     : "# of other genders",
-            value     : clientInfo.count_sex_other || 0,
-            min       : 0,
-            step      : 1,
+            value     : (clientInfo.count_sex_other || 0).toString(),
+            width     : 40,
             properties :
             {
               enabled    : false
@@ -823,11 +780,10 @@ qx.Mixin.define("bcp.client.MClientMgmt",
           },
           count_veteran :
           {
-            type      : "spinner",
+            type      : "TextField",
             label     : "# of veterans",
-            value     : clientInfo.count_veteran || 0,
-            min       : 0,
-            step      : 1,
+            value     : (clientInfo.count_veteran || 0).toString(),
+            width     : 40,
             userdata  :
             {
               row       : 8
@@ -1358,13 +1314,13 @@ qx.Mixin.define("bcp.client.MClientMgmt",
                 }
 
                 // Update the Family page
-                this._formElements["count_senior"].setValue(seniors);
-                this._formElements["count_adult"].setValue(adults);
-                this._formElements["count_child"].setValue(children);
-                this._formElements["count_sex_male"].setValue(males);
-                this._formElements["count_sex_female"].setValue(females);
-                this._formElements["count_sex_other"].setValue(others);
-                this._formElements["count_veteran"].setValue(veterans);
+                this._formElements["count_senior"].setValue(seniors.toString());
+                this._formElements["count_adult"].setValue(adults.toString());
+                this._formElements["count_child"].setValue(children.toString());
+                this._formElements["count_sex_male"].setValue(males.toString());
+                this._formElements["count_sex_female"].setValue(females.toString());
+                this._formElements["count_sex_other"].setValue(others.toString());
+                this._formElements["count_veteran"].setValue(veterans.toString());
               }
             });
 
