@@ -21,7 +21,13 @@ qx.Class.define("bcp.server.Rpc",
 
       // Application-specific errors (-32000.. -32099)
       AlreadyExists    : -32000
-    }
+    },
+
+    /** Whether a transaction is in progress */
+    _bTransactionInProgress : false,
+
+    /** Queue of waiting transactions (promises) */
+    _transactionQueue       : []
   },
 
   members :
@@ -272,6 +278,62 @@ qx.Class.define("bcp.server.Rpc",
     },
 
     /**
+     * Begin an exclusive transaction by preventing collaborating requests
+     * from issuing their queries until they're given permission.
+     *
+     * @return {Promise}
+     *   Resolves with `true` when the transaction may begin
+     */
+    _beginTransaction()
+    {
+      // If there's no transaction in progress...
+      if (! this.constructor._bTransactionInProgress)
+      {
+        // ... then we'll let them proceed. Set the flag to indicate
+        // they're in a transaction.
+        this.constructor._bTransactionInProgress = true;
+
+        // Indicate they can proceed
+        return true;
+      }
+
+      // There's a transaction in progress. Create a promise and store
+      // its resolve function on the transaction queue. When the
+      // current transaction ends, we'll pull the first resolve
+      // function from the queue and call it.
+      return new Promise(
+        (resolve, reject) =>
+        {
+          this.constructor._transactionQueue.push(resolve);
+        });
+    },
+
+    /**
+     * End the transaction, allowing the next waiter in the transaction queue
+     * to proceed.
+     */
+    _endTransaction()
+    {
+      let             resolver;
+
+      // The transaction has ended. Note that.
+      this.constructor._bTransactionInProgress = false;
+
+      // If there are any transaction requests in the queue...
+      if (this.constructor._transactionQueue.length > 0)
+      {
+        // ... then there's now a transaction in progress
+        this.constructor._bTransactionInProgress = true;
+
+        // Pull that request's resolve function off the queue
+        resolver = this.constructor._transactionQueue.pop();
+
+        // Call it, to resolve the promise, allowing the requester to proceed.
+        resolver(true);
+      }
+    },
+
+    /**
      * Return the logged-in user and permissions
      *
      * @param args {Array}
@@ -302,34 +364,41 @@ qx.Class.define("bcp.server.Rpc",
     _getClientList(args, callback)
     {
       // TODO: move prepared statements to constructor
-      return this._db.prepare(
-        [
-          "SELECT",
-          [
-            "family_name",
-            "phone",
-            "email",
-            "ethnicity",
-            "verified",
-            "count_senior",
-            "count_adult",
-            "count_child",
-            "count_sex_male",
-            "count_sex_female",
-            "count_sex_other",
-            "count_veteran",
-            "notes_default",
-            "perishables_default",
-            "income_source",
-            "income_amount",
-            "pet_types",
-            "address_default",
-            "appt_day_default",
-            "appt_time_default"
-          ].join(", "),
-          "FROM Client",
-          "ORDER BY family_name"
-        ].join(" "))
+      return Promise.resolve()
+        .then(() => this._beginTransaction())
+
+        .then(
+          () =>
+          {
+            return this._db.prepare(
+            [
+              "SELECT",
+              [
+                "family_name",
+                "phone",
+                "email",
+                "ethnicity",
+                "verified",
+                "count_senior",
+                "count_adult",
+                "count_child",
+                "count_sex_male",
+                "count_sex_female",
+                "count_sex_other",
+                "count_veteran",
+                "notes_default",
+                "perishables_default",
+                "income_source",
+                "income_amount",
+                "pet_types",
+                "address_default",
+                "appt_day_default",
+                "appt_time_default"
+              ].join(", "),
+              "FROM Client",
+              "ORDER BY family_name"
+            ].join(" "));
+          })
         .then(
           (stmt) =>
           {
@@ -340,11 +409,14 @@ qx.Class.define("bcp.server.Rpc",
           {
             callback(null, result);
           })
+
         .catch((e) =>
           {
             console.warn("Error in getClientList", e);
             callback( { message : e.toString() } );
-          });
+          })
+
+        .finally(() => this._endTransaction());
     },
 
     /**
@@ -360,19 +432,26 @@ qx.Class.define("bcp.server.Rpc",
     _getFamilyMembers(args, callback)
     {
       // TODO: move prepared statements to constructor
-      return this._db.prepare(
-        [
-          "SELECT",
-          [
-            "member_name",
-            "date_of_birth",
-            "gender",
-            "is_veteran"
-          ].join(", "),
-          "FROM FamilyMember",
-          "WHERE family_name = $family_name",
-          "ORDER BY date_of_birth DESC, member_name ASC"
-        ].join(" "))
+      return Promise.resolve()
+        .then(() => this._beginTransaction())
+
+        .then(
+          () =>
+          {
+            return this._db.prepare(
+            [
+              "SELECT",
+              [
+                "member_name",
+                "date_of_birth",
+                "gender",
+                "is_veteran"
+              ].join(", "),
+              "FROM FamilyMember",
+              "WHERE family_name = $family_name",
+              "ORDER BY date_of_birth DESC, member_name ASC"
+            ].join(" "));
+          })
         .then(
           (stmt) =>
           {
@@ -392,11 +471,14 @@ qx.Class.define("bcp.server.Rpc",
               });
             callback(null, result);
           })
+
         .catch((e) =>
           {
             console.warn("Error in getFamilyMembers", e);
             callback( { message : e.toString() } );
-          });
+          })
+
+        .finally(() => this._endTransaction());
     },
 
     /**
@@ -513,19 +595,10 @@ qx.Class.define("bcp.server.Rpc",
       // TODO: move prepared statements to constructor
       p = Promise.resolve()
         // Begin a transaction
-        .then(
-          () =>
-          {
-            return this._db.prepare("BEGIN;");
-          })
-        .then(stmt => stmt.run())
+        .then(() => this._beginTransaction())
 
         // Insert or update this client
-        .then(
-          () =>
-          {
-            return prepare;
-          })
+        .then(() => prepare)
         .then(stmt => stmt.run(
           Object.assign(
             {
@@ -626,14 +699,6 @@ qx.Class.define("bcp.server.Rpc",
             return Promise.all(promises);
           })
 
-        // Commit the transaction
-        .then(
-          () =>
-          {
-            return this._db.prepare("COMMIT;");
-          })
-        .then(stmt => stmt.run())
-
         // Give 'em what they came for!
         .then((result) => callback(null, null))
         .catch((e) =>
@@ -652,7 +717,9 @@ qx.Class.define("bcp.server.Rpc",
             }
 
             callback(error);
-          });
+          })
+
+        .finally(() => this._endTransaction());
 
       return p;
     },
@@ -671,19 +738,22 @@ qx.Class.define("bcp.server.Rpc",
     _deleteClient(args, callback)
     {
       let             p;
-      let             prepare;
       const           clientInfo = args[0];
-
-      // TODO: move prepared statements to constructor
-      prepare = this._db.prepare(
-        [
-          "DELETE FROM Client",
-          "  WHERE family_name = $family_name;"
-        ].join(" "));
 
       // This will delete the Client record and any Fulfillment
       // records that reference that client.
-      p = prepare
+      return Promise.resolve()
+        .then(() => this._beginTransaction())
+
+        .then(
+          () =>
+          {
+            return this._db.prepare(
+              [
+                "DELETE FROM Client",
+                "  WHERE family_name = $family_name;"
+              ].join(" "));
+          })
         .then(stmt => stmt.run(
           {
             $family_name        : clientInfo.family_name
@@ -697,7 +767,9 @@ qx.Class.define("bcp.server.Rpc",
 
             console.warn(`Error in deleteClient`, e);
             callback(error);
-          });
+          })
+
+        .finally(() => this._endTransaction());
 
       return p;
     },
@@ -736,6 +808,8 @@ qx.Class.define("bcp.server.Rpc",
 
       // TODO: move prepared statements to constructor
       p = Promise.resolve()
+        .then(() => this._beginTransaction())
+
         .then(
           () =>
           {
@@ -844,7 +918,9 @@ qx.Class.define("bcp.server.Rpc",
           {
             console.warn("Error in getAppointments", e);
             callback( { message : e.toString() } );
-          });
+          })
+
+        .finally(() => this._endTransaction());
 
       return p;
     },
@@ -866,7 +942,6 @@ qx.Class.define("bcp.server.Rpc",
     _saveFulfillment(args, callback)
     {
       let             p;
-      let             prepare;
       let             day = null;
       let             time = null;
       const           fulfillmentInfo = args[0];
@@ -878,35 +953,39 @@ qx.Class.define("bcp.server.Rpc",
         time = fulfillmentInfo.appointments.time;
       }
 
-      // This is a new entry
-      prepare = this._db.prepare(
-        [
-          "INSERT OR REPLACE INTO Fulfillment",
-          "  (",
-          "    distribution,",
-          "    family_name,",
-          "    appt_day,",
-          "    appt_time,",
-          "    notes,",
-          "    perishables,",
-          "    fulfilled,",
-          "    fulfillment_time",
-          "  )",
-          "  VALUES",
-          "  (",
-          "    $distribution,",
-          "    $family_name,",
-          "    $appt_day,",
-          "    $appt_time,",
-          "    $notes,",
-          "    $perishables,",
-          "    $fulfilled,",
-          "    $fulfillment_time",
-          "  );"
-        ].join(" "));
-
       // TODO: move prepared statements to constructor
-      p = prepare
+      return Promise.resolve()
+        .then(() => this._beginTransaction())
+
+        .then(
+          () =>
+          {
+            return this._db.prepare(
+              [
+                "INSERT OR REPLACE INTO Fulfillment",
+                "  (",
+                "    distribution,",
+                "    family_name,",
+                "    appt_day,",
+                "    appt_time,",
+                "    notes,",
+                "    perishables,",
+                "    fulfilled,",
+                "    fulfillment_time",
+                "  )",
+                "  VALUES",
+                "  (",
+                "    $distribution,",
+                "    $family_name,",
+                "    $appt_day,",
+                "    $appt_time,",
+                "    $notes,",
+                "    $perishables,",
+                "    $fulfilled,",
+                "    $fulfillment_time",
+                "  );"
+              ].join(" "));
+          })
         .then(stmt => stmt.run(
           {
             $distribution      : fulfillmentInfo.distribution,
@@ -933,7 +1012,9 @@ qx.Class.define("bcp.server.Rpc",
 
             console.warn(`Error in saveFulfillment`, e);
             callback(error);
-          });
+          })
+
+        .finally(() => this._endTransaction());
 
       return p;
     },
@@ -950,22 +1031,25 @@ qx.Class.define("bcp.server.Rpc",
      */
     _deleteFulfillment(args, callback)
     {
-      let             p;
-      let             prepare;
       let             day = null;
       let             time = null;
       const           fulfillmentInfo = args[0];
 
-      // This is a new entry
-      prepare = this._db.prepare(
-        [
-          "DELETE FROM Fulfillment",
-          "  WHERE distribution = $distribution",
-          "    AND family_name = $family_name;"
-        ].join(" "));
-
       // TODO: move prepared statements to constructor
-      p = prepare
+      return Promise.resolve()
+        .then(() => this._beginTransaction())
+
+        .then(
+          () =>
+          {
+            return this._db.prepare(
+              [
+                "DELETE FROM Fulfillment",
+                "  WHERE distribution = $distribution",
+                "    AND family_name = $family_name;"
+              ].join(" "));
+          })
+
         .then(stmt => stmt.run(
           {
             $distribution      : fulfillmentInfo.distribution,
@@ -986,9 +1070,9 @@ qx.Class.define("bcp.server.Rpc",
 
             console.warn(`Error in deleteFulfillment`, e);
             callback(error);
-          });
+          })
 
-      return p;
+        .finally(() => this._endTransaction());
     },
 
     /**
@@ -1004,27 +1088,34 @@ qx.Class.define("bcp.server.Rpc",
     _getDistributionList(args, callback)
     {
       // TODO: move prepared statements to constructor
-      return this._db.prepare(
-        [
-          "SELECT ",
-          "    start_date,",
-          "    day_1_first_appt,",
-          "    day_1_last_appt,",
-          "    day_2_first_appt,",
-          "    day_2_last_appt,",
-          "    day_3_first_appt,",
-          "    day_3_last_appt,",
-          "    day_4_first_appt,",
-          "    day_4_last_appt,",
-          "    day_5_first_appt,",
-          "    day_5_last_appt,",
-          "    day_6_first_appt,",
-          "    day_6_last_appt,",
-          "    day_7_first_appt,",
-          "    day_7_last_appt",
-          "  FROM DistributionPeriod",
-          "  ORDER BY start_date DESC;"
-        ].join(" "))
+      return Promise.resolve()
+        .then(() => this._beginTransaction())
+
+        .then(
+          () =>
+          {
+            return this._db.prepare(
+              [
+                "SELECT ",
+                "    start_date,",
+                "    day_1_first_appt,",
+                "    day_1_last_appt,",
+                "    day_2_first_appt,",
+                "    day_2_last_appt,",
+                "    day_3_first_appt,",
+                "    day_3_last_appt,",
+                "    day_4_first_appt,",
+                "    day_4_last_appt,",
+                "    day_5_first_appt,",
+                "    day_5_last_appt,",
+                "    day_6_first_appt,",
+                "    day_6_last_appt,",
+                "    day_7_first_appt,",
+                "    day_7_last_appt",
+                "  FROM DistributionPeriod",
+                "  ORDER BY start_date DESC;"
+              ].join(" "));
+          })
         .then(
           (stmt) =>
           {
@@ -1035,11 +1126,14 @@ qx.Class.define("bcp.server.Rpc",
           {
             callback(null, result);
           })
+
         .catch((e) =>
           {
             console.warn("Error in getDistributionList", e);
             callback( { message : e.toString() } );
-          });
+          })
+
+        .finally(() => this._endTransaction());
     },
 
     /**
@@ -1058,7 +1152,6 @@ qx.Class.define("bcp.server.Rpc",
      */
     _saveDistribution(args, callback)
     {
-      let             p;
       let             prepare;
       const           distroInfo = args[0];
       const           bNew = args[1];
@@ -1131,7 +1224,14 @@ qx.Class.define("bcp.server.Rpc",
       }
 
       // TODO: move prepared statements to constructor
-      p = prepare
+      return Promise.resolve()
+        .then(() => this._beginTransaction())
+
+        .then(
+          () =>
+          {
+            return prepare;
+          })
         .then(stmt => stmt.run(
           {
             $start_date : distroInfo.start_date,
@@ -1165,6 +1265,7 @@ qx.Class.define("bcp.server.Rpc",
 
         // Give 'em what they came for!
         .then((result) => callback(null, null))
+
         .catch((e) =>
           {
             let             error = { message : e.toString() };
@@ -1181,9 +1282,9 @@ qx.Class.define("bcp.server.Rpc",
             }
 
             callback(error);
-          });
+          })
 
-      return p;
+        .finally(() => this._endTransaction());
     },
 
     /**
@@ -1201,8 +1302,10 @@ qx.Class.define("bcp.server.Rpc",
 
       // TODO: move prepared statements to constructor
       return Promise.resolve()
+        .then(() => this._beginTransaction())
+
         .then(
-          () =>this._db.prepare(
+          () => this._db.prepare(
             [
               "SELECT",
               [
@@ -1247,11 +1350,14 @@ qx.Class.define("bcp.server.Rpc",
 
             callback(null, results);
           })
+
         .catch((e) =>
           {
             console.warn("Error in getReportList", e);
             callback( { message : e.toString() } );
-          });
+          })
+
+        .finally(() => this._endTransaction());
     },
 
     /**
@@ -1271,14 +1377,9 @@ qx.Class.define("bcp.server.Rpc",
 
       // TODO: move prepared statements to constructor
       return Promise.resolve()
-        .then(
-          () =>
-          {
-            // Begin a transaction so that any pre-query, e.g.,
-            // updating family member ages, doesn't get overwritten by
-            // a different report request.
-            return this._db.prepare("BEGIN;").then(stmt => stmt.run());
-          })
+        // Begin a transaction
+        .then(() => this._beginTransaction())
+
         .then(
           () =>
           {
@@ -1371,17 +1472,14 @@ qx.Class.define("bcp.server.Rpc",
           {
             callback(null, result);
           })
-        .then(
-          () =>
-          {
-            return this._db.prepare("COMMIT;").then(stmt => stmt.run());
-          })
+
         .catch((e) =>
           {
             console.warn("Error in generateReport", e);
-            this._db.prepare("ROLLBACK;").then(stmt => stmt.run());
             callback( { message : e.toString() } );
-          });
+          })
+
+        .finally(() => this._endTransaction());
     },
 
     /**
@@ -1399,6 +1497,8 @@ qx.Class.define("bcp.server.Rpc",
 
       // TODO: move prepared statements to constructor
       return Promise.resolve()
+        .then(() => this._beginTransaction())
+
         .then(
           () =>
           {
@@ -1474,11 +1574,14 @@ qx.Class.define("bcp.server.Rpc",
             // Give 'em what they came for
             callback(null, results);
           })
+
         .catch((e) =>
           {
             console.warn("Error in getDeliveryDay", e);
             callback( { message : e.toString() } );
-          });
+          })
+
+        .finally(() => this._endTransaction());
     },
 
     /**
@@ -1501,6 +1604,8 @@ qx.Class.define("bcp.server.Rpc",
     {
       // TODO: move prepared statements to constructor
       return Promise.resolve()
+        .then(() => this._beginTransaction())
+
         .then(
           () =>
           {
@@ -1529,11 +1634,14 @@ qx.Class.define("bcp.server.Rpc",
             // Give 'em what they came for
             callback(null, null);
           })
+
         .catch((e) =>
           {
             console.warn("Error in updateFulfilled", e);
             callback( { message : e.toString() } );
-          });
+          })
+
+        .finally(() => this._endTransaction());
     },
 
     /**
@@ -1576,6 +1684,8 @@ qx.Class.define("bcp.server.Rpc",
 
       // TODO: move prepared statements to constructor
       return Promise.resolve()
+        .then(() => this._beginTransaction())
+
         .then(
           () =>
           {
@@ -1615,11 +1725,14 @@ qx.Class.define("bcp.server.Rpc",
                 });
             }
           })
+
         .catch((e) =>
           {
             console.warn("Error in saveMotd", e);
             callback( { message : e.toString() } );
-          });
+          })
+
+        .finally(() => this._endTransaction());
     }
   }
 });
