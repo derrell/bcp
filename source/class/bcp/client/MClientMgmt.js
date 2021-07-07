@@ -947,6 +947,7 @@ qx.Mixin.define("bcp.client.MClientMgmt",
             properties :
             {
               placeholder : "YYYY-MM-DD",
+              maxWidth    : 120,
               tabIndex    : tabIndex++
             },
             // validation : handled in form validation
@@ -959,18 +960,20 @@ qx.Mixin.define("bcp.client.MClientMgmt",
 
         formData[`gender${row}`] =
           {
-            type        : "SelectBox",
+            type        : "RadioGroup",
             label       : "",
             value       : familyMember.gender,
             properties :
             {
-              tabIndex   : tabIndex++
+              paddingLeft : 15,
+              tabIndex    : tabIndex
             },
+            orientation : "horizontal",
             options     :
             [
-              { label : "Male",   value : "M" },
-              { label : "Female", value : "F" },
-              { label : "Other",  value : "O" }
+              { label : "Male",   value : "M", tabIndex : tabIndex },
+              { label : "Female", value : "F", tabIndex : tabIndex },
+              { label : "Other",  value : "O", tabIndex : tabIndex }
             ],
             userdata    :
             {
@@ -982,22 +985,12 @@ qx.Mixin.define("bcp.client.MClientMgmt",
         formData[`veteran${row}`] =
           {
             type       : "CheckBox",
-            label      : familyMember.is_veteran ? "Veteran" : "Not a veteran",
+            label      : "Veteran",
             value      : familyMember.is_veteran,
             properties :
             {
-              width      : 200,
-              appearance : "toggle-button",
-              tabIndex   : tabIndex++
-            },
-            events     :
-            {
-              changeValue : function(e)
-              {
-                const           value = e.getData();
-
-                this.setLabel(value ? "Veteran" : "Not a veteran");
-              }
+              paddingLeft : 74,
+              tabIndex    : tabIndex++
             },
             userdata   :
             {
@@ -1344,7 +1337,7 @@ qx.Mixin.define("bcp.client.MClientMgmt",
                     getAge(value) <= 17 && ++children;
 
                     // Add genders
-                    switch(this._formElements[`gender${i}`].getSelection()[0].getModel().getValue())
+                    switch(this._formElements[`gender${i}`].getSelection()[0].getUserData("value"))
                     {
                     case "M" :
                       ++males;
