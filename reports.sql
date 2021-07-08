@@ -894,3 +894,59 @@ REPLACE INTO Report
   '
 );
 
+REPLACE INTO Report
+(
+  name,
+  description,
+  landscape,
+  input_fields,
+  separate_by,
+  query
+)
+ VALUES
+(
+  'Missing birthdates: all',
+  'Show all families without entered birthdates',
+  0,
+  '',
+  '',
+  '
+   SELECT family_name AS `Family Name`
+     FROM Client
+     WHERE `Family Name` NOT IN
+       (SELECT DISTINCT family_name FROM FamilyMember)
+     ORDER BY `Family Name`;
+  '
+);
+
+REPLACE INTO Report
+(
+  name,
+  description,
+  landscape,
+  input_fields,
+  separate_by,
+  query
+)
+ VALUES
+(
+  'Missing birthdates: distributed 2021',
+  'Show families who participated 2021, without entered birthdates',
+  0,
+  '',
+  '',
+  '
+   SELECT family_name AS `Family Name`
+     FROM Client
+     WHERE
+           `Family Name` IN
+             (SELECT family_name
+                FROM Fulfillment
+                WHERE distribution LIKE ''2021%'')
+       AND `Family Name` NOT IN
+             (SELECT DISTINCT family_name
+                FROM FamilyMember)
+     ORDER BY `Family Name`;
+  '
+);
+
