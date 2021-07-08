@@ -129,7 +129,12 @@ qx.Class.define("bcp.server.WebSocket",
           ws.on("pong", () => { ws.bAlive = true; });
 
           // Periodically resend the user list (with idle changes)
-          userTimer = setInterval(this.sendUserList.bind(this), 10000);
+          userTimer = setInterval(
+            () =>
+            {
+              this.sendUserList();
+            },
+            10000);
 
           // Periodically check for loss of connection on websocket
           pingTimer = setInterval(
@@ -218,8 +223,9 @@ qx.Class.define("bcp.server.WebSocket",
             {
               let             user;
 
-              // Stop the ping timer
+              // Stop the timers
               clearInterval(pingTimer);
+              clearInterval(userTimer);
 
               // This user is disconnected
               delete this._userWsMap[stampedUsername];
