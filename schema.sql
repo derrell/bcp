@@ -164,6 +164,7 @@ CREATE TABLE Report
   UNIQUE (name COLLATE NOCASE)
 );
 
+-- ALTER TABLE Report ADD COLUMN pre_query VARCHAR;
 
 CREATE TABLE KeyValueStore
 (

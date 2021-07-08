@@ -1098,6 +1098,9 @@ qx.Mixin.define("bcp.client.MClientMgmt",
           // Add corresponding space on right side of Save/Cancel buttons
           buttonBar.add(new qx.ui.core.Spacer(), { flex : 1});
           buttonBar.add(new qx.ui.core.Spacer(100));
+
+          // Save the button bar so we have later access to it
+          _this._buttonBar = buttonBar;
         },
         afterFormFunction : function(container, form)
         {
@@ -1261,6 +1264,7 @@ qx.Mixin.define("bcp.client.MClientMgmt",
               // If we're not viewing the family tab, hide the 'Remove
               // default appointment' button
               _this._butClearAppointment.setVisibility(newTabIndex === 0 ? "visible" : "hidden");
+              _this._buttonBar.setVisibility(newTabIndex === 0 ? "visible" : "excluded");
 
               function getAge(dateString, todayString = "")
               {
