@@ -20,7 +20,8 @@ qx.Class.define("bcp.server.Rpc",
       InternalError    : -32603,
 
       // Application-specific errors (-32000.. -32099)
-      AlreadyExists    : -32000
+      AlreadyExists    : -32000,
+      NoFamilyMembers  : -32001
     },
 
     /** Whether a transaction is in progress */
@@ -810,6 +811,36 @@ qx.Class.define("bcp.server.Rpc",
       p = Promise.resolve()
         .then(() => this._beginTransaction())
 
+        // Ensure this family has birthdates entered
+        .then(
+          () =>
+          {
+            return this._db.prepare(
+              [
+                "SELECT COUNT(*) AS count",
+                "  FROM FamilyMember",
+                "  WHERE family_name = $family_name;"
+              ].join(" "));
+          })
+        .then(stmt => stmt.all( { $family_name : familyName } ))
+        .then(
+          (result) =>
+          {
+            // If we weren't given a family name, continue on
+            if (! familyName)
+            {
+              return;
+            }
+
+            // It's an error to be retrieving appointments if family
+            // member birthdates have not been entered
+            console.log("getAppointments: family member count=" + result[0].count);
+            if (result[0].count < 1)
+            {
+              throw new Error(`Family member info has not been entered for ${familyName}`);
+            }
+          })
+
         .then(
           () =>
           {
@@ -914,10 +945,19 @@ qx.Class.define("bcp.server.Rpc",
 
         // Give 'em what they came for!
         .then(() => callback(null, results))
-        .catch((e) =>
+        .catch(
+          (e) =>
           {
+            let             error = { message : e.toString() };
+
             console.warn("Error in getAppointments", e);
-            callback( { message : e.toString() } );
+
+            if (error.message.includes("Family member info has not been entered"))
+            {
+              error.code = this.constructor.Error.NoFamilyMembers;
+            }
+
+            callback(error);
           })
 
         .finally(() => this._endTransaction());

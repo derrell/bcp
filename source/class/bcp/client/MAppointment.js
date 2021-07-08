@@ -652,7 +652,8 @@ qx.Mixin.define("bcp.client.MAppointment",
         .catch(
           (e) =>
           {
-            console.error("getDistributionList:", e);
+            console.error("getAppointments:", e);
+            qxl.dialog.Dialog.error(e.message);
           });
     }
   }
