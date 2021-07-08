@@ -1325,6 +1325,9 @@ qx.Mixin.define("bcp.client.MClientMgmt",
                 this._formElements["count_sex_female"].setValue(females.toString());
                 this._formElements["count_sex_other"].setValue(others.toString());
                 this._formElements["count_veteran"].setValue(veterans.toString());
+
+                // Re-validate
+                form.validate(form.getValidationManager());
               }
             });
 
@@ -1367,14 +1370,14 @@ qx.Mixin.define("bcp.client.MClientMgmt",
                 }
               });
 
-            familyName = formDialog._formElements["family_name"].getValue();
-            ageSenior = formDialog._formElements["count_senior"].getValue();
-            ageAdult = formDialog._formElements["count_adult"].getValue();
-            ageChild = formDialog._formElements["count_child"].getValue();
-            sexMale = formDialog._formElements["count_sex_male"].getValue();
-            sexFemale = formDialog._formElements["count_sex_female"].getValue();
-            sexOther = formDialog._formElements["count_sex_other"].getValue();
-            veteran = formDialog._formElements["count_veteran"].getValue();
+            familyName = parseInt(formDialog._formElements["family_name"].getValue(), 10);
+            ageSenior = parseInt(formDialog._formElements["count_senior"].getValue(), 10);
+            ageAdult = parseInt(formDialog._formElements["count_adult"].getValue(), 10);
+            ageChild = parseInt(formDialog._formElements["count_child"].getValue(), 10);
+            sexMale = parseInt(formDialog._formElements["count_sex_male"].getValue(), 10);
+            sexFemale = parseInt(formDialog._formElements["count_sex_female"].getValue(), 10);
+            sexOther = parseInt(formDialog._formElements["count_sex_other"].getValue(), 10);
+            veteran = parseInt(formDialog._formElements["count_veteran"].getValue(), 10);
 
             // Reset warnings
             _this._nameAndDobRequiredWarning.exclude();
