@@ -8,5 +8,6 @@ readme.txt
 clientlist.json
 pantry.db
 pantry.db.old
+pantry.db.sav
 users.sql
 sessions

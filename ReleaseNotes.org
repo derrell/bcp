@@ -1,0 +1,202 @@
+* Family Member / Birth date update
+CREATE TABLE FamilyMember
+(
+  family_name     VARCHAR REFERENCES Client
+                          ON DELETE CASCADE
+                          ON UPDATE CASCADE,
+  member_name     VARCHAR NOT NULL,
+  date_of_birth   VARCHAR NOT NULL, -- in format YYYY-MM-DD
+  gender          VARCHAR NOT NULL, -- M, F, O
+  is_veteran      BOOLEAN NOT NULL, -- 0=false, 1=true,
+
+  -- transient:
+  -- updated as needed by StoredProc_UpdateAge, with an as-of date
+  age             INTEGER,
+
+  UNIQUE (member_name COLLATE NOCASE),
+  PRIMARY KEY (family_name, member_name)
+);
+
+ALTER TABLE Report ADD COLUMN pre_query VARCHAR;
+
+--
+-- "Stored Procedures"
+--
+
+-- Update a family member's age as of a given date
+-- The AFTER INSERT trigger modifies table FamilyMember
+CREATE TABLE StoredProc_UpdateAge
+(
+  id              INTEGER PRIMARY KEY,
+
+  -- parameters
+  birthday        TEXT,
+  asOf            TEXT,
+  family_name     TEXT,
+  member_name     TEXT,
+
+  -- "local variables"
+  age             INTEGER,
+  mDiff           INTEGER
+);
+
+CREATE TRIGGER tr_ai_StoredProc_UpdateAge
+AFTER INSERT ON StoredProc_UpdateAge
+BEGIN
+  -- age = today.year - birthday.year
+  UPDATE StoredProc_UpdateAge
+    SET age =
+      (SELECT strftime('%Y', new.asOf)) -
+      (SELECT strftime('%Y', new.birthday))
+    WHERE id = new.rowid;
+
+  -- mDiff = today.month - birthday.month
+  -- (see if birthday month has passed yet)
+  UPDATE StoredProc_UpdateAge
+    SET mDiff =
+      (SELECT strftime('%m', new.asOf)) -
+      (SELECT strftime('%m', new.birthday))
+    WHERE id = new.rowid;
+
+  -- if (mDiff < 0 || (mDiff === 0 && today.day <= birthday.day)) --age;
+  UPDATE StoredProc_UpdateAge
+    SET age = age - 1
+    WHERE id == new.rowid
+      AND ((SELECT mDiff FROM StoredProc_UpdateAge WHERE id = new.rowid) < 0
+           OR (    (SELECT mDiff FROM StoredProc_UpdateAge WHERE id = new.rowid) = 0
+               AND (SELECT
+                      strftime('%d', new.asOf)
+                      <=
+                      strftime('%d', new.birthday))));
+
+  -- update the specified family member record
+  UPDATE FamilyMember
+    SET age = (SELECT age FROM StoredProc_UpdateAge WHERE id = new.rowid)
+    WHERE family_name = new.family_name
+      AND member_name = new.member_name;
+
+  --
+  -- update the client with counts based on FamilyMember entries
+  --
+  -- This is slow, Slow, SLOW, as it recalculates counts after each
+  -- family member age is calculated, rather than once after all
+  -- family members' ages are calculated. There is no current
+  -- implementation to do the latter, though, and this should be fast
+  -- enough for ~1000 clients totalling ~4000 family members. We'll see.
+  --
+  UPDATE Client
+    SET count_senior =
+      (SELECT COUNT(*)
+         FROM FamilyMember
+         WHERE family_name = new.family_name
+           AND age >= 65)
+      WHERE family_name = new.family_name;
+
+  UPDATE Client
+    SET count_adult =
+      (SELECT COUNT(*)
+         FROM FamilyMember
+         WHERE family_name = new.family_name
+           AND age >= 18 AND age < 65)
+      WHERE family_name = new.family_name;
+
+  UPDATE Client
+    SET count_child =
+      (SELECT COUNT(*)
+         FROM FamilyMember
+         WHERE family_name = new.family_name
+           AND age < 18)
+      WHERE family_name = new.family_name;
+
+  UPDATE Client
+    SET count_sex_male =
+      (SELECT COUNT(*)
+         FROM FamilyMember
+         WHERE family_name = new.family_name
+           AND gender = 'M')
+      WHERE family_name = new.family_name;
+
+  UPDATE Client
+    SET count_sex_female =
+      (SELECT COUNT(*)
+         FROM FamilyMember
+         WHERE family_name = new.family_name
+           AND gender = 'F')
+      WHERE family_name = new.family_name;
+
+  UPDATE Client
+    SET count_sex_other =
+      (SELECT COUNT(*)
+         FROM FamilyMember
+         WHERE family_name = new.family_name
+           AND gender = 'O')
+      WHERE family_name = new.family_name;
+
+  UPDATE Client
+    SET count_veteran =
+      (SELECT COUNT(*)
+         FROM FamilyMember
+         WHERE family_name = new.family_name
+           AND is_veteran = 1)
+      WHERE family_name = new.family_name;
+
+  DELETE FROM StoredProc_UpdateAge
+    WHERE id = new.rowid;
+END;
+
+REPLACE INTO Report
+(
+  name,
+  description,
+  landscape,
+  input_fields,
+  separate_by,
+  query
+)
+ VALUES
+(
+  'Missing birthdates: all',
+  'Show all families without entered birthdates',
+  0,
+  '',
+  '',
+  '
+   SELECT family_name AS `Family Name`
+     FROM Client
+     WHERE `Family Name` NOT IN
+       (SELECT DISTINCT family_name FROM FamilyMember)
+     ORDER BY `Family Name`;
+  '
+);
+
+REPLACE INTO Report
+(
+  name,
+  description,
+  landscape,
+  input_fields,
+  separate_by,
+  query
+)
+ VALUES
+(
+  'Missing birthdates: distributed 2021',
+  'Show families who participated 2021, without entered birthdates',
+  0,
+  '',
+  '',
+  '
+   SELECT family_name AS `Family Name`
+     FROM Client
+     WHERE
+           `Family Name` IN
+             (SELECT family_name
+                FROM Fulfillment
+                WHERE distribution LIKE ''2021%'')
+       AND `Family Name` NOT IN
+             (SELECT DISTINCT family_name
+                FROM FamilyMember)
+     ORDER BY `Family Name`;
+  '
+);
+
