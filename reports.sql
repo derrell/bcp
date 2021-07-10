@@ -427,7 +427,7 @@ REPLACE INTO Report
    INSERT INTO StoredProc_UpdateAge
        (birthday, asOf, family_name, member_name)
      SELECT
-         date_of_birth, $distribution, family_name, member_name
+         date_of_birth, $year || ''-12-31'', family_name, member_name
        FROM FamilyMember;
   ',
   '
@@ -677,7 +677,7 @@ REPLACE INTO Report
    INSERT INTO StoredProc_UpdateAge
        (birthday, asOf, family_name, member_name)
      SELECT
-         date_of_birth, $distribution, family_name, member_name
+         date_of_birth, ''2021-12-31'', family_name, member_name
        FROM FamilyMember;
   ',
   '
@@ -788,7 +788,10 @@ REPLACE INTO Report
    INSERT INTO StoredProc_UpdateAge
        (birthday, asOf, family_name, member_name)
      SELECT
-         date_of_birth, $distribution, family_name, member_name
+         date_of_birth,
+         (SELECT MAX(start_date) FROM DistributionPeriod),
+         family_name,
+         member_name
        FROM FamilyMember;
   ',
   '
@@ -841,7 +844,10 @@ REPLACE INTO Report
    INSERT INTO StoredProc_UpdateAge
        (birthday, asOf, family_name, member_name)
      SELECT
-         date_of_birth, $distribution, family_name, member_name
+         date_of_birth,
+         (SELECT MAX(start_date) FROM DistributionPeriod),
+         family_name,
+         member_name
        FROM FamilyMember;
   ',
   '
