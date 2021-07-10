@@ -212,16 +212,13 @@ BEGIN
       (SELECT strftime('%m', new.birthday))
     WHERE id = new.rowid;
 
-  -- if (mDiff < 0 || (mDiff === 0 && today.day <= birthday.day)) --age;
+  -- if (mDiff < 0 || (mDiff === 0 && today.day < birthday.day)) --age;
   UPDATE StoredProc_UpdateAge
     SET age = age - 1
     WHERE id == new.rowid
       AND ((SELECT mDiff FROM StoredProc_UpdateAge WHERE id = new.rowid) < 0
            OR (    (SELECT mDiff FROM StoredProc_UpdateAge WHERE id = new.rowid) = 0
-               AND (SELECT
-                      strftime('%d', new.asOf)
-                      <=
-                      strftime('%d', new.birthday))));
+               AND (SELECT strftime('%d', new.asOf) < strftime('%d', new.birthday))));
 
   -- update the specified family member record
   UPDATE FamilyMember
@@ -259,7 +256,7 @@ BEGIN
       (SELECT COUNT(*)
          FROM FamilyMember
          WHERE family_name = new.family_name
-           AND age < 18)
+           AND age < 18 AND age >= 0)
       WHERE family_name = new.family_name;
 
   UPDATE Client
