@@ -138,6 +138,9 @@ qx.Class.define("bcp.server.Server",
       // Create the remote procedure calls
       bcp.server.Rpc.getInstance().init(app, protocol === https);
 
+      // Create the get-report interface
+      bcp.server.GetReport.getInstance().init(app, protocol === https);
+
       app.use(
         (err, req, res, next) =>
         {

@@ -197,6 +197,18 @@ qx.Mixin.define("bcp.client.MReports",
             label      : "Description",
             value      : reportInfo.description,
             lines      : 5
+          },
+
+          reportType :
+          {
+            type       : "SelectBox",
+            label      : "Report Type",
+            options    :
+            [
+              { label : "On-screen", value : "onscreen" },
+              { label : "CSV",       value : "csv" }
+            ],
+            value      : "On-screen"
           }
         };
 
@@ -299,7 +311,7 @@ qx.Mixin.define("bcp.client.MReports",
                   let             priorForRemaining = 0;
                   let             totals = {};
                   
-                  if (report.length === 0)
+                  if (report.length === 0) // array length if onscreen; string length for csv
                   {
                     // If there is no data, let 'em know
                     qxl.dialog.Dialog.alert("Nothing to report");
@@ -310,6 +322,17 @@ qx.Mixin.define("bcp.client.MReports",
                   if (this._reportWin)
                   {
                     this._reportWin.close();
+                  }
+
+                  // Take care of CSV file first
+                  if (result.reportType == "csv")
+                  {
+                    this._reportWin = window.open(
+                      `/getReport/${report}`,
+                      "Report",
+                      "resizable=yes,scrollbars=yes,width=1000,height=600");
+                    setTimeout(() => this._reportWin.close(), 500);
+                    return;
                   }
 
                   // Create a window in which to generate the report

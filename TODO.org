@@ -12,9 +12,10 @@
 *** search by name
 *** allow choosing distribution start date
 ** Client tab
-*** TODO HIGH: DOB field in lieu of ages fields
+*** DONE HIGH: DOB field in lieu of ages fields
 *** Add archive feature
 *** Notes fields need to be able to have linefeeds (create a list)
+** DONE HIGH: Distribution total attendance: need family detail
 ** Groceries
 *** "Brief" reports in larger font
 *** From Taryn:
@@ -35,3 +36,4 @@ food has cost over the course of a year. None of this has any urgency
 *** Other Distribution reports need not have Pets or phone numbers
 *** Person outside and computer person need a report without perishables
 *** See above Client tab persihables report
+

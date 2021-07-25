@@ -1414,6 +1414,7 @@ qx.Class.define("bcp.server.Rpc",
     {
       let             query;
       let             preQuery;
+      let             queryArgs;
 
       // TODO: move prepared statements to constructor
       return Promise.resolve()
@@ -1457,7 +1458,6 @@ qx.Class.define("bcp.server.Rpc",
           (stmt) =>
           {
             let             key;
-            let             queryArgs;
 
             // If there was no pre-query, we have nothing to do here
             if (! stmt)
@@ -1490,7 +1490,6 @@ qx.Class.define("bcp.server.Rpc",
           (stmt) =>
           {
             let             key;
-            let             queryArgs;
 
             queryArgs = Object.assign({}, args[0]);
 
@@ -1506,6 +1505,100 @@ qx.Class.define("bcp.server.Rpc",
 
             // run the report query
             return stmt.all(queryArgs);
+          })
+        .then(
+          (result) =>
+          {
+            let             url;
+            let             filename = "";
+            const           path =
+              qx.core.Environment.select(
+                "bcp.target",
+                {
+                  "build"  : "reports",
+                  "source" : `${process.cwd()}/reports`
+                });
+
+            // If they want an on-screen report, we don't have to process the result
+            switch(args[0].reportType)
+            {
+            case "onscreen" :
+              return result;
+
+            case "csv" :
+              return Promise.resolve()
+                .then(
+                  () =>
+                  {
+                    const           fsPromises = require("fs/promises");
+
+                    return fsPromises.mkdir(
+                      path,
+                      {
+                        recursive : true,
+                        mode      : 0o700
+                      });
+                  })
+                .then(
+                  () =>
+                  {
+                    let             header;
+                    let             csvWriter;
+                    let             now = new Date();
+                    const           createCsvWriter = require("csv-writer").createObjectCsvWriter;
+
+                    // If there were results...
+                    if (result.length > 0)
+                    {
+                      // ... then create the list of headings.
+                      // csvWriter expects an id, found in each
+                      // record, and a title used in the heading. We
+                      // use the same value for both
+                      header = [];
+                      Object.keys(result[0]).forEach(
+                        (key) =>
+                        {
+                          header.push(
+                            {
+                              id    : key,
+                              title : key
+                            });
+                        });
+
+                      // Build the csv file name from the requested
+                      // report name and the current timestamp.
+                      filename =
+                        args[0].name +
+                        "-" +
+                        now.getFullYear() +
+                        ("0" + (now.getMonth() + 1)).substr(-2) +
+                        ("0" + now.getDate()).substr(-2) +
+                        ("0" + now.getHours()).substr(-2) +
+                        ("0" + now.getMinutes()).substr(-2) +
+                        ("0" + now.getSeconds()).substr(-2) +
+                        ("00" + now.getMilliseconds()).substr(-3) +
+                        ".csv";
+
+                      // Write the CSV file
+                      csvWriter = createCsvWriter(
+                        {
+                          path   : path + "/" + filename,
+                          header : header
+                        });
+                      csvWriter.writeRecords(result);
+                    }
+                  })
+                .then(
+                  () =>
+                  {
+                    // Return the filename if there were records;
+                    // empty string otherwise
+                    return filename;
+                  });
+
+            default :
+              throw new Error("Unknown report type: " + args[0].reportType);
+            }
           })
         .then(
           (result) =>
