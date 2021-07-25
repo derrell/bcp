@@ -512,6 +512,13 @@ qx.Mixin.define("bcp.client.MClientMgmt",
         .then(
           () =>
           {
+            // New client?
+            if (! clientInfo)
+            {
+              // Yup. No family members exist yet
+              return null;
+            }
+
             return this.rpc("getFamilyMembers", [ clientInfo.family_name ]);
           })
         .then(
@@ -1370,7 +1377,7 @@ qx.Mixin.define("bcp.client.MClientMgmt",
                 }
               });
 
-            familyName = parseInt(formDialog._formElements["family_name"].getValue(), 10);
+            familyName = formDialog._formElements["family_name"].getValue();
             ageSenior = parseInt(formDialog._formElements["count_senior"].getValue(), 10);
             ageAdult = parseInt(formDialog._formElements["count_adult"].getValue(), 10);
             ageChild = parseInt(formDialog._formElements["count_child"].getValue(), 10);
