@@ -74,7 +74,6 @@ CREATE TABLE FamilyMember
   -- updated as needed by StoredProc_UpdateAge, with an as-of date
   age             INTEGER,
 
-  UNIQUE (member_name COLLATE NOCASE),
   PRIMARY KEY (family_name, member_name)
 );
 
