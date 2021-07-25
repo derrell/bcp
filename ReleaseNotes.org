@@ -1,5 +1,8 @@
 #+STARTUP: content
 * Family Member / Birth date update
+** Iterations
+*** #1: copy db from production to dev; perform following ops locally
+*** #2: perform following ops on production
 ** Merge to master
 ** Database changes
 CREATE TABLE FamilyMember
@@ -16,7 +19,6 @@ CREATE TABLE FamilyMember
   -- updated as needed by StoredProc_UpdateAge, with an as-of date
   age             INTEGER,
 
-  UNIQUE (member_name COLLATE NOCASE),
   PRIMARY KEY (family_name, member_name)
 );
 
@@ -148,4 +150,4 @@ BEGIN
 END;
 
 ** Add the entirety of reports.sql
-
+** Install new software
