@@ -450,7 +450,7 @@ qx.Class.define("bcp.server.Rpc",
               ].join(", "),
               "FROM FamilyMember",
               "WHERE family_name = $family_name",
-              "ORDER BY date_of_birth DESC, member_name ASC"
+              "ORDER BY date_of_birth, member_name"
             ].join(" "));
           })
         .then(
