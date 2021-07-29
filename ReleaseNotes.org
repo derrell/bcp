@@ -150,4 +150,5 @@ BEGIN
 END;
 
 ** Add the entirety of reports.sql
+** mkdir <toplevel>/reports
 ** Install new software
