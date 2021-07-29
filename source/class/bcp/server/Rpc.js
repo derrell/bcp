@@ -1530,7 +1530,7 @@ qx.Class.define("bcp.server.Rpc",
                 .then(
                   () =>
                   {
-                    const           fsPromises = require("fs/promises");
+                    const           fsPromises = require("fs").promises;
 
                     return fsPromises.mkdir(
                       path,
