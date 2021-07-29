@@ -1003,6 +1003,9 @@ qx.Mixin.define("bcp.client.MClientMgmt",
         {
           let             butDelete;
 
+          // Save the button bar so we have later access to it
+          _this._buttonBar = buttonBar;
+
           // If the user doesn't have permission to delete (level 60),
           // then there's no reason to add a Delete button
           if (_this._me.permissionLevel < 60)
@@ -1105,9 +1108,6 @@ qx.Mixin.define("bcp.client.MClientMgmt",
           // Add corresponding space on right side of Save/Cancel buttons
           buttonBar.add(new qx.ui.core.Spacer(), { flex : 1});
           buttonBar.add(new qx.ui.core.Spacer(100));
-
-          // Save the button bar so we have later access to it
-          _this._buttonBar = buttonBar;
         },
         afterFormFunction : function(container, form)
         {
