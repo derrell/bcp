@@ -24,7 +24,7 @@ REPLACE INTO Report
      }
    }',
   '$distribution',
-  'Time',
+  '_separatorWithTime',
   '$remaining',
   'Day',
   '
@@ -39,6 +39,7 @@ REPLACE INTO Report
        ci.id AS _id,
        f.appt_day as Day,
        f.appt_time AS Time,
+       "Day " || f.appt_day || " at " || f.appt_time AS _separatorWithTime,
        c.family_name || CASE c.verified WHEN 1 THEN "&check;" ELSE "" END
           AS "Family name",
        (c.count_senior + c.count_adult + c.count_child) ||
@@ -88,7 +89,7 @@ REPLACE INTO Report
      }
    }',
   '$distribution',
-  'Time',
+  '_separatorWithTime',
   '$remaining',
   'Day',
   '
@@ -103,6 +104,7 @@ REPLACE INTO Report
        ci.id AS _id,
        f.appt_day as Day,
        f.appt_time AS Time,
+       "Day " || f.appt_day || " at " || f.appt_time AS _separatorWithTime,
        c.family_name || CASE c.verified WHEN 1 THEN "&check;" ELSE "" END
           AS "Family name",
        (c.count_senior + c.count_adult + c.count_child) ||
@@ -152,7 +154,7 @@ REPLACE INTO Report
      }
    }',
   '$distribution',
-  'Time',
+  '_separatorWithTime',
   '$remaining',
   'Day',
   '
@@ -167,6 +169,7 @@ REPLACE INTO Report
        ci.id AS _id,
        f.appt_day as Day,
        f.appt_time AS Time,
+       "Day " || f.appt_day || " at " || f.appt_time AS _separatorWithTime,
        c.family_name || CASE c.verified WHEN 1 THEN "&check;" ELSE "" END
           AS "Family name",
        (c.count_senior + c.count_adult + c.count_child) ||
@@ -217,7 +220,7 @@ REPLACE INTO Report
      }
    }',
   '$distribution',
-  'Time',
+  '_separatorWithTime',
   '$remaining',
   'Day',
   '
@@ -232,6 +235,7 @@ REPLACE INTO Report
        ci.id as _id,
        f.appt_day as Day,
        f.appt_time AS Time,
+       "Day " || f.appt_day || " at " || f.appt_time AS _separatorWithTime,
        CASE c.verified WHEN 1 THEN "&check;" ELSE "" END AS V,
        (c.count_senior + c.count_adult + c.count_child) ||
          CASE
@@ -901,7 +905,7 @@ REPLACE INTO Report
   1,
   '',
   '',
-  'Time',
+  '_separatorWithTime',
   '',
   '',
   '
@@ -919,6 +923,7 @@ REPLACE INTO Report
        c.appt_day_default as Day,
        c.appt_time_default AS Time,
        c.family_name as "Family name",
+       "Day " || c.appt_day_default || " at " || c.appt_time_default AS _separatorWithTime,
        (c.count_senior + c.count_adult + c.count_child) ||
          CASE
            WHEN c.count_senior + c.count_adult + c.count_child >= 4

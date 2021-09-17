@@ -432,7 +432,8 @@ qx.Mixin.define("bcp.client.MReports",
                         // two separate rows so that the zebra
                         // striping remains consistent.
                         heading =
-                          reportInfo.separate_by == "Time"
+                          (reportInfo.separate_by == "Time" ||
+                           reportInfo.separate_by == "_separatorWithTime")
                           ? this.convert24to12(row[reportInfo.separate_by])
                           : row[reportInfo.separate_by];
                         this._reportWin.document.write(

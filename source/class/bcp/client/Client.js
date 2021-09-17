@@ -585,16 +585,28 @@ qx.Class.define("bcp.client.Client",
      * Convert a 24-hour time to its 12-hour equivalent. Handle null, "" input
      * too.
      *
-     * @param {String|null}
-     *   A 24-hour time string, in format HH:MM, or an empty string or null
+     * @param input {String|null}
+     *   A 24-hour time string, in format HH:MM with optional leading
+     *   or trailing text; or an empty string or null
      *
      * @return {String}
      *   The 24-hour time converted to a 12-hour time with am/pm suffix if a
      *   valid 24-hour time was provided; an empty string, otherwise.
      */
-    convert24to12(time24)
+    convert24to12(input)
     {
       let             time12;
+      let             time24;
+      let             ret;
+
+      if (input === null ||
+          (typeof input == "string" && input.length === 0))
+      {
+        return "";
+      }
+
+      // Extract the 24-hour time string. There may be prefix
+      time24 = input.replace(/^.*([0-9][0-9]:[0-9][0-9]).*$/, "$1");
 
       if (time24 === null ||
           (typeof time24 == "string" && time24.length === 0))
@@ -618,7 +630,11 @@ qx.Class.define("bcp.client.Client",
 
       // Times after noon are converted to 12-hour format and get "pm" suffix
       time12[0] -= 12;
-      return time12.join(":") + " pm";
+      time12 = time12.join(":") + " pm";
+
+      ret = input.replace(/^(.*)([0-9][0-9]:[0-9][0-9])(.*)/,
+                          `$1${time12}$3`);
+      return ret;
     },
 
     /**
