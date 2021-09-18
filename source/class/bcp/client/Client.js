@@ -622,15 +622,28 @@ qx.Class.define("bcp.client.Client",
         return "";
       }
 
-      // Times before noon remain as is, with an "am" suffix
-      if (time12[0] <= 12)
+      if (time12[0] == 0)
       {
-        return time24 + " am";
+        // Midnight becomes 12am
+        time12[0] += 12;
+        time12 = time12.join(":") + " am";
       }
-
-      // Times after noon are converted to 12-hour format and get "pm" suffix
-      time12[0] -= 12;
-      time12 = time12.join(":") + " pm";
+      else if (time12[0] < 12)
+      {
+        // Other times before noon remain as is, with an "am" suffix
+        time12 = time24 + " am";
+      }
+      else if (time12[0] == 12)
+      {
+        // Noon becomes 12pm
+        time12 = time24 + " pm";
+      }
+      else
+      {
+        // Times after noon are converted to 12-hour format and get "pm" suffix
+        time12[0] -= 12;
+        time12 = time12.join(":") + " pm";
+      }
 
       ret = input.replace(/^(.*)([0-9][0-9]:[0-9][0-9])(.*)/,
                           `$1${time12}$3`);
