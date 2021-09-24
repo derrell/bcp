@@ -1081,3 +1081,46 @@ REPLACE INTO Report
   '
 );
 
+REPLACE INTO Report
+(
+  name,
+  description,
+  landscape,
+  input_fields,
+  subtitle_field,
+  separate_by,
+  number_style,
+  number_remaining,
+  pre_query,
+  query
+)
+ VALUES
+(
+  'Family members, by age',
+  'All family members, sorted by age ',
+  0,
+  '',
+  '',
+  '',
+  '',
+  '',
+  '
+   INSERT INTO StoredProc_UpdateAge
+       (birthday, asOf, family_name, member_name)
+     SELECT
+         date_of_birth, datetime(), family_name, member_name
+       FROM FamilyMember;
+  ',
+  '
+   SELECT
+       member_name AS Name,
+       family_name AS Family,
+       age AS Age,
+       date_of_birth AS Birthday,
+       gender AS Gender,
+       CASE is_veteran WHEN 0 THEN "N" ELSE "Y" END AS Veteran
+     FROM FamilyMember
+     ORDER BY date_of_birth DESC;
+  '
+);
+
