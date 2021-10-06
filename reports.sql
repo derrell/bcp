@@ -51,74 +51,21 @@ REPLACE INTO Report
            ELSE " (Small)"
          END AS "Family size",
        COALESCE(perishables, "") AS Perishables,
-       CASE
-         WHEN      typeof(c.income_amount) = "real"
-               AND c.income_amount < 1383.0
-               AND (SELECT COUNT(*)
-                      FROM FamilyMember fam
-                      WHERE fam.family_name = c.family_name) = 1
-           THEN "yes"
-         WHEN      typeof(c.income_amount) = "real"
-               AND c.income_amount < 1868.0
-               AND (SELECT COUNT(*)
-                      FROM FamilyMember fam
-                      WHERE fam.family_name = c.family_name) = 2
-           THEN "yes"
-         WHEN      typeof(c.income_amount) = "real"
-               AND c.income_amount < 2353.0
-               AND (SELECT COUNT(*)
-                      FROM FamilyMember fam
-                      WHERE fam.family_name = c.family_name) = 3
-           THEN "yes"
-         WHEN      typeof(c.income_amount) = "real"
-               AND c.income_amount < 2839.0
-               AND (SELECT COUNT(*)
-                      FROM FamilyMember fam
-                      WHERE fam.family_name = c.family_name) = 4
-           THEN "yes"
-         WHEN      typeof(c.income_amount) = "real"
-               AND c.income_amount < 3324.0
-               AND (SELECT COUNT(*)
-                      FROM FamilyMember fam
-                      WHERE fam.family_name = c.family_name) = 5
-           THEN "yes"
-         WHEN      typeof(c.income_amount) = "real"
-               AND c.income_amount < 3809.0
-               AND (SELECT COUNT(*)
-                      FROM FamilyMember fam
-                      WHERE fam.family_name = c.family_name) = 6
-           THEN "yes"
-         WHEN      typeof(c.income_amount) = "real"
-               AND c.income_amount < 4295.0
-               AND (SELECT COUNT(*)
-                      FROM FamilyMember fam
-                      WHERE fam.family_name = c.family_name) = 7
-           THEN "yes"
-         WHEN      typeof(c.income_amount) = "real"
-               AND c.income_amount < 4780.0
-               AND (SELECT COUNT(*)
-                      FROM FamilyMember fam
-                      WHERE fam.family_name = c.family_name) = 8
-           THEN "yes"
-         WHEN      typeof(c.income_amount) = "real"
-               AND c.income_amount < 5744.0
-               AND (SELECT COUNT(*)
-                      FROM FamilyMember fam
-                      WHERE fam.family_name = c.family_name) = 9
-           THEN "yes"
-         WHEN      typeof(c.income_amount) = "real"
-               AND c.income_amount < 6230.0
-               AND (SELECT COUNT(*)
-                      FROM FamilyMember fam
-                      WHERE fam.family_name = c.family_name) = 10
-           THEN "yes"
-         WHEN      typeof(c.income_amount) = "real"
-               AND c.income_amount < 6716.0
-               AND (SELECT COUNT(*)
-                      FROM FamilyMember fam
-                      WHERE fam.family_name = c.family_name) = 11
-           THEN "yes"
-         ELSE "no"
+       CASE (SELECT COUNT(*)
+               FROM FamilyMember fam
+               WHERE fam.family_name = c.family_name)
+         WHEN 1 THEN "$1383"
+         WHEN 2 THEN "$1868"
+         WHEN 3 THEN "$2353"
+         WHEN 4 THEN "$2839"
+         WHEN 5 THEN "$3324"
+         WHEN 6 THEN "$3809"
+         WHEN 7 THEN "$4295"
+         WHEN 8 THEN "$4780"
+         WHEN 9 THEN "$5744"
+         WHEN 10 THEN "$6230"
+         WHEN 11 THEN "$6716"
+         ELSE "See Taryn"
        END AS USDA,
        COALESCE(notes, "") AS Notes
      FROM Fulfillment f
@@ -185,74 +132,21 @@ REPLACE INTO Report
            ELSE " (Small)"
          END AS "Family size",
        COALESCE(pet_types, "") AS Pets,
-       CASE
-         WHEN      typeof(c.income_amount) = "real"
-               AND c.income_amount < 1383.0
-               AND (SELECT COUNT(*)
-                      FROM FamilyMember fam
-                      WHERE fam.family_name = c.family_name) = 1
-           THEN "yes"
-         WHEN      typeof(c.income_amount) = "real"
-               AND c.income_amount < 1868.0
-               AND (SELECT COUNT(*)
-                      FROM FamilyMember fam
-                      WHERE fam.family_name = c.family_name) = 2
-           THEN "yes"
-         WHEN      typeof(c.income_amount) = "real"
-               AND c.income_amount < 2353.0
-               AND (SELECT COUNT(*)
-                      FROM FamilyMember fam
-                      WHERE fam.family_name = c.family_name) = 3
-           THEN "yes"
-         WHEN      typeof(c.income_amount) = "real"
-               AND c.income_amount < 2839.0
-               AND (SELECT COUNT(*)
-                      FROM FamilyMember fam
-                      WHERE fam.family_name = c.family_name) = 4
-           THEN "yes"
-         WHEN      typeof(c.income_amount) = "real"
-               AND c.income_amount < 3324.0
-               AND (SELECT COUNT(*)
-                      FROM FamilyMember fam
-                      WHERE fam.family_name = c.family_name) = 5
-           THEN "yes"
-         WHEN      typeof(c.income_amount) = "real"
-               AND c.income_amount < 3809.0
-               AND (SELECT COUNT(*)
-                      FROM FamilyMember fam
-                      WHERE fam.family_name = c.family_name) = 6
-           THEN "yes"
-         WHEN      typeof(c.income_amount) = "real"
-               AND c.income_amount < 4295.0
-               AND (SELECT COUNT(*)
-                      FROM FamilyMember fam
-                      WHERE fam.family_name = c.family_name) = 7
-           THEN "yes"
-         WHEN      typeof(c.income_amount) = "real"
-               AND c.income_amount < 4780.0
-               AND (SELECT COUNT(*)
-                      FROM FamilyMember fam
-                      WHERE fam.family_name = c.family_name) = 8
-           THEN "yes"
-         WHEN      typeof(c.income_amount) = "real"
-               AND c.income_amount < 5744.0
-               AND (SELECT COUNT(*)
-                      FROM FamilyMember fam
-                      WHERE fam.family_name = c.family_name) = 9
-           THEN "yes"
-         WHEN      typeof(c.income_amount) = "real"
-               AND c.income_amount < 6230.0
-               AND (SELECT COUNT(*)
-                      FROM FamilyMember fam
-                      WHERE fam.family_name = c.family_name) = 10
-           THEN "yes"
-         WHEN      typeof(c.income_amount) = "real"
-               AND c.income_amount < 6716.0
-               AND (SELECT COUNT(*)
-                      FROM FamilyMember fam
-                      WHERE fam.family_name = c.family_name) = 11
-           THEN "yes"
-         ELSE "no"
+       CASE (SELECT COUNT(*)
+               FROM FamilyMember fam
+               WHERE fam.family_name = c.family_name)
+         WHEN 1 THEN "$1383"
+         WHEN 2 THEN "$1868"
+         WHEN 3 THEN "$2353"
+         WHEN 4 THEN "$2839"
+         WHEN 5 THEN "$3324"
+         WHEN 6 THEN "$3809"
+         WHEN 7 THEN "$4295"
+         WHEN 8 THEN "$4780"
+         WHEN 9 THEN "$5744"
+         WHEN 10 THEN "$6230"
+         WHEN 11 THEN "$6716"
+         ELSE "See Taryn"
        END AS USDA,
        COALESCE(notes, "") AS Notes
      FROM Fulfillment f
@@ -320,74 +214,21 @@ REPLACE INTO Report
          END AS "Family size",
        COALESCE(pet_types, "") AS Pets,
        COALESCE(phone, "") AS Phone,
-       CASE
-         WHEN      typeof(c.income_amount) = "real"
-               AND c.income_amount < 1383.0
-               AND (SELECT COUNT(*)
-                      FROM FamilyMember fam
-                      WHERE fam.family_name = c.family_name) = 1
-           THEN "yes"
-         WHEN      typeof(c.income_amount) = "real"
-               AND c.income_amount < 1868.0
-               AND (SELECT COUNT(*)
-                      FROM FamilyMember fam
-                      WHERE fam.family_name = c.family_name) = 2
-           THEN "yes"
-         WHEN      typeof(c.income_amount) = "real"
-               AND c.income_amount < 2353.0
-               AND (SELECT COUNT(*)
-                      FROM FamilyMember fam
-                      WHERE fam.family_name = c.family_name) = 3
-           THEN "yes"
-         WHEN      typeof(c.income_amount) = "real"
-               AND c.income_amount < 2839.0
-               AND (SELECT COUNT(*)
-                      FROM FamilyMember fam
-                      WHERE fam.family_name = c.family_name) = 4
-           THEN "yes"
-         WHEN      typeof(c.income_amount) = "real"
-               AND c.income_amount < 3324.0
-               AND (SELECT COUNT(*)
-                      FROM FamilyMember fam
-                      WHERE fam.family_name = c.family_name) = 5
-           THEN "yes"
-         WHEN      typeof(c.income_amount) = "real"
-               AND c.income_amount < 3809.0
-               AND (SELECT COUNT(*)
-                      FROM FamilyMember fam
-                      WHERE fam.family_name = c.family_name) = 6
-           THEN "yes"
-         WHEN      typeof(c.income_amount) = "real"
-               AND c.income_amount < 4295.0
-               AND (SELECT COUNT(*)
-                      FROM FamilyMember fam
-                      WHERE fam.family_name = c.family_name) = 7
-           THEN "yes"
-         WHEN      typeof(c.income_amount) = "real"
-               AND c.income_amount < 4780.0
-               AND (SELECT COUNT(*)
-                      FROM FamilyMember fam
-                      WHERE fam.family_name = c.family_name) = 8
-           THEN "yes"
-         WHEN      typeof(c.income_amount) = "real"
-               AND c.income_amount < 5744.0
-               AND (SELECT COUNT(*)
-                      FROM FamilyMember fam
-                      WHERE fam.family_name = c.family_name) = 9
-           THEN "yes"
-         WHEN      typeof(c.income_amount) = "real"
-               AND c.income_amount < 6230.0
-               AND (SELECT COUNT(*)
-                      FROM FamilyMember fam
-                      WHERE fam.family_name = c.family_name) = 10
-           THEN "yes"
-         WHEN      typeof(c.income_amount) = "real"
-               AND c.income_amount < 6716.0
-               AND (SELECT COUNT(*)
-                      FROM FamilyMember fam
-                      WHERE fam.family_name = c.family_name) = 11
-           THEN "yes"
-         ELSE "no"
+       CASE (SELECT COUNT(*)
+               FROM FamilyMember fam
+               WHERE fam.family_name = c.family_name)
+         WHEN 1 THEN "$1383"
+         WHEN 2 THEN "$1868"
+         WHEN 3 THEN "$2353"
+         WHEN 4 THEN "$2839"
+         WHEN 5 THEN "$3324"
+         WHEN 6 THEN "$3809"
+         WHEN 7 THEN "$4295"
+         WHEN 8 THEN "$4780"
+         WHEN 9 THEN "$5744"
+         WHEN 10 THEN "$6230"
+         WHEN 11 THEN "$6716"
+         ELSE "See Taryn"
        END AS USDA,
        COALESCE(notes, "") AS Notes
      FROM Fulfillment f
