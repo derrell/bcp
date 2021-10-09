@@ -96,6 +96,7 @@ qx.Mixin.define("bcp.client.MClientMgmt",
           "Perishables",
           "Income source",
           "Income amount",
+          "USDA eligible",
           "Pet types",
           "Address",
           "Appt day",
@@ -111,6 +112,7 @@ qx.Mixin.define("bcp.client.MClientMgmt",
           "perishables_default",
           "income_source",
           "income_amount",
+          "usda_eligible",
           "pet_types",
           "address_default",
           "appt_day_default",
@@ -179,6 +181,7 @@ qx.Mixin.define("bcp.client.MClientMgmt",
       behavior.setWidth(tm.getColumnIndexById("perishables_default"), 200);
       behavior.setWidth(tm.getColumnIndexById("income_source"), 100);
       behavior.setWidth(tm.getColumnIndexById("income_amount"), 100);
+      behavior.setWidth(tm.getColumnIndexById("usda_eligible"), 100);
       behavior.setWidth(tm.getColumnIndexById("pet_types"), 100);
       behavior.setWidth(tm.getColumnIndexById("address_default"), 100);
       behavior.setWidth(tm.getColumnIndexById("appt_day_default"), 60);
