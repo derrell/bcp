@@ -660,6 +660,22 @@ qx.Mixin.define("bcp.client.MClientMgmt",
               tabIndex   : 7
             }
           },
+          usda_eligible :
+          {
+            type       : "SelectBox",
+            label      : "USDA eligible",
+            value      : clientInfo.usda_eligible || "",
+            options :
+            [
+              { label : "",    value : "" },
+              { label : "Yes", value : "yes" },
+              { label : "No",  value : "no" }
+            ],
+            properties :
+            {
+              tabIndex   : 8
+            }
+          },
           pet_types :
           {
             type       : "TextField",
@@ -667,7 +683,7 @@ qx.Mixin.define("bcp.client.MClientMgmt",
             value      : clientInfo.pet_types || "",
             properties :
             {
-              tabIndex   : 8
+              tabIndex   : 9
             }
           },
           notes_default :
@@ -682,7 +698,7 @@ qx.Mixin.define("bcp.client.MClientMgmt",
             },
             properties :
             {
-              tabIndex   : 9
+              tabIndex   : 10
             }
           },
           perishables_default :
@@ -697,7 +713,7 @@ qx.Mixin.define("bcp.client.MClientMgmt",
             },
             properties :
             {
-              tabIndex   : 10
+              tabIndex   : 11
             }
           },
           verified :

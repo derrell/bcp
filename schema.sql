@@ -24,6 +24,7 @@ CREATE TABLE Client
   count_veteran       INTEGER DEFAULT 0,
   income_source       VARCHAR,
   income_amount       REAL,
+  usda_eligible       VARCHAR NOT NULL DEFAULT '',
   pet_types           VARCHAR,
   address_default     VARCHAR, -- default address for delivery
   appt_day_default    INTEGER, -- default appt day, 1-relative to Distr start
@@ -38,7 +39,7 @@ CREATE TABLE Client
 -- Changes from original to derive the above table
 --
 -- ALTER TABLE Client ADD COLUMN notes_default VARCHAR NOT NULL DEFAULT '';
--- ALTER TABLE Client ADD COLUMN perishables_default VARCHAR NOT NULL DEFAULT '';
+-- ALTER TABLE Client ADD COLUMN perishables_default VARCHAR NOT NULL DEFAULT '-- ALTER TABLE Client ADD COLUMN usda_eligible VARCHAR NOT NULL DEFAULT '';
 
 
 

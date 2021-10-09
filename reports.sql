@@ -54,17 +54,17 @@ REPLACE INTO Report
        CASE (SELECT COUNT(*)
                FROM FamilyMember fam
                WHERE fam.family_name = c.family_name)
-         WHEN 1 THEN "$1383"
-         WHEN 2 THEN "$1868"
-         WHEN 3 THEN "$2353"
-         WHEN 4 THEN "$2839"
-         WHEN 5 THEN "$3324"
-         WHEN 6 THEN "$3809"
-         WHEN 7 THEN "$4295"
-         WHEN 8 THEN "$4780"
-         WHEN 9 THEN "$5744"
-         WHEN 10 THEN "$6230"
-         WHEN 11 THEN "$6716"
+         WHEN 1 THEN "$2,383"
+         WHEN 2 THEN "$3,629"
+         WHEN 3 THEN "$4,575"
+         WHEN 4 THEN "$5,521"
+         WHEN 5 THEN "$6,467"
+         WHEN 6 THEN "$7,413"
+         WHEN 7 THEN "$8,358"
+         WHEN 8 THEN "$9,304"
+         WHEN 9 THEN "$10,250"
+         WHEN 10 THEN "$11,196"
+         WHEN 11 THEN "$12,142"
          ELSE "See Taryn"
        END AS USDA,
        COALESCE(notes, "") AS Notes
@@ -135,19 +135,20 @@ REPLACE INTO Report
        CASE (SELECT COUNT(*)
                FROM FamilyMember fam
                WHERE fam.family_name = c.family_name)
-         WHEN 1 THEN "$1383"
-         WHEN 2 THEN "$1868"
-         WHEN 3 THEN "$2353"
-         WHEN 4 THEN "$2839"
-         WHEN 5 THEN "$3324"
-         WHEN 6 THEN "$3809"
-         WHEN 7 THEN "$4295"
-         WHEN 8 THEN "$4780"
-         WHEN 9 THEN "$5744"
-         WHEN 10 THEN "$6230"
-         WHEN 11 THEN "$6716"
+         WHEN 1 THEN "$2,383"
+         WHEN 2 THEN "$3,629"
+         WHEN 3 THEN "$4,575"
+         WHEN 4 THEN "$5,521"
+         WHEN 5 THEN "$6,467"
+         WHEN 6 THEN "$7,413"
+         WHEN 7 THEN "$8,358"
+         WHEN 8 THEN "$9,304"
+         WHEN 9 THEN "$10,250"
+         WHEN 10 THEN "$11,196"
+         WHEN 11 THEN "$12,142"
          ELSE "See Taryn"
        END AS USDA,
+       c.usda_eligible AS "USDA Eligible",
        COALESCE(notes, "") AS Notes
      FROM Fulfillment f
      LEFT JOIN Client c
@@ -217,17 +218,17 @@ REPLACE INTO Report
        CASE (SELECT COUNT(*)
                FROM FamilyMember fam
                WHERE fam.family_name = c.family_name)
-         WHEN 1 THEN "$1383"
-         WHEN 2 THEN "$1868"
-         WHEN 3 THEN "$2353"
-         WHEN 4 THEN "$2839"
-         WHEN 5 THEN "$3324"
-         WHEN 6 THEN "$3809"
-         WHEN 7 THEN "$4295"
-         WHEN 8 THEN "$4780"
-         WHEN 9 THEN "$5744"
-         WHEN 10 THEN "$6230"
-         WHEN 11 THEN "$6716"
+         WHEN 1 THEN "$2,383"
+         WHEN 2 THEN "$3,629"
+         WHEN 3 THEN "$4,575"
+         WHEN 4 THEN "$5,521"
+         WHEN 5 THEN "$6,467"
+         WHEN 6 THEN "$7,413"
+         WHEN 7 THEN "$8,358"
+         WHEN 8 THEN "$9,304"
+         WHEN 9 THEN "$10,250"
+         WHEN 10 THEN "$11,196"
+         WHEN 11 THEN "$12,142"
          ELSE "See Taryn"
        END AS USDA,
        COALESCE(notes, "") AS Notes
