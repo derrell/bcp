@@ -54,7 +54,7 @@ REPLACE INTO Report
        CASE (SELECT COUNT(*)
                FROM FamilyMember fam
                WHERE fam.family_name = c.family_name)
-         WHEN 1 THEN "$2,383"
+         WHEN 1 THEN "$2,683"
          WHEN 2 THEN "$3,629"
          WHEN 3 THEN "$4,575"
          WHEN 4 THEN "$5,521"
@@ -135,7 +135,7 @@ REPLACE INTO Report
        CASE (SELECT COUNT(*)
                FROM FamilyMember fam
                WHERE fam.family_name = c.family_name)
-         WHEN 1 THEN "$2,383"
+         WHEN 1 THEN "$2,683"
          WHEN 2 THEN "$3,629"
          WHEN 3 THEN "$4,575"
          WHEN 4 THEN "$5,521"
@@ -218,7 +218,7 @@ REPLACE INTO Report
        CASE (SELECT COUNT(*)
                FROM FamilyMember fam
                WHERE fam.family_name = c.family_name)
-         WHEN 1 THEN "$2,383"
+         WHEN 1 THEN "$2,683"
          WHEN 2 THEN "$3,629"
          WHEN 3 THEN "$4,575"
          WHEN 4 THEN "$5,521"
