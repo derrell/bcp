@@ -975,6 +975,7 @@ REPLACE INTO Report
    SELECT
        c.appt_day_default as Day,
        c.appt_time_default AS Time,
+       "#" || ci.id AS "Client ID",
        c.family_name as "Family name",
        "Day " || c.appt_day_default || " at " || c.appt_time_default AS _separatorWithTime,
        (c.count_senior + c.count_adult + c.count_child) ||
@@ -985,10 +986,33 @@ REPLACE INTO Report
              THEN " (Single)"
            ELSE " (Small)"
          END AS "Family size",
+       CASE (SELECT COUNT(*)
+               FROM FamilyMember fam
+               WHERE fam.family_name = c.family_name)
+         WHEN 1 THEN "$2,683"
+         WHEN 2 THEN "$3,629"
+         WHEN 3 THEN "$4,575"
+         WHEN 4 THEN "$5,521"
+         WHEN 5 THEN "$6,467"
+         WHEN 6 THEN "$7,413"
+         WHEN 7 THEN "$8,358"
+         WHEN 8 THEN "$9,304"
+         WHEN 9 THEN "$10,250"
+         WHEN 10 THEN "$11,196"
+         WHEN 11 THEN "$12,142"
+         ELSE "See Taryn"
+       END AS USDA,
+       CASE c.usda_eligible
+         WHEN "yes" THEN "Yes"
+         WHEN "no" THEN "No"
+         ELSE ""
+       END AS "USDA Eligible",
        COALESCE(c.pet_types, "") AS Pets,
        COALESCE(c.phone, "") AS Phone,
        COALESCE(c.notes_default, "") AS Notes
      FROM Client c
+     LEFT JOIN ClientId ci
+       ON ci.family_name = c.family_name
      WHERE appt_time_default IS NOT NULL
         AND length(appt_time_default) > 0
      ORDER BY Day, Time, "Family name";
