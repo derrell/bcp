@@ -67,6 +67,11 @@ REPLACE INTO Report
          WHEN 11 THEN "$12,142"
          ELSE "See Taryn"
        END AS USDA,
+       CASE c.usda_eligible
+         WHEN "yes" THEN "Yes"
+         WHEN "no" THEN "No"
+         ELSE ""
+       END AS "USDA Eligible",
        COALESCE(notes, "") AS Notes
      FROM Fulfillment f
      LEFT JOIN Client c
@@ -235,6 +240,11 @@ REPLACE INTO Report
          WHEN 11 THEN "$12,142"
          ELSE "See Taryn"
        END AS USDA,
+       CASE c.usda_eligible
+         WHEN "yes" THEN "Yes"
+         WHEN "no" THEN "No"
+         ELSE ""
+       END AS "USDA Eligible",
        COALESCE(notes, "") AS Notes
      FROM Fulfillment f
      LEFT JOIN Client c
