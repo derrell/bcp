@@ -533,6 +533,39 @@ qx.Mixin.define("bcp.client.MAppointment",
                   }
                 },
 
+                usda_label :
+                {
+                  type       : "Label",
+                  label      : this.bold("USDA")
+                },
+
+                usda_amount :
+                {
+                  type       : "TextField",
+                  label      : "Amount",
+                  value      : fulfillment.usda_amount,
+                  enabled    : false
+                },
+
+                usda_eligible :
+                {
+                  type       : "TextField",
+                  label      : "Eligible",
+                  value      : client.usda_eligible,
+                  enabled    : false
+                },
+
+                is_usda_current :
+                {
+                  type       : "CheckBox",
+                  label      : "Current",
+                  value      : !! fulfillment.is_usda_current,
+                  properties :
+                  {
+                    marginLeft : 156
+                  }
+                },
+
                 appointments :
                 {
                   type       : "appointments",

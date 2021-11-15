@@ -329,6 +329,91 @@ REPLACE INTO Report
   input_fields,
   subtitle_field,
   separate_by,
+  number_style,
+  number_remaining,
+  pre_query,
+  query
+)
+ VALUES
+(
+  'Distribution appointments for USDA',
+  'Schedule of appointments for a specified distribution, for USDA',
+  1,
+  '{
+     "$distribution" :
+     {
+       "type"  : "SelectBox",
+       "label" : "Distribution Date"
+     }
+   }',
+  '$distribution',
+  '_separatorWithTime',
+  '',
+  'Day',
+  '
+   INSERT INTO StoredProc_UpdateAge
+       (birthday, asOf, family_name, member_name)
+     SELECT
+         date_of_birth, $distribution, family_name, member_name
+       FROM FamilyMember;
+  ',
+  '
+   SELECT
+       f.appt_day as Day,
+       f.appt_time AS Time,
+       "Day " || f.appt_day || " at " || f.appt_time AS _separatorWithTime,
+       c.family_name || CASE c.verified WHEN 1 THEN "&check;" ELSE "" END
+          AS "Family name",
+       c.count_senior AS "65+",
+       c.count_adult AS "18-64",
+       c.count_child AS "0-17",
+       (c.count_senior + c.count_adult + c.count_child) AS "Total",
+       CASE (SELECT COUNT(*)
+               FROM FamilyMember fam
+               WHERE fam.family_name = c.family_name)
+         WHEN 1 THEN "$2,683"
+         WHEN 2 THEN "$3,629"
+         WHEN 3 THEN "$4,575"
+         WHEN 4 THEN "$5,521"
+         WHEN 5 THEN "$6,467"
+         WHEN 6 THEN "$7,413"
+         WHEN 7 THEN "$8,358"
+         WHEN 8 THEN "$9,304"
+         WHEN 9 THEN "$10,250"
+         WHEN 10 THEN "$11,196"
+         WHEN 11 THEN "$12,142"
+         ELSE "See Taryn"
+       END AS "USDA$",
+       CASE c.usda_eligible
+         WHEN "yes" THEN "Yes"
+         WHEN "no" THEN "No"
+         ELSE ""
+       END AS "USDA",
+       CASE f.is_usda_current
+         WHEN 1 THEN "&check;"
+         ELSE ""
+       END AS "&check;",
+       "" AS "Board&nbsp;Member&nbsp;Signature"
+     FROM Fulfillment f
+     LEFT JOIN Client c
+       ON c.family_name = f.family_name
+     LEFT JOIN ClientId ci
+       ON ci.family_name = c.family_name
+     WHERE f.distribution = $distribution
+       AND length(COALESCE(f.appt_time, "")) > 0
+     ORDER BY Day, Time, "Family name";
+  '
+);
+
+
+REPLACE INTO Report
+(
+  name,
+  description,
+  landscape,
+  input_fields,
+  subtitle_field,
+  separate_by,
   pre_query,
   query
 )
