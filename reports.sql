@@ -72,6 +72,10 @@ REPLACE INTO Report
          WHEN "no" THEN "No"
          ELSE ""
        END AS "USDA Eligible",
+       CASE f.is_usda_current
+         WHEN 1 THEN "&check;"
+         ELSE ""
+       END AS "&check;",
        COALESCE(notes, "") AS Notes
      FROM Fulfillment f
      LEFT JOIN Client c
@@ -158,6 +162,10 @@ REPLACE INTO Report
          WHEN "no" THEN "No"
          ELSE ""
        END AS "USDA Eligible",
+       CASE f.is_usda_current
+         WHEN 1 THEN "&check;"
+         ELSE ""
+       END AS "&check;",
        COALESCE(notes, "") AS Notes
      FROM Fulfillment f
      LEFT JOIN Client c
@@ -245,6 +253,10 @@ REPLACE INTO Report
          WHEN "no" THEN "No"
          ELSE ""
        END AS "USDA Eligible",
+       CASE f.is_usda_current
+         WHEN 1 THEN "&check;"
+         ELSE ""
+       END AS "&check;",
        COALESCE(notes, "") AS Notes
      FROM Fulfillment f
      LEFT JOIN Client c
