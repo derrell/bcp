@@ -643,11 +643,12 @@ REPLACE INTO Report
    INSERT INTO StoredProc_UpdateAge
        (birthday, asOf, family_name, member_name)
      SELECT
-         date_of_birth, $year || ''-12-31'', family_name, member_name
+         date_of_birth, $year || ''-12-31 23:59'', family_name, member_name
        FROM FamilyMember;
   ',
   '
     SELECT
+        COUNT(*) AS Families,
         COALESCE(SUM(Total), 0) AS Total,
         COALESCE(SUM(Senior), 0) AS Senior,
         COALESCE(SUM(Adult), 0) AS Adult,
@@ -708,7 +709,7 @@ REPLACE INTO Report
    INSERT INTO StoredProc_UpdateAge
        (birthday, asOf, family_name, member_name)
      SELECT
-         date_of_birth, $distribution, family_name, member_name
+         date_of_birth, $year || ''-12-31 23:59'', family_name, member_name
        FROM FamilyMember;
   ',
   '
@@ -805,6 +806,54 @@ REPLACE INTO Report
          AND f.fulfilled
          AND c.family_name = f.family_name)
      GROUP BY "Family name";
+  '
+);
+
+REPLACE INTO Report
+(
+  name,
+  description,
+  landscape,
+  input_fields,
+  subtitle_field,
+  separate_by,
+  query
+)
+ VALUES
+(
+  'Yearly family members by ethnicity',
+  'Ethnicity breakdown of unique family members during year',
+  0,
+  '{
+     "$year" :
+     {
+       "type" : "TextField",
+       "label" : "Year",
+       "validation" :
+        {
+          "required"  : true
+        }
+     }
+   }',
+  '$year',
+  '',
+  '
+    SELECT
+        ethnicity AS Ethnicity,
+        count(*) AS Count
+      FROM
+        (SELECT DISTINCT
+             fm.member_name AS member_name,
+             c.family_name AS family_name,
+             c.ethnicity AS ethnicity
+           FROM Client c, Fulfillment f, FamilyMember fm
+           WHERE f.fulfilled
+             AND c.family_name = f.family_name
+             AND f.distribution >= $year
+             AND f.distribution < ($year + 1)
+             AND fm.family_name = c.family_name
+           ORDER by c.family_name, fm.member_name)
+      GROUP BY ethnicity;
   '
 );
 
