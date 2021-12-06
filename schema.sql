@@ -134,22 +134,36 @@ CREATE TABLE DistributionPeriod
 
   -- This might later change to a separate table of appointment
   -- start/end per day, if we need more than one week.
-  day_1_first_appt  VARCHAR,    -- %H:%M
+  day_1_date        VARCHAR DEFAULT '', --%&-%m-%d
+  day_1_first_appt  VARCHAR,            -- %H:%M
   day_1_last_appt   VARCHAR,
+  day_2_date        VARCHAR DEFAULT '',
   day_2_first_appt  VARCHAR,
   day_2_last_appt   VARCHAR,
+  day_3_date        VARCHAR DEFAULT '',
   day_3_first_appt  VARCHAR,
   day_3_last_appt   VARCHAR,
+  day_4_date        VARCHAR DEFAULT '',
   day_4_first_appt  VARCHAR,
   day_4_last_appt   VARCHAR,
+  day_5_date        VARCHAR DEFAULT '',
   day_5_first_appt  VARCHAR,
   day_5_last_appt   VARCHAR,
+  day_6_date        VARCHAR DEFAULT '',
   day_6_first_appt  VARCHAR,
   day_6_last_appt   VARCHAR,
+  day_7_date        VARCHAR DEFAULT '',
   day_7_first_appt  VARCHAR,
   day_7_last_appt   VARCHAR
 );
 
+-- ALTER TABLE DistributionPeriod ADD COLUMN day_1_date VARCHAR DEFAULT '';
+-- ALTER TABLE DistributionPeriod ADD COLUMN day_2_date VARCHAR DEFAULT '';
+-- ALTER TABLE DistributionPeriod ADD COLUMN day_3_date VARCHAR DEFAULT '';
+-- ALTER TABLE DistributionPeriod ADD COLUMN day_4_date VARCHAR DEFAULT '';
+-- ALTER TABLE DistributionPeriod ADD COLUMN day_5_date VARCHAR DEFAULT '';
+-- ALTER TABLE DistributionPeriod ADD COLUMN day_6_date VARCHAR DEFAULT '';
+-- ALTER TABLE DistributionPeriod ADD COLUMN day_7_date VARCHAR DEFAULT '';
 
 CREATE TABLE Report
 (

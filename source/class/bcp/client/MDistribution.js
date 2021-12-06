@@ -311,11 +311,14 @@ qx.Mixin.define("bcp.client.MDistribution",
       let             maxTime;
       let             startDate;
       let             eData = e.getData();
+      let             dates = [];
       let             first = [];
       let             last = [];
       let             times = [];
       const           form = this._distributionForm;
       const           fifteenMin = (1000 * 60 * 15);
+      const           oneDay = 1000 * 60 * 60 * 24;      // ms per day
+      const           twelveHours = 1000 * 60 * 60 * 12; // ms per 1/2 day
 
       // If the selection is being cleared, we have nothing to do.
       if (eData.length === 0)
@@ -353,14 +356,57 @@ qx.Mixin.define("bcp.client.MDistribution",
         startDate = this._distributions.getSelection()[0].getLabel();
         for (i = 1; i <= 7; i++)
         {
+          let             date;
+
+          // Get the distribution start date
+          date = new Date(startDate);
+
+          // Assume days are sequential, and get the date for each day
+          date = new Date(date.getTime() + ((i - 1) * oneDay));
+
+          dates[i] = date;
           first[i] = times[0].value;
           last[i] = times[times.length - 1].value;
         }
       }
       else
       {
+        let             date;
+
         // We have the start date readily available
         startDate = dist.start_date;
+        date = new Date(startDate);
+
+        // Get the date for each day. We add twelve hours to each date
+        // as a simple way of ensuring we're not in GMT. Kludge.
+        dates[1] =
+          dist.day_1_date
+          ? new Date(dist.day_1_date + " 12:00:00")
+          : new Date(date.getTime() + twelveHours + 0 * oneDay);
+        dates[2] =
+          dist.day_2_date
+          ? new Date(dist.day_2_date + " 12:00:00")
+          : new Date(date.getTime() + twelveHours + 1 * oneDay);
+        dates[3] =
+          dist.day_3_date
+          ? new Date(dist.day_3_date + " 12:00:00")
+          : new Date(date.getTime() + twelveHours + 2 * oneDay);
+        dates[4] =
+          dist.day_4_date
+          ? new Date(dist.day_4_date + " 12:00:00")
+          : new Date(date.getTime() + twelveHours + 3 * oneDay);
+        dates[5] =
+          dist.day_5_date
+          ? new Date(dist.day_5_date + " 12:00:00")
+          : new Date(date.getTime() + twelveHours + 4 * oneDay);
+        dates[6] =
+          dist.day_6_date
+          ? new Date(dist.day_6_date + " 12:00:00")
+          : new Date(date.getTime() + twelveHours + 5 * oneDay);
+        dates[7] =
+          dist.day_7_date
+          ? new Date(dist.day_7_date + " 12:00:00")
+          : new Date(date.getTime() + twelveHours + 6 * oneDay);
 
         // Get the first/last times for each day
         first[1] = dist.day_1_first_appt;
@@ -391,6 +437,14 @@ qx.Mixin.define("bcp.client.MDistribution",
               column     : 2,
               row        : 0
             }
+          },
+
+          day_1_date:
+          {
+            type       : "DateField",
+            label      : "Date",
+            value      : dates[1],
+            dateFormat : new qx.util.format.DateFormat("yyyy-MM-dd")
           },
 
           day_1_first_appt :
@@ -427,6 +481,14 @@ qx.Mixin.define("bcp.client.MDistribution",
             }
           },
 
+          day_2_date:
+          {
+            type       : "DateField",
+            label      : "Date",
+            value      : dates[2],
+            dateFormat : new qx.util.format.DateFormat("yyyy-MM-dd")
+          },
+
           day_2_first_appt :
           {
             type       : "SelectBox",
@@ -459,6 +521,14 @@ qx.Mixin.define("bcp.client.MDistribution",
             {
               row        : 8    // leave a blank row above
             }
+          },
+
+          day_3_date:
+          {
+            type       : "DateField",
+            label      : "Date",
+            value      : dates[3],
+            dateFormat : new qx.util.format.DateFormat("yyyy-MM-dd")
           },
 
           day_3_first_appt :
@@ -496,6 +566,14 @@ qx.Mixin.define("bcp.client.MDistribution",
             }
           },
 
+          day_4_date:
+          {
+            type       : "DateField",
+            label      : "Date",
+            value      : dates[4],
+            dateFormat : new qx.util.format.DateFormat("yyyy-MM-dd")
+          },
+
           day_4_first_appt :
           {
             type       : "SelectBox",
@@ -528,6 +606,14 @@ qx.Mixin.define("bcp.client.MDistribution",
             {
               row        : 4    // leave a blank row above
             }
+          },
+
+          day_5_date:
+          {
+            type       : "DateField",
+            label      : "Date",
+            value      : dates[5],
+            dateFormat : new qx.util.format.DateFormat("yyyy-MM-dd")
           },
 
           day_5_first_appt :
@@ -564,6 +650,14 @@ qx.Mixin.define("bcp.client.MDistribution",
             }
           },
 
+          day_6_date:
+          {
+            type       : "DateField",
+            label      : "Date",
+            value      : dates[6],
+            dateFormat : new qx.util.format.DateFormat("yyyy-MM-dd")
+          },
+
           day_6_first_appt :
           {
             type       : "SelectBox",
@@ -594,9 +688,17 @@ qx.Mixin.define("bcp.client.MDistribution",
             label      : this.bold("Day 7"),
             userdata   :
             {
-              column     : 6,
+              column     : 7,
               row        : 0    // leave a blank row above,
             }
+          },
+
+          day_7_date:
+          {
+            type       : "DateField",
+            label      : "Date",
+            value      : dates[7],
+            dateFormat : new qx.util.format.DateFormat("yyyy-MM-dd")
           },
 
           day_7_first_appt :
@@ -642,6 +744,8 @@ qx.Mixin.define("bcp.client.MDistribution",
         .then(
           (result) =>
           {
+            const dateFormat = new qx.util.format.DateFormat("yyyy-MM-dd");
+
             // If the form was cancelled...
             if (! result)
             {
@@ -654,6 +758,29 @@ qx.Mixin.define("bcp.client.MDistribution",
 
             // Ensure the start date is included in the data to be saved
             result.start_date = startDate;
+
+            [
+              "day_1_date",
+              "day_2_date",
+              "day_3_date",
+              "day_4_date",
+              "day_5_date",
+              "day_6_date",
+              "day_7_date"
+            ].forEach(
+              (name) =>
+              {
+                if (result[name])
+                {
+                  // format dates as yyyy-MM-dd
+                  result[name] = dateFormat.format(result[name]);
+                }
+                else
+                {
+                  // use empty string for non-entered dates
+                  result[name] = '';
+                }
+              });
 
             return this.rpc("saveDistribution", [ result, ! dist ])
               .catch(

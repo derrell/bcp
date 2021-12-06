@@ -39,7 +39,38 @@ REPLACE INTO Report
        ci.id AS _id,
        f.appt_day as Day,
        f.appt_time AS Time,
-       "Day " || f.appt_day || " at " || f.appt_time AS _separatorWithTime,
+       "Day " || f.appt_day || " (" ||
+         CASE f.appt_day
+           WHEN 1 THEN
+             (SELECT day_1_date
+                FROM DistributionPeriod
+                WHERE start_date = $distribution)
+           WHEN 2 THEN
+             (SELECT day_2_date
+                FROM DistributionPeriod
+                WHERE start_date = $distribution)
+           WHEN 3 THEN
+             (SELECT day_3_date
+                FROM DistributionPeriod
+                WHERE start_date = $distribution)
+           WHEN 4 THEN
+             (SELECT day_4_date
+                FROM DistributionPeriod
+                WHERE start_date = $distribution)
+           WHEN 5 THEN
+             (SELECT day_5_date
+                FROM DistributionPeriod
+                WHERE start_date = $distribution)
+           WHEN 6 THEN
+             (SELECT day_6_date
+                FROM DistributionPeriod
+                WHERE start_date = $distribution)
+           WHEN 7 THEN
+             (SELECT day_7_date
+                FROM DistributionPeriod
+                WHERE start_date = $distribution)
+         END ||
+         ") at " || f.appt_time AS _separatorWithTime,
        c.family_name || CASE c.verified WHEN 1 THEN "&check;" ELSE "" END
           AS "Family name",
        (c.count_senior + c.count_adult + c.count_child) ||
@@ -129,7 +160,38 @@ REPLACE INTO Report
        ci.id AS _id,
        f.appt_day as Day,
        f.appt_time AS Time,
-       "Day " || f.appt_day || " at " || f.appt_time AS _separatorWithTime,
+       "Day " || f.appt_day || " (" ||
+         CASE f.appt_day
+           WHEN 1 THEN
+             (SELECT day_1_date
+                FROM DistributionPeriod
+                WHERE start_date = $distribution)
+           WHEN 2 THEN
+             (SELECT day_2_date
+                FROM DistributionPeriod
+                WHERE start_date = $distribution)
+           WHEN 3 THEN
+             (SELECT day_3_date
+                FROM DistributionPeriod
+                WHERE start_date = $distribution)
+           WHEN 4 THEN
+             (SELECT day_4_date
+                FROM DistributionPeriod
+                WHERE start_date = $distribution)
+           WHEN 5 THEN
+             (SELECT day_5_date
+                FROM DistributionPeriod
+                WHERE start_date = $distribution)
+           WHEN 6 THEN
+             (SELECT day_5_date
+                FROM DistributionPeriod
+                WHERE start_date = $distribution)
+           WHEN 7 THEN
+             (SELECT day_6_date
+                FROM DistributionPeriod
+                WHERE start_date = $distribution)
+         END ||
+         ") at " || f.appt_time AS _separatorWithTime,
        c.family_name || CASE c.verified WHEN 1 THEN "&check;" ELSE "" END
           AS "Family name",
        (c.count_senior + c.count_adult + c.count_child) ||
@@ -219,7 +281,38 @@ REPLACE INTO Report
        ci.id AS _id,
        f.appt_day as Day,
        f.appt_time AS Time,
-       "Day " || f.appt_day || " at " || f.appt_time AS _separatorWithTime,
+       "Day " || f.appt_day || " (" ||
+         CASE f.appt_day
+           WHEN 1 THEN
+             (SELECT day_1_date
+                FROM DistributionPeriod
+                WHERE start_date = $distribution)
+           WHEN 2 THEN
+             (SELECT day_2_date
+                FROM DistributionPeriod
+                WHERE start_date = $distribution)
+           WHEN 3 THEN
+             (SELECT day_3_date
+                FROM DistributionPeriod
+                WHERE start_date = $distribution)
+           WHEN 4 THEN
+             (SELECT day_4_date
+                FROM DistributionPeriod
+                WHERE start_date = $distribution)
+           WHEN 5 THEN
+             (SELECT day_5_date
+                FROM DistributionPeriod
+                WHERE start_date = $distribution)
+           WHEN 6 THEN
+             (SELECT day_6_date
+                FROM DistributionPeriod
+                WHERE start_date = $distribution)
+           WHEN 7 THEN
+             (SELECT day_7_date
+                FROM DistributionPeriod
+                WHERE start_date = $distribution)
+         END ||
+         ") at " || f.appt_time AS _separatorWithTime,
        c.family_name || CASE c.verified WHEN 1 THEN "&check;" ELSE "" END
           AS "Family name",
        (c.count_senior + c.count_adult + c.count_child) ||
@@ -310,7 +403,38 @@ REPLACE INTO Report
        ci.id as _id,
        f.appt_day as Day,
        f.appt_time AS Time,
-       "Day " || f.appt_day || " at " || f.appt_time AS _separatorWithTime,
+       "Day " || f.appt_day || " (" ||
+         CASE f.appt_day
+           WHEN 1 THEN
+             (SELECT day_1_date
+                FROM DistributionPeriod
+                WHERE start_date = $distribution)
+           WHEN 2 THEN
+             (SELECT day_2_date
+                FROM DistributionPeriod
+                WHERE start_date = $distribution)
+           WHEN 3 THEN
+             (SELECT day_3_date
+                FROM DistributionPeriod
+                WHERE start_date = $distribution)
+           WHEN 4 THEN
+             (SELECT day_4_date
+                FROM DistributionPeriod
+                WHERE start_date = $distribution)
+           WHEN 5 THEN
+             (SELECT day_5_date
+                FROM DistributionPeriod
+                WHERE start_date = $distribution)
+           WHEN 6 THEN
+             (SELECT day_6_date
+                FROM DistributionPeriod
+                WHERE start_date = $distribution)
+           WHEN 7 THEN
+             (SELECT day_7_date
+                FROM DistributionPeriod
+                WHERE start_date = $distribution)
+         END ||
+         ") at " || f.appt_time AS _separatorWithTime,
        CASE c.verified WHEN 1 THEN "&check;" ELSE "" END AS V,
        (c.count_senior + c.count_adult + c.count_child) ||
          CASE
@@ -373,7 +497,38 @@ REPLACE INTO Report
    SELECT
        f.appt_day as Day,
        f.appt_time AS Time,
-       "Day " || f.appt_day || " at " || f.appt_time AS _separatorWithTime,
+       "Day " || f.appt_day || " (" ||
+         CASE f.appt_day
+           WHEN 1 THEN
+             (SELECT day_1_date
+                FROM DistributionPeriod
+                WHERE start_date = $distribution)
+           WHEN 2 THEN
+             (SELECT day_2_date
+                FROM DistributionPeriod
+                WHERE start_date = $distribution)
+           WHEN 3 THEN
+             (SELECT day_3_date
+                FROM DistributionPeriod
+                WHERE start_date = $distribution)
+           WHEN 4 THEN
+             (SELECT day_4_date
+                FROM DistributionPeriod
+                WHERE start_date = $distribution)
+           WHEN 5 THEN
+             (SELECT day_5_date
+                FROM DistributionPeriod
+                WHERE start_date = $distribution)
+           WHEN 6 THEN
+             (SELECT day_6_date
+                FROM DistributionPeriod
+                WHERE start_date = $distribution)
+           WHEN 7 THEN
+             (SELECT day_7_date
+                FROM DistributionPeriod
+                WHERE start_date = $distribution)
+         END ||
+         ") at " || f.appt_time AS _separatorWithTime,
        c.family_name || CASE c.verified WHEN 1 THEN "&check;" ELSE "" END
           AS "Family name",
        c.count_senior AS "65+",
