@@ -111,7 +111,9 @@ console.log("getDeliveryDay data:", result);
         });
       container.add(tree, { flex : 1 });
 
-      root = this.configureTreeItem(new qx.ui.tree.TreeFolder(), distribution);
+      root = this.configureTreeItem(
+        new qx.ui.tree.TreeFolder(),
+        "Distribution start date: " + distribution);
       root.setOpen(true);
       tree.setRoot(root);
 
@@ -131,7 +133,9 @@ console.log("getDeliveryDay data:", result);
           {
             // We haven't. Create it.
             label =
-              appointment.method == "Delivery" ? "Delivery" : `Day ${day}`;
+              appointment.method == "Delivery"
+              ? "Delivery"
+              : `Day ${day} (${appointment.appt_date})`;
             nodes[day] = this.configureTreeItem(new Branch(), label);
             root.add(nodes[day]);
 
