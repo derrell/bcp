@@ -523,6 +523,14 @@ qx.Mixin.define("bcp.client.MReports",
                             row[heading] = this.convert24to12(row[heading]);
                           }
 
+                          // Convert signature URLs into images
+                          if (heading == "Signature" &&
+                              row[heading].length > 0)
+                          {
+                            row[heading] = `<img src='${row[heading]}'/>`;
+                          }
+
+                          // Write this column's data
                           this._reportWin.document.write(
                             `<td>${row[heading]}</td>`);
                         });

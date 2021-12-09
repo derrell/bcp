@@ -23,6 +23,7 @@ qx.Class.define("bcp.client.Client",
     bcp.client.MClientMgmt,
     bcp.client.MAppointment,
     bcp.client.MDeliveryDay,
+    bcp.client.MUsdaSignature,
     bcp.client.MDistribution,
     bcp.client.MReports
   ],
@@ -486,12 +487,16 @@ qx.Class.define("bcp.client.Client",
               },
               {
                 requiredPermission : 50,
+                implementation     : this._createUsdaSignatureTab
+              },
+              {
+                requiredPermission : 50,
                 implementation     : this._createDistributionTab
               },
               {
                 requiredPermission : 50,
                 implementation     : this._createReportsTab
-              },
+              }
             ].forEach(
               (pageInfo) =>
               {
