@@ -97,46 +97,9 @@
         "qx.event.handler.Gesture",
         "qx.event.handler.PointerCore"
       ]
-    },
-    {
-      "class": "qxl.apiviewer.Application",
-      "theme": "qxl.apiviewer.Theme",
-      "name": "apiviewer",
-      "title": "Qooxdoo API Viewer",
-      "environment": {
-        "qx.icontheme": "Tango",
-        "qxl.apiviewer.applicationName": "",
-        "qxl.apiviewer.exclude": [
-          "qxl.apiviewer.*"
-        ],
-        "qxl.apiviewer.include": []
-      },
-      "include": [
-        "qx.*"
-      ],
-      "exclude": [
-        "qx.test.*",
-        "qx.module.Blocker",
-        "qx.module.Placement"
-      ]
-    },
-    {
-      "class": "qxl.testtapper.Application",
-      "name": "testtapper",
-      "theme": "qx.theme.Simple",
-      "title": "Qooxdoo TestTAPper",
-      "environment": {
-        "qx.icontheme": "Tango",
-        "testtapper.testNameSpace": "qx.test"
-      },
-      "include": [
-        "qx.test.*"
-      ],
-      "exclude": []
     }
   ],
   "libraries": [
-    "../../qooxdoo.git",
     "../../qxl.dialog.git",
     "../../incubator.qx.io.jsonrpc.git",
     "."

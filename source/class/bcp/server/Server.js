@@ -121,7 +121,7 @@ qx.Class.define("bcp.server.Server",
       app.use(
         (req, res, next) =>
         {
-          console.log("Request body: ", req.body);
+          console.log(`Request path=${req.path} body: `, req.body);
           next();
         });
 */
