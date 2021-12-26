@@ -38,9 +38,8 @@ qx.Mixin.define("bcp.client.MUsdaSignature",
       let             page;
       let             button;
       let             command;
+      let             dynLoader;
 
-      // Generate the label for this tab
-      this._tabLabelUsdaSignature = this.underlineChar("USDA Signature", 5);
 
       page = new qx.ui.tabview.Page(this._tabLabelUsdaSignature);
       page.setLayout(new qx.ui.layout.VBox());
@@ -51,6 +50,11 @@ qx.Mixin.define("bcp.client.MUsdaSignature",
 
       command = new qx.ui.command.Command("Alt+S");
       command.addListener("execute", () => tabView.setSelection( [ page ] ));
+
+
+      // Generate the label for this tab
+      this._tabLabelUsdaSignature =
+        this.underlineChar("USDA Signature", 5);
 
       // Retrieve the delivery day information when the page appears
       page.addListener(
@@ -66,7 +70,7 @@ qx.Mixin.define("bcp.client.MUsdaSignature",
 console.log("getUsdaSignature data:", result);
                 if (! result || result.appointments.length === 0)
                 {
-                  qxl.dialog.Dialog.alert("No appoitments scheduled");
+                  qxl.dialog.Dialog.alert("No appointments scheduled");
                   return;
                 }
 
@@ -77,9 +81,26 @@ console.log("getUsdaSignature data:", result);
               {
                 console.warn("getUsdaSignature:", e);
                 qxl.dialog.Dialog.alert(
-                  `Could not retrieve delivery day information: ${e.message}`);
+                  "Could not retrieve USDA Signature information: " +
+                  e.message);
               });
         });
+
+      // To update signature_pad, from top-level:
+      // `npm i --save signature_pad`, then
+      // `cp node_modules/signature_pad/dist/signature_pad.umd.js source/resource/script/`
+      dynLoader = new qx.util.DynamicScriptLoader(
+        [
+          "resource/script/signature_pad.umd.js"
+        ]);
+
+      dynLoader.addListenerOnce(
+        "ready", (e) => console.log("signature_pad is ready"));
+
+      dynLoader.addListener(
+        "failed", (e) => console.log("failed to load signature_pad"));
+
+      dynLoader.start();
     },
 
     _buildUsdaSignatureTree : function(page, deliveryInfo)

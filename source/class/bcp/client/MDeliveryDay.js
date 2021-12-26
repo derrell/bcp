@@ -66,7 +66,7 @@ qx.Mixin.define("bcp.client.MDeliveryDay",
 console.log("getDeliveryDay data:", result);
                 if (! result || result.appointments.length === 0)
                 {
-                  qxl.dialog.Dialog.alert("No appoitments scheduled");
+                  qxl.dialog.Dialog.alert("No appointments scheduled");
                   return;
                 }
 
