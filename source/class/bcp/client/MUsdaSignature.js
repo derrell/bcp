@@ -38,8 +38,9 @@ qx.Mixin.define("bcp.client.MUsdaSignature",
       let             page;
       let             button;
       let             command;
-      let             dynLoader;
 
+      // Create this tab
+      this._tabLabelUsdaSignature = this.underlineChar("USDA Signature", 5);
 
       page = new qx.ui.tabview.Page(this._tabLabelUsdaSignature);
       page.setLayout(new qx.ui.layout.VBox());
@@ -52,11 +53,7 @@ qx.Mixin.define("bcp.client.MUsdaSignature",
       command.addListener("execute", () => tabView.setSelection( [ page ] ));
 
 
-      // Generate the label for this tab
-      this._tabLabelUsdaSignature =
-        this.underlineChar("USDA Signature", 5);
-
-      // Retrieve the delivery day information when the page appears
+      // Retrieve the USDA Signature information when the page appears
       page.addListener(
         "appear",
         () =>
@@ -85,22 +82,6 @@ console.log("getUsdaSignature data:", result);
                   e.message);
               });
         });
-
-      // To update signature_pad, from top-level:
-      // `npm i --save signature_pad`, then
-      // `cp node_modules/signature_pad/dist/signature_pad.umd.js source/resource/script/`
-      dynLoader = new qx.util.DynamicScriptLoader(
-        [
-          "resource/script/signature_pad.umd.js"
-        ]);
-
-      dynLoader.addListenerOnce(
-        "ready", (e) => console.log("signature_pad is ready"));
-
-      dynLoader.addListener(
-        "failed", (e) => console.log("failed to load signature_pad"));
-
-      dynLoader.start();
     },
 
     _buildUsdaSignatureTree : function(page, deliveryInfo)
@@ -209,6 +190,8 @@ console.log("getUsdaSignature data:", result);
     {
       let             o;
       let             checkbox;
+      let             formData;
+      let             rootSize;
       const           MUsdaSignature = bcp.client.MUsdaSignature;
 
       // We don't want any icons on branches or leaves
@@ -253,6 +236,7 @@ console.log("getUsdaSignature data:", result);
       // On leaves, add a checkbox for indicating whether they're USDA eligible
       checkbox = new qx.ui.form.ToggleButton(
         "Not Eligible", "qxl.dialog.icon.warning");
+
       checkbox.set(
         {
           focusable   : false,
@@ -290,22 +274,122 @@ console.log("getUsdaSignature data:", result);
         "tap",
         () =>
         {
-          // this.rpc(
-          //   "updateFulfilled",
-          //   [ distribution, data.family_name, checkbox.getValue() ])
-          //   .then(
-          //     () =>
-          //     {
-          //       console.log(`Updated fulfillment for ${data.family_name}`);
-          //     })
-          //   .catch(
-          //     (e) =>
-          //     {
-          //       console.warn("updateFulfilled:", e);
-          //       qxl.dialog.Dialog.alert(
-          //         "Could not update fulfilled status for " +
-          //           `${data.family_name}: ${e.message}`);
-          //     });
+          // Create the form for adding/editing a appointment record
+          this._usdaForm = new qxl.dialog.Form(
+            {
+              callback         : function(result)
+              {
+                console.log("result=", result);
+              }
+              // finalizeFunction : function(form, formDialog)
+              // {
+              //   let             f;
+              //   let             manager;
+              //   const           appointments =
+              //         formDialog._formElements["appointments"];
+
+              //   //
+              //   // Use a validation manager. Ensure that the entered data is
+              //   // consistent, and that all required fields are entered.
+              //   // When valid, enable the Save button.
+              //   //
+
+              //   // Instantiate a validation manager
+              //   form._validationManager = manager =
+              //     new qx.ui.form.validation.Manager();
+
+              //   // Prepare a validation function
+              //   f = function()
+              //   {
+              //     // Enable the Save button if the form validates
+              //     manager.bind(
+              //       "valid",
+              //       formDialog._okButton,
+              //       "enabled",
+              //      {
+              //         converter: function(value)
+              //         {
+              //           return value || false;
+              //         }
+              //       });
+
+              //     // Reset warnings
+              //     _this._requireAppointment.exclude();
+
+              //     // An appointment time is required
+              //     if (! appointments.getValue())
+              //     {
+              //       _this._requireAppointment.show();
+              //       return false;
+              //     }
+
+              //     return true;
+              //   }.bind(this);
+
+              //   // Use that validator
+              //   manager.setValidator(f);
+              //   form.validate(manager);
+              // }
+            });
+
+          if (checkbox.getValue())
+          {
+            formData =
+              {
+                signature :
+                {
+                  type       : "signature",
+                  label      : "",
+                  value      : "xxx"
+                }
+              };
+
+            rootSize = this.getRoot().getInnerSize();
+            this._usdaForm.set(
+              {
+                message          : this.bold(
+                  "I affirm that my monthly income is no greater than $3."),
+                labelColumnWidth : 150,
+                formData         : formData,
+                width            : rootSize.width,
+                height           : rootSize.height,
+              });
+
+            this._usdaForm._message.setFont(
+              qx.bom.Font.fromString("bold 30px Arial"));
+
+            this._usdaForm._okButton.set(
+              {
+                rich    : true,
+                label   : this.underlineChar("Save"),
+                command : new qx.ui.command.Command("Alt+S")
+              });
+
+            this._usdaForm.center();
+            this._usdaForm.show();
+
+            this._usdaForm.promise()
+              .then(
+                (result) =>
+                {
+                  // If the form was cancelled...
+                  if (! result)
+                  {
+                    // ... and get outta Dodge!
+                    return Promise.resolve();
+                  }
+
+                  // return this.rpc("saveFulfillment", [ result ])
+                  //   .catch(
+                  //     (e) =>
+                  //     {
+                  //       console.warn("Error saving changes:", e);
+                  //       qxl.dialog.Dialog.error(`Error saving changes: ${e}`);
+                  //     });
+                  console.log("form result=", result);
+                  return Promise.resolve();
+                });
+          }
         });
 
       treeItem.addWidget(checkbox);
