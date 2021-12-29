@@ -17,6 +17,9 @@ qx.Class.define("bcp.client.Signature",
   include   : [ qx.ui.form.MForm ],
   implement : [ qx.ui.form.IForm, qx.ui.form.IField ],
 
+  /**
+   * @ignore SignaturePad
+   */
   construct()
   {
     let             border;
@@ -64,9 +67,11 @@ qx.Class.define("bcp.client.Signature",
         const prepSignaturePad =
           () =>
           {
+            let             canvasWrapper = canvas.getContentElement();
+            let             htmlCanvas = canvasWrapper.getCanvas();
+
             // Obtain the HTML canvas element, and attach SignaturePad to it
-            canvas = canvas.getContentElement().getCanvas();
-            this._signaturePad = new SignaturePad(canvas);
+            this._signaturePad = new SignaturePad(htmlCanvas);
 
             // Update our value property after each stroke completes
             this._signaturePad.addEventListener(
@@ -74,6 +79,34 @@ qx.Class.define("bcp.client.Signature",
               (e) =>
               {
                 this.setValue(this._signaturePad.toDataURL());
+              });
+
+            this.addListener(
+              "resize",
+              () =>
+              {
+                let             ratio;
+
+                // When zoomed out to less than 100%, for some very
+                // strange reason, some browsers report
+                // devicePixelRatio as less than 1 and only part of
+                // the canvas is cleared then.
+                ratio =  Math.max(window.devicePixelRatio || 1, 1);
+
+                // This part causes the canvas to be cleared
+                htmlCanvas.width = htmlCanvas.offsetWidth * ratio;
+                htmlCanvas.height = htmlCanvas.offsetHeight * ratio;
+                htmlCanvas.getContext("2d").scale(ratio, ratio);
+
+                // SignaturePad does not listen for canvas changes, so
+                // after the canvas is automatically cleared by the
+                // browser, SignaturePad#isEmpty might still return
+                // false, even though the canvas looks empty, because
+                // the internal data of this library wasn't cleared.
+                // To make sure that the state of this library is
+                // consistent with visual state of the canvas, you
+                // have to clear it manually.
+                this._signaturePad.clear();
               });
           };
 
