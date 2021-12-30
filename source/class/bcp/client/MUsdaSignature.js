@@ -194,6 +194,7 @@ console.log("getUsdaSignature data:", result);
       let             root;
       let             rootSize;
       let             fUsdaSigResizeForm;
+      let             fUsdaFormHandler;
       const           MUsdaSignature = bcp.client.MUsdaSignature;
 
       // We don't want any icons on branches or leaves
@@ -277,62 +278,7 @@ console.log("getUsdaSignature data:", result);
         () =>
         {
           // Create the form for adding/editing a appointment record
-          this._usdaForm = new qxl.dialog.Form(
-            {
-              callback         : function(result)
-              {
-                console.log("result=", result);
-              }
-              // finalizeFunction : function(form, formDialog)
-              // {
-              //   let             f;
-              //   let             manager;
-              //   const           appointments =
-              //         formDialog._formElements["appointments"];
-
-              //   //
-              //   // Use a validation manager. Ensure that the entered data is
-              //   // consistent, and that all required fields are entered.
-              //   // When valid, enable the Save button.
-              //   //
-
-              //   // Instantiate a validation manager
-              //   form._validationManager = manager =
-              //     new qx.ui.form.validation.Manager();
-
-              //   // Prepare a validation function
-              //   f = function()
-              //   {
-              //     // Enable the Save button if the form validates
-              //     manager.bind(
-              //       "valid",
-              //       formDialog._okButton,
-              //       "enabled",
-              //      {
-              //         converter: function(value)
-              //         {
-              //           return value || false;
-              //         }
-              //       });
-
-              //     // Reset warnings
-              //     _this._requireAppointment.exclude();
-
-              //     // An appointment time is required
-              //     if (! appointments.getValue())
-              //     {
-              //       _this._requireAppointment.show();
-              //       return false;
-              //     }
-
-              //     return true;
-              //   }.bind(this);
-
-              //   // Use that validator
-              //   manager.setValidator(f);
-              //   form.validate(manager);
-              // }
-            });
+          this._usdaForm = new qxl.dialog.Form({});
 
           if (checkbox.getValue())
           {
@@ -399,27 +345,74 @@ console.log("getUsdaSignature data:", result);
             this._usdaForm.center();
             this._usdaForm.show();
 
-            this._usdaForm.promise()
-              .then(
-                (result) =>
-                {
-                  // If the form was cancelled...
-                  if (! result)
-                  {
-                    // ... and get outta Dodge!
-                    return Promise.resolve();
-                  }
+            // Don't use the callback mechanism as we might need to
+            // submit the form multiple times if the PIN entry fails
+            // of if the greeter decides the signature is incomplete
+            // or unusable. Instead, we'll await the "ok" and "cancel"
+            // events.
+            fUsdaFormHandler =
+              (result) =>
+              {
+                // Reshow the signature until PIN is accepted
+                this._usdaForm.show();
 
-                  // return this.rpc("saveFulfillment", [ result ])
-                  //   .catch(
-                  //     (e) =>
-                  //     {
-                  //       console.warn("Error saving changes:", e);
-                  //       qxl.dialog.Dialog.error(`Error saving changes: ${e}`);
-                  //     });
-                  console.log("form result=", result);
-                  return Promise.resolve();
-                });
+                // Prompt for the password that allows returning to
+                // the secure environment
+                this.createLogin(
+                  "Accept signature",
+                  (err, data) =>
+                  {
+                    // Was the password accepted?
+                    if (err)
+                    {
+                      // Nope. Let them re-enter it
+                      return;
+                    }
+
+                    // PIN was accepted. We can now hide the form.
+                    this._usdaForm.hide();
+
+                    // If the form was cancelled...
+                    if (! result)
+                    {
+                      // ... then we're done
+                      return;
+                    }
+
+                    console.log("form result=", result);
+                    // this.rpc("saveUsdaSignature", [ result ])
+                    //   .catch(
+                    //     (e) =>
+                    //     {
+                    //       console.warn("Error saving changes:", e);
+                    //       qxl.dialog.Dialog.error(
+                    //         `Error saving changes: ${e}`);
+                    //     });
+                  });
+              };
+
+            // Handle "Ok", retrieving signature form results
+            this._usdaForm.addListener(
+              "ok",
+              () =>
+              {
+                let             result;
+
+                // Get the signature form result
+                result =
+                  qx.util.Serializer.toNativeObject(this._usdaForm.getModel());
+
+                fUsdaFormHandler(result);
+              });
+
+            // Handle "Cancel". Indicate it with null vs. results.
+            this._usdaForm.addListener(
+              "cancel",
+              () =>
+              {
+                fUsdaFormHandler(null);
+                checkbox.setValue(false);
+              });
           }
         });
 
@@ -476,6 +469,65 @@ console.log("getUsdaSignature data:", result);
         (this._nextSigAppointmentRowColor + 1) % 2;
 
       return treeItem;
+    },
+
+    /**
+     * Creates a login widget for continuing after client signature
+     * @param caption
+     * @param button
+     */
+    createLogin : function(caption, callback)
+    {
+      let             loginWidget;
+
+      loginWidget = new qxl.dialog.Login(
+        {
+          text                  : "Please provide PIN to continue",
+          checkCredentials      : this.loginCheckCredentials,
+          callback              : callback,
+          showForgotPassword    : false,
+          caption               : caption
+      });
+
+      loginWidget.addListener(
+        "appear",
+        () =>
+        {
+          loginWidget._username.set(
+            {
+              value   : "PIN",
+              enabled : false
+            });
+        });
+
+      loginWidget.show();
+    },
+
+    /**
+     * Asyncronous function for checking credentials. It takes the
+     * username, password and a callback function as parameters. After
+     * performing the authentication, the callback is called with the
+     * result, which should be undefined or null if successful, and
+     * the error message if the authentication failed. If the problem
+     * was not the authentication, but some other exception, you could
+     * pass an error object.
+     *
+     * @param username {String}
+     * @param password {String}
+     * @param callback {Function}
+     *   The callback function that needs to be called with
+     *   (err, data) as arguments
+     */
+    loginCheckCredentials : function(username, password, callback)
+    {
+      if (username === "PIN" && password === "1234")
+      {
+        callback(null, username);
+      }
+      else
+      {
+        callback("Wrong PIN");
+      }
     }
   }
 });
