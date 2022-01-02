@@ -145,13 +145,25 @@ qx.Class.define("bcp.server.Rpc",
           getDeliveryDay      :
           {
             handler             : this._getDeliveryDay.bind(this),
-            permission_level    : 20
+            permission_level    : 50
           },
 
           updateFulfilled    :
           {
             handler             : this._updateFulfilled.bind(this),
-            permission_level    : 20
+            permission_level    : 50
+          },
+
+          getUsdaSignature   :
+          {
+            handler             : this._getUsdaSignature.bind(this),
+            permission_level    : 40
+          },
+
+          updateUsdaSignature   :
+          {
+            handler             : this._updateUsdaSignature.bind(this),
+            permission_level    : 40
           },
 
           sendChat           :
@@ -1721,7 +1733,7 @@ qx.Class.define("bcp.server.Rpc",
             }
 
             results.distribution = result[0].distribution;
-            return result.distribution;
+            return results.distribution;
           })
         .then(
           (distribution) =>
@@ -1737,6 +1749,7 @@ qx.Class.define("bcp.server.Rpc",
               [
                 "SELECT ",
                 "    f.family_name AS family_name,",
+                "    cid.id AS id,",
                 "    f.appt_day AS appt_day,",
                 "    f.appt_time AS appt_time,",
                 "    CASE f.appt_day",
@@ -1754,10 +1767,15 @@ qx.Class.define("bcp.server.Rpc",
                 "    c.count_senior + c.count_adult + c.count_child ",
                 "      AS family_size,",
                 "    c.pet_types AS pet_types",
-                "  FROM Fulfillment f, Client c, DistributionPeriod dp",
+                "  FROM",
+                "    Fulfillment f,",
+                "    Client c,",
+                "    DistributionPeriod dp,",
+                "    ClientId cid",
                 "  WHERE f.distribution = $distribution",
                 "    AND dp.start_date = $distribution",
                 "    AND c.family_name = f.family_name",
+                "    AND cid.family_name = f.family_name",
                 "  ORDER BY appt_day, appt_time, family_name"
               ].join(" "));
           })
@@ -1845,6 +1863,204 @@ qx.Class.define("bcp.server.Rpc",
         .catch((e) =>
           {
             console.warn("Error in updateFulfilled", e);
+            callback( { message : e.toString() } );
+          })
+
+        .finally(() => this._endTransaction());
+    },
+
+    /**
+     * Get USDA eligibility data, including signatures
+     *
+     * @param args {Array}
+     *   There are no arguments to this method
+     *
+     * @param callback {Function}
+     *   @signature(err, result)
+     */
+    _getUsdaSignature(args, callback)
+    {
+      let             results = {};
+
+      // TODO: move prepared statements to constructor
+      return Promise.resolve()
+        .then(() => this._beginTransaction())
+
+        .then(
+          () =>
+          {
+            // First, retrieve the most recent distribution start date
+            return this._db.prepare(
+              [
+                "SELECT MAX(start_date) AS distribution",
+                "  FROM DistributionPeriod;",
+              ].join(" "));
+          })
+        .then(
+          (stmt) =>
+          {
+            return stmt.all({});
+          })
+        .then(
+          (result) =>
+          {
+            // If there was at least one distribution, save its start date
+            if (result.length < 1)
+            {
+              return null;
+            }
+
+            results.distribution = result[0].distribution;
+            return results.distribution;
+          })
+        .then(
+          (distribution) =>
+          {
+            // If no distributions, there's nothing more to do
+            if (distribution === null)
+            {
+              return null;
+            }
+
+            // Get all of the appointments for this most recent distribution
+            return this._db.prepare(
+              [
+                "SELECT ",
+                "    f.family_name AS family_name,",
+                "    cid.id AS id,",
+                "    f.appt_day AS appt_day,",
+                "    f.appt_time AS appt_time,",
+                "    CASE f.appt_day",
+                "      WHEN 1 THEN dp.day_1_date",
+                "      WHEN 2 THEN dp.day_2_date",
+                "      WHEN 3 THEN dp.day_3_date",
+                "      WHEN 4 THEN dp.day_4_date",
+                "      WHEN 5 THEN dp.day_5_date",
+                "      WHEN 6 THEN dp.day_6_date",
+                "      WHEN 7 THEN dp.day_7_date",
+                "    END AS appt_date,",
+                "    f.notes AS notes,",
+                "    f.perishables AS perishables,",
+                "    f.fulfilled AS fulfilled,",
+                "    CASE (SELECT COUNT(*) ",
+                "            FROM FamilyMember fam ",
+                "            WHERE fam.family_name = f.family_name) ",
+                "      WHEN 1 THEN '$2,683' ",
+                "      WHEN 2 THEN '$3,629' ",
+                "      WHEN 3 THEN '$4,575' ",
+                "      WHEN 4 THEN '$5,521' ",
+                "      WHEN 5 THEN '$6,467' ",
+                "      WHEN 6 THEN '$7,413' ",
+                "      WHEN 7 THEN '$8,358' ",
+                "      WHEN 8 THEN '$9,304' ",
+                "      WHEN 9 THEN '$10,250' ",
+                "      WHEN 10 THEN '$11,196' ",
+                "      WHEN 11 THEN '$12,142' ",
+                "      ELSE 'See Taryn' ",
+                "    END AS usda_amount, ",
+                "    f.usda_eligible_signature AS usda_eligible_signature,",
+                "    c.count_senior + c.count_adult + c.count_child ",
+                "      AS family_size,",
+                "    c.pet_types AS pet_types",
+                "  FROM",
+                "    Fulfillment f,",
+                "    Client c,",
+                "    DistributionPeriod dp,",
+                "    ClientId cid",
+                "  WHERE f.distribution = $distribution",
+                "    AND dp.start_date = $distribution",
+                "    AND c.family_name = f.family_name",
+                "    AND cid.family_name = f.family_name",
+                "  ORDER BY appt_day, appt_time, family_name"
+              ].join(" "));
+          })
+        .then(
+          (stmt) =>
+          {
+            // If no distributions, there's nothing more to do
+            if (stmt === null)
+            {
+              return null;
+            }
+
+            return stmt.all( { $distribution : results.distribution } );
+          })
+        .then(
+          (result) =>
+          {
+            // Save the appointments for this distribution
+            results.appointments = result;
+
+            // Give 'em what they came for
+            callback(null, results);
+          })
+
+        .catch((e) =>
+          {
+            console.warn("Error in getDeliveryDay", e);
+            callback( { message : e.toString() } );
+          })
+
+        .finally(() => this._endTransaction());
+    },
+
+    /**
+     * Update (or remove) a USDA Signature
+     *
+     * @param args {Array}
+     *   args[0] {distribution}
+     *     The start date of the distribution period
+     *
+     *   args[1] {family_name}
+     *     The name of the family whose fulfillment status is to be updated
+     *
+     *   args[2] {signature|null}
+     *     The signature indicating eligibility, or null to indicate
+     *     not eligible
+     *
+     * @param callback {Function}
+     *   @signature(err, result)
+     */
+    _updateUsdaSignature(args, callback)
+    {
+      // TODO: move prepared statements to constructor
+      return Promise.resolve()
+        .then(() => this._beginTransaction())
+
+        .then(
+          () =>
+          {
+            // First, retrieve the most recent distribution start date
+            return this._db.prepare(
+              [
+                "UPDATE Fulfillment",
+                "  SET ",
+                "    usda_eligible_signature = $usda_eligible_signature, ",
+                "    is_usda_current = TRUE",
+                "  WHERE distribution = $distribution",
+                "    AND family_name = $family_name;"
+              ].join(" "));
+          })
+        .then(
+          (stmt) =>
+          {
+            return stmt.all(
+              {
+                $distribution            : args[0],
+                $family_name             : args[1],
+                $usda_eligible_signature : args[2]
+              });
+          })
+        .then(
+          (result) =>
+          {
+            // Give 'em what they came for
+            callback(null, null);
+          })
+
+        .catch((e) =>
+          {
+            console.warn("Error in updateUsdaSignature", e);
             callback( { message : e.toString() } );
           })
 

@@ -101,7 +101,7 @@ console.log("getDeliveryDay data:", result);
 
       tree = new qx.ui.tree.Tree().set(
         {
-          width: 1000
+          width: 1100
         });
       tree.addListener(
         "changeSelection",
@@ -211,6 +211,17 @@ console.log("getDeliveryDay data:", result);
 
       // Right-justify the rest
       treeItem.addWidget(new qx.ui.core.Spacer(), { flex: 1 });
+
+      data.id = ("00" + data.id).substr(-3);
+      o = new qx.ui.basic.Label(`#${data.id}`);
+      o.set(
+        {
+          width  : 70,
+          alignX : "right",
+          alignY : "middle",
+          font   : qx.bom.Font.fromString("bold 16px Arial")
+        });
+      treeItem.addWidget(o);
 
       // On leaves, add a checkbox for indicating it's been Fulfilled
       checkbox = new qx.ui.form.ToggleButton(

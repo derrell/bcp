@@ -482,11 +482,11 @@ qx.Class.define("bcp.client.Client",
                 implementation     : this._createAppointmentTab
               },
               {
-                requiredPermission : 30,
+                requiredPermission : 50,
                 implementation     : this._createDeliveryDayTab
               },
               {
-                requiredPermission : 50,
+                requiredPermission : 40,
                 implementation     : this._createUsdaSignatureTab
               },
               {
