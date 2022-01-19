@@ -46,6 +46,8 @@ qx.Class.define("bcp.server.Gui",
 
       [
         { route : "index.html",  path : `${path}index.html` },
+        { route : "bcp.client/index.js([\$]*)",
+          path  : `${path}bcp.client/index.js` },
         { route : "bcp.client",  path : `${path}bcp.client` },
         { route : "resource",    path : `${path}resource` },
         { route : "help",        path : `${path}help` },
