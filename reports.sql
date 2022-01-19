@@ -51,9 +51,7 @@ REPLACE INTO Report
            ELSE " (Small)"
          END AS "Family size",
        COALESCE(perishables, "") AS Perishables,
-       CASE (SELECT COUNT(*)
-               FROM FamilyMember fam
-               WHERE fam.family_name = c.family_name)
+       CASE (c.count_senior + c.count_adult + c.count_child)
          WHEN 1 THEN "$2,683"
          WHEN 2 THEN "$3,629"
          WHEN 3 THEN "$4,575"
@@ -65,6 +63,9 @@ REPLACE INTO Report
          WHEN 9 THEN "$10,250"
          WHEN 10 THEN "$11,196"
          WHEN 11 THEN "$12,142"
+         WHEN 12 THEN "$13,088"
+         WHEN 13 THEN "$14,034"
+         WHEN 14 THEN "$14,980"
          ELSE "See Taryn"
        END AS USDA,
        CASE c.usda_eligible
@@ -141,9 +142,7 @@ REPLACE INTO Report
            ELSE " (Small)"
          END AS "Family size",
        COALESCE(pet_types, "") AS Pets,
-       CASE (SELECT COUNT(*)
-               FROM FamilyMember fam
-               WHERE fam.family_name = c.family_name)
+       CASE (c.count_senior + c.count_adult + c.count_child)
          WHEN 1 THEN "$2,683"
          WHEN 2 THEN "$3,629"
          WHEN 3 THEN "$4,575"
@@ -155,6 +154,9 @@ REPLACE INTO Report
          WHEN 9 THEN "$10,250"
          WHEN 10 THEN "$11,196"
          WHEN 11 THEN "$12,142"
+         WHEN 12 THEN "$13,088"
+         WHEN 13 THEN "$14,034"
+         WHEN 14 THEN "$14,980"
          ELSE "See Taryn"
        END AS USDA,
        CASE c.usda_eligible
@@ -232,9 +234,7 @@ REPLACE INTO Report
          END AS "Family size",
        COALESCE(pet_types, "") AS Pets,
        COALESCE(phone, "") AS Phone,
-       CASE (SELECT COUNT(*)
-               FROM FamilyMember fam
-               WHERE fam.family_name = c.family_name)
+       CASE (c.count_senior + c.count_adult + c.count_child)
          WHEN 1 THEN "$2,683"
          WHEN 2 THEN "$3,629"
          WHEN 3 THEN "$4,575"
@@ -246,6 +246,9 @@ REPLACE INTO Report
          WHEN 9 THEN "$10,250"
          WHEN 10 THEN "$11,196"
          WHEN 11 THEN "$12,142"
+         WHEN 12 THEN "$13,088"
+         WHEN 13 THEN "$14,034"
+         WHEN 14 THEN "$14,980"
          ELSE "See Taryn"
        END AS USDA,
        CASE c.usda_eligible
@@ -380,9 +383,7 @@ REPLACE INTO Report
        c.count_adult AS "18-64",
        c.count_child AS "0-17",
        (c.count_senior + c.count_adult + c.count_child) AS "Total",
-       CASE (SELECT COUNT(*)
-               FROM FamilyMember fam
-               WHERE fam.family_name = c.family_name)
+       CASE (c.count_senior + c.count_adult + c.count_child)
          WHEN 1 THEN "$2,683"
          WHEN 2 THEN "$3,629"
          WHEN 3 THEN "$4,575"
@@ -394,6 +395,9 @@ REPLACE INTO Report
          WHEN 9 THEN "$10,250"
          WHEN 10 THEN "$11,196"
          WHEN 11 THEN "$12,142"
+         WHEN 12 THEN "$13,088"
+         WHEN 13 THEN "$14,034"
+         WHEN 14 THEN "$14,980"
          ELSE "See Taryn"
        END AS "USDA$",
        CASE c.usda_eligible
@@ -1142,9 +1146,7 @@ REPLACE INTO Report
              THEN " (Single)"
            ELSE " (Small)"
          END AS "Family size",
-       CASE (SELECT COUNT(*)
-               FROM FamilyMember fam
-               WHERE fam.family_name = c.family_name)
+       CASE (c.count_senior + c.count_adult + c.count_child)
          WHEN 1 THEN "$2,683"
          WHEN 2 THEN "$3,629"
          WHEN 3 THEN "$4,575"
@@ -1156,6 +1158,9 @@ REPLACE INTO Report
          WHEN 9 THEN "$10,250"
          WHEN 10 THEN "$11,196"
          WHEN 11 THEN "$12,142"
+         WHEN 12 THEN "$13,088"
+         WHEN 13 THEN "$14,034"
+         WHEN 14 THEN "$14,980"
          ELSE "See Taryn"
        END AS USDA,
        CASE c.usda_eligible
