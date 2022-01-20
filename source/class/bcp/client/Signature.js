@@ -13,7 +13,8 @@
  */
 qx.Class.define("bcp.client.Signature",
 {
-  extend     : qx.ui.container.Composite,
+  type      : "singleton",
+  extend    : qx.ui.container.Composite,
   include   : [ qx.ui.form.MForm ],
   implement : [ qx.ui.form.IForm, qx.ui.form.IField ],
 
@@ -146,6 +147,14 @@ qx.Class.define("bcp.client.Signature",
 
   members :
   {
-    _signaturePad : null
+    _signaturePad : null,
+
+    clear : function()
+    {
+      if (this._signaturePad)
+      {
+        this._signaturePad.clear();
+      }
+    }
   }
 });

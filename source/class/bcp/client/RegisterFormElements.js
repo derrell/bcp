@@ -36,7 +36,8 @@ qx.Class.define("bcp.client.RegisterFormElements",
       {
         initElement : function(fieldType, fieldData, key)
         {
-          let formElement = new bcp.client.Signature();
+          let formElement = bcp.client.Signature.getInstance();
+          formElement.clear();
           return formElement;
         },
 
