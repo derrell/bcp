@@ -555,6 +555,7 @@ qx.Mixin.define("bcp.client.MAppointment",
                   enabled    : false
                 },
 
+/*
                 is_usda_current :
                 {
                   type       : "CheckBox",
@@ -565,6 +566,7 @@ qx.Mixin.define("bcp.client.MAppointment",
                     marginLeft : 156
                   }
                 },
+*/
 
                 appointments :
                 {

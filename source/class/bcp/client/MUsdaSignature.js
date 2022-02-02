@@ -336,7 +336,9 @@ console.log("getUsdaSignature data:", result);
           this._usdaForm.set(
             {
               message          : this.bold(
-                "I affirm that my monthly income is no greater than $3."),
+                "I affirm that my monthly income is no greater than " +
+                  data.usda_amount +
+                  "."),
               labelColumnWidth : 150,
               formData         : formData,
               width            : rootSize.width,

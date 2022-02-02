@@ -404,6 +404,7 @@ qx.Class.define("bcp.server.Rpc",
                 "income_source",
                 "income_amount",
                 "usda_eligible",
+                "usda_eligible_next_distro",
                 "pet_types",
                 "address_default",
                 "appt_day_default",
@@ -540,6 +541,7 @@ qx.Class.define("bcp.server.Rpc",
             "    income_source = $income_source,",
             "    income_amount = $income_amount,",
             "    usda_eligible = $usda_eligible,",
+            "    usda_eligible_next_distro = $usda_eligible_next_distro,",
             "    pet_types = $pet_types,",
             "    address_default = $address_default,",
             "    appt_day_default = $appt_day_default,",
@@ -576,6 +578,7 @@ qx.Class.define("bcp.server.Rpc",
             "    income_source,",
             "    income_amount,",
             "    usda_eligible,",
+            "    usda_eligible_next_distro,",
             "    pet_types,",
             "    address_default,",
             "    appt_day_default,",
@@ -599,7 +602,7 @@ qx.Class.define("bcp.server.Rpc",
             "    $perishables_default,",
             "    $income_source,",
             "    $income_amount,",
-            "    $usda_eligible,",
+            "    $usda_eligible_next_distro,",
             "    $pet_types,",
             "    $address_default,",
             "    $appt_day_default,",
@@ -619,27 +622,28 @@ qx.Class.define("bcp.server.Rpc",
         .then(stmt => stmt.run(
           Object.assign(
             {
-              $family_name         : clientInfo.family_name,
-              $phone               : clientInfo.phone,
-              $email               : clientInfo.email,
-              $ethnicity           : clientInfo.ethnicity,
-              $count_senior        : clientInfo.count_senior,
-              $count_adult         : clientInfo.count_adult,
-              $count_child         : clientInfo.count_child,
-              $count_sex_male      : clientInfo.count_sex_male,
-              $count_sex_female    : clientInfo.count_sex_female,
-              $count_sex_other     : clientInfo.count_sex_other,
-              $count_veteran       : clientInfo.count_veteran,
-              $notes_default       : clientInfo.notes_default,
-              $perishables_default : clientInfo.perishables_default,
-              $income_source       : clientInfo.income_source,
-              $income_amount       : clientInfo.income_amount,
-              $usda_eligible       : clientInfo.usda_eligible,
-              $pet_types           : clientInfo.pet_types,
-              $address_default     : clientInfo.address_default,
-              $appt_day_default    : clientInfo.appt_day_default,
-              $appt_time_default   : clientInfo.appt_time_default,
-              $verified            : clientInfo.verified
+              $family_name               : clientInfo.family_name,
+              $phone                     : clientInfo.phone,
+              $email                     : clientInfo.email,
+              $ethnicity                 : clientInfo.ethnicity,
+              $count_senior              : clientInfo.count_senior,
+              $count_adult               : clientInfo.count_adult,
+              $count_child               : clientInfo.count_child,
+              $count_sex_male            : clientInfo.count_sex_male,
+              $count_sex_female          : clientInfo.count_sex_female,
+              $count_sex_other           : clientInfo.count_sex_other,
+              $count_veteran             : clientInfo.count_veteran,
+              $notes_default             : clientInfo.notes_default,
+              $perishables_default       : clientInfo.perishables_default,
+              $income_source             : clientInfo.income_source,
+              $income_amount             : clientInfo.income_amount,
+              $usda_eligible             : clientInfo.usda_eligible,
+              $usda_eligible_next_distro : clientInfo.usda_eligible_next_distro,
+              $pet_types                 : clientInfo.pet_types,
+              $address_default           : clientInfo.address_default,
+              $appt_day_default          : clientInfo.appt_day_default,
+              $appt_time_default         : clientInfo.appt_time_default,
+              $verified                  : clientInfo.verified
             },
             addlArgs)))
 
@@ -715,6 +719,144 @@ qx.Class.define("bcp.server.Rpc",
               });
 
             return Promise.all(promises);
+          })
+
+        // Add a Fulfillment record if none exists, if client override
+        // of USDA eligibility is specified. Conversely, if client
+        // does not override USDA eligibility, ensure there is no
+        // previously-added (for override) Fulfillment record.
+        .then(
+          () =>
+          {
+            let             distribution;
+
+            return Promise.resolve()
+
+              // Obtain the current distribution start date
+              .then(
+                () =>
+                {
+                  return this._db.prepare(
+                    "SELECT MAX(start_date) AS distribution" +
+                    "  FROM DistributionPeriod;");
+                })
+
+              .then((stmt) => stmt.all({}))
+
+              .then(
+                (result) =>
+                {
+                  distribution = result[0].distribution;
+                })
+
+              // Add or delete an override Fulfillment record
+              .then(
+                () =>
+                {
+                  // An "X" image, created with:
+                  // convert .../qxl.dialog.git/source/resource/qxl/dialog/icon/IcoMoonFree/272-cross.svg /tmp/cross.png && echo "data:image/png;base64,$(base64 /tmp/cross.png | tr -d '\r\n')"
+                  let             signatureRequired =
+                      "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQEAAAAABqCHz+AAAABGdBTUEAALGPC/xhBQAAACBjSFJNAAB6JgAAgIQAAPoAAACA6AAAdTAAAOpgAAA6mAAAF3CculE8AAAAAmJLR0T//xSrMc0AAAAHdElNRQfmAgIRFSIjMadjAAAAZElEQVQoz42RMQ7AMAgDb2WO8v+Rv/EGJHeoIiWkEmUzdoINSJLnHGE6KmwOTwnJEwB2Sdjb82TRu2TRAMyxAcIKDQVemOtFlV8zy0A+bB2WqcFqon8/NB6aFO0e2k1KzS26az7wGpoGwJEuPQAAACV0RVh0ZGF0ZTpjcmVhdGUAMjAyMi0wMi0wMlQxNzoyMTozNCswMDowMPzKmsEAAAAldEVYdGRhdGU6bW9kaWZ5ADIwMjItMDItMDJUMTc6MjE6MzQrMDA6MDCNlyJ9AAAAJXRFWHRzdmc6Y29tbWVudAAgR2VuZXJhdGVkIGJ5IEljb01vb24uaW8gMMvLSAAAAABJRU5ErkJggg==";
+
+                  // But if this is a new database with no
+                  // distirbutions yet, we have nothing to do here.
+                  if (! distribution)
+                  {
+                    return null;
+                  }
+
+                  // If we're overriding USDA eligibility for next distro...
+                  if (clientInfo.usda_eligible_next_distro)
+                  {
+                    // ... then ensure there's a Fulfillment record.
+                    // If not, add one with is_usda_current = 1 which
+                    // says that it's automatically added for override
+                    // purposes.
+                    return Promise.resolve()
+                      .then(
+                        () =>
+                        {
+                          return this._db.prepare(
+                          [
+                            "INSERT INTO Fulfillment",
+                            "  (",
+                            "    distribution,",
+                            "    family_name,",
+                            "    appt_day,",
+                            "    appt_time,",
+                            "    notes,",
+                            "    perishables,",
+                            "    fulfilled,",
+                            "    fulfillment_time,",
+                            "    usda_eligible_signature,",
+                            "    is_usda_current",
+                            "  )",
+                            "  VALUES",
+                            "  (",
+                            "    $distribution,",
+                            "    $family_name,",
+                            "    $appt_day,",
+                            "    $appt_time,",
+                            "    $notes,",
+                            "    $perishables,",
+                            "    $fulfilled,",
+                            "    $fulfillment_time,",
+                            "    $signature,",
+                            "    $is_usda_current",
+                            "  )",
+                            "  ON CONFLICT(distribution, family_name)",
+                            "    DO UPDATE SET ",
+                            "      usda_eligible_signature = $signature,",
+                            "      is_usda_current = $is_usda_current;"
+                          ].join(" "));
+                        })
+
+                      .then(
+                        (stmt) =>
+                        {
+                          return stmt.run(
+                            {
+                              $distribution      : distribution,
+                              $family_name       : clientInfo.family_name,
+                              $appt_day          : null,
+                              $appt_time         : null,
+                              $notes             : '',
+                              $perishables       : '',
+                              $fulfilled         : 0,
+                              $fulfillment_time  : null,
+                              $is_usda_current   : 1,    // is client override
+                              $signature         : signatureRequired
+                            });
+                      });
+                  }
+                  else
+                  {
+                    // Otherwise, ensure there's no
+                    // automatically-added Fulfillment record
+                    return Promise.resolve()
+                      .then(
+                        () =>
+                        {
+                          return this._db.prepare(
+                          [
+                            "DELETE FROM Fulfillment",
+                            "  WHERE distribution = $distribution",
+                            "    AND family_name = $family_name",
+                            "    AND is_usda_current;"
+                          ]);
+                        })
+
+                      .then(
+                        (stmt) =>
+                        {
+                          return stmt.run(
+                            {
+                                $distribution      : distribution,
+                                $family_name       : clientInfo.family_name,
+                            });
+                        });
+                  }
+                });
           })
 
         // Give 'em what they came for!
@@ -966,9 +1108,11 @@ qx.Class.define("bcp.server.Rpc",
                 "      WHEN 9 THEN '$10,250' ",
                 "      WHEN 10 THEN '$11,196' ",
                 "      WHEN 11 THEN '$12,142' ",
+                "      WHEN 12 THEN '$13,088' ",
+                "      WHEN 13 THEN '$14,034' ",
+                "      WHEN 14 THEN '$14,980' ",
                 "      ELSE 'See Taryn' ",
-                "    END AS usda_amount, ",
-                "    f.is_usda_current AS is_usda_current",
+                "    END AS usda_amount",
                 "  FROM Fulfillment f",
                 "  WHERE f.family_name = $family_name",
                 "    AND distribution = $distribution;"
@@ -1076,7 +1220,7 @@ qx.Class.define("bcp.server.Rpc",
             $perishables       : fulfillmentInfo.perishables,
             $fulfilled         : fulfillmentInfo.fulfilled,
             $fulfillment_time  : fulfillmentInfo.fulfillment_time,
-            $is_usda_current   : fulfillmentInfo.is_usda_current
+            $is_usda_current   : 0     // only true for client override
           }))
 
         .then(
@@ -1240,13 +1384,16 @@ qx.Class.define("bcp.server.Rpc",
      */
     _saveDistribution(args, callback)
     {
-      let             prepare;
+      let             preparedInsertOrUpdate;
+      let             prepareUsda = null;
+      let             prepareUsdaClearNextDistro = null;
+      let             priorDistribution = null;
       const           distroInfo = args[0];
       const           bNew = args[1];
 
       if (! bNew)
       {
-        prepare = this._db.prepare(
+        preparedInsertOrUpdate = this._db.prepare(
           [
             "UPDATE DistributionPeriod",
             "  SET ",
@@ -1277,7 +1424,7 @@ qx.Class.define("bcp.server.Rpc",
       else
       {
         // This is a new entry
-        prepare = this._db.prepare(
+        preparedInsertOrUpdate = this._db.prepare(
           [
             "INSERT INTO DistributionPeriod",
             "  (",
@@ -1330,20 +1477,79 @@ qx.Class.define("bcp.server.Rpc",
             "    $day_7_last_appt",
             "  );"
           ].join(" "));
+
+        prepareUsda = this._db.prepare(
+          [
+            "UPDATE Client AS c",
+            "  SET usda_eligible=",
+            "    (CASE",
+            "       WHEN c.usda_eligible_next_distro IS NOT NULL",
+            "         THEN c.usda_eligible_next_distro",
+            "       WHEN f.usda_eligible_signature IS NOT NULL",
+            "         THEN 'yes' ",
+            "       ELSE 'no'",
+            "     END)",
+            "  FROM Fulfillment AS f",
+            "  WHERE",
+            "   c.usda_eligible_next_distro IS NOT NULL",
+            "   OR",
+            "   (    f.distribution = $distribution",
+            "    AND f.family_name = c.family_name",
+            "    AND (f.fulfilled OR f.usda_eligible_signature IS NOT NULL));"
+          ]);
+
+        prepareUsdaClearNextDistro = this._db.prepare(
+          [
+            "UPDATE Client",
+            "  SET usda_eligible_next_distro = NULL;"
+          ]);
       }
 
       // TODO: move prepared statements to constructor
       return Promise.resolve()
         .then(() => this._beginTransaction())
 
+        // If we're creating a new distribution period, find out the
+        // prior distribution start date
         .then(
           () =>
           {
-            return prepare;
+            if (prepareUsda)    // only non-null if creating new distribution
+            {
+              return this._db .prepare(
+                "SELECT MAX(start_date) FROM DistributionPeriod AS distro");
+            }
+            else
+            {
+              return this._db.prepare(
+                "SELECT NULL AS distro;");
+            }
           })
+
+        .then(
+          (stmt) =>
+          {
+            return stmt.all({});
+          })
+
+        .then(
+          (result) =>
+          {
+            if (result.length > 0)
+            {
+              priorDistribution = result[0].distro;
+            }
+          })
+
+        .then(
+          () =>
+          {
+            return preparedInsertOrUpdate;
+          })
+
         .then(stmt => stmt.run(
           {
-            $start_date : distroInfo.start_date,
+            $start_date       : distroInfo.start_date,
             $day_1_date       : distroInfo.day_1_date || '',
             $day_2_date       : distroInfo.day_2_date || '',
             $day_3_date       : distroInfo.day_3_date || '',
@@ -1368,7 +1574,7 @@ qx.Class.define("bcp.server.Rpc",
           }))
 
         .then(
-          function (result)
+          (result) =>
           {
             // Ensure that a request to edit actually edited something
             if (! bNew && result.changes != 1)
@@ -1376,11 +1582,45 @@ qx.Class.define("bcp.server.Rpc",
               throw new Error("Edit did not find a row to modify");
             }
 
-            return result;
+            return null;
+          })
+
+        // Update the usda_eligible field of the client, for the
+        // upcoming distribution if this is a new distribution being
+        // created
+        .then(
+          () =>
+          {
+            // prepareUsda is only non-null for a new distribution creation.
+            // priorDistribution is non-null except creating 1st distribution.
+            if (prepareUsda && priorDistribution)
+            {
+              console.log("Updating USDA eligibility");
+              return prepareUsda.run(
+                {
+                  $distribution : priorDistribution
+                });
+            }
+
+            return null;
+          })
+
+        .then(
+          () =>
+          {
+            // prepareUsdaClearNextDistro is only non-null for a new
+            // distribution creation.
+            if (prepareUsdaClearNextDistro)
+            {
+              console.log("Clearing USDA next-distro overrides");
+              return prepareUsdaClearNextDistro.run({});
+            }
+
+            return null;
           })
 
         // Give 'em what they came for!
-        .then((result) => callback(null, null))
+        .then(() => callback(null, null))
 
         .catch((e) =>
           {
@@ -1956,6 +2196,9 @@ qx.Class.define("bcp.server.Rpc",
                 "      WHEN 9 THEN '$10,250' ",
                 "      WHEN 10 THEN '$11,196' ",
                 "      WHEN 11 THEN '$12,142' ",
+                "      WHEN 12 THEN '$13,088' ",
+                "      WHEN 13 THEN '$14,034' ",
+                "      WHEN 14 THEN '$14,980' ",
                 "      ELSE 'See Taryn' ",
                 "    END AS usda_amount, ",
                 "    f.usda_eligible_signature AS usda_eligible_signature,",
@@ -2036,7 +2279,7 @@ qx.Class.define("bcp.server.Rpc",
                 "UPDATE Fulfillment",
                 "  SET ",
                 "    usda_eligible_signature = $usda_eligible_signature, ",
-                "    is_usda_current = TRUE",
+                "    is_usda_current = FALSE", // only true for client override
                 "  WHERE distribution = $distribution",
                 "    AND family_name = $family_name;"
               ].join(" "));
