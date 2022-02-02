@@ -80,7 +80,8 @@
       "class": "bcp.client.Client",
       "theme": "bcp.client.theme.Theme",
       "name": "bcp.client",
-      "type": "browser"
+      "type": "browser",
+      "bootPath": "source/boot"
     },
     {
       "class": "bcp.server.Server",
