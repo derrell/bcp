@@ -9,5 +9,6 @@ clientlist.json
 pantry.db
 pantry.db.old
 pantry.db.sav
+pantry.db.new-orig
 users.sql
 sessions
