@@ -754,9 +754,9 @@ qx.Class.define("bcp.server.Rpc",
                 () =>
                 {
                   // An "X" image, created with:
-                  // convert .../qxl.dialog.git/source/resource/qxl/dialog/icon/IcoMoonFree/272-cross.svg /tmp/cross.png && echo "data:image/png;base64,$(base64 /tmp/cross.png | tr -d '\r\n')"
+                  // echo "data:image/png;base64,$(base64 source/resource/bcp/client/cross.png | tr -d '\r\n')"
                   let             signatureRequired =
-                      "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQEAAAAABqCHz+AAAABGdBTUEAALGPC/xhBQAAACBjSFJNAAB6JgAAgIQAAPoAAACA6AAAdTAAAOpgAAA6mAAAF3CculE8AAAAAmJLR0T//xSrMc0AAAAHdElNRQfmAgIRFSIjMadjAAAAZElEQVQoz42RMQ7AMAgDb2WO8v+Rv/EGJHeoIiWkEmUzdoINSJLnHGE6KmwOTwnJEwB2Sdjb82TRu2TRAMyxAcIKDQVemOtFlV8zy0A+bB2WqcFqon8/NB6aFO0e2k1KzS26az7wGpoGwJEuPQAAACV0RVh0ZGF0ZTpjcmVhdGUAMjAyMi0wMi0wMlQxNzoyMTozNCswMDowMPzKmsEAAAAldEVYdGRhdGU6bW9kaWZ5ADIwMjItMDItMDJUMTc6MjE6MzQrMDA6MDCNlyJ9AAAAJXRFWHRzdmc6Y29tbWVudAAgR2VuZXJhdGVkIGJ5IEljb01vb24uaW8gMMvLSAAAAABJRU5ErkJggg==";
+                      "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAB4AAAAeCAYAAAA7MK6iAAAACXBIWXMAAA3XAAAN1wFCKJt4AAAAB3RJTUUH5gIDDhEZWZAIawAAAJpJREFUSMfNl80OgCAMg9u9/zvjxYvGABtd6i4kyPqZyX4ETMZ7HR97answYnGgAwoAiN2DSug7rGPxXAXll7ASPtVi1kEBnQmewLd8eSpQ9ZEJZV+UotClo6P4bqX7wNNCUNVUpElJj6LCkNYKd1v8dagtl8uSTpYCYimZliZhaYuWQcAy+liGvQ7oFB7C5pHKnGiGdv8W5e0C2k4tIsqHIKsAAAAASUVORK5CYII=";
 
                   // But if this is a new database with no
                   // distirbutions yet, we have nothing to do here.
@@ -769,7 +769,7 @@ qx.Class.define("bcp.server.Rpc",
                   if (clientInfo.usda_eligible_next_distro)
                   {
                     // ... then ensure there's a Fulfillment record.
-                    // If not, add one with is_usda_current = 1 which
+                    // If not, add one with is_usda_only = 1 which
                     // says that it's automatically added for override
                     // purposes.
                     return Promise.resolve()
@@ -789,7 +789,7 @@ qx.Class.define("bcp.server.Rpc",
                             "    fulfilled,",
                             "    fulfillment_time,",
                             "    usda_eligible_signature,",
-                            "    is_usda_current",
+                            "    is_usda_only",
                             "  )",
                             "  VALUES",
                             "  (",
@@ -802,37 +802,40 @@ qx.Class.define("bcp.server.Rpc",
                             "    $fulfilled,",
                             "    $fulfillment_time,",
                             "    $signature,",
-                            "    $is_usda_current",
+                            "    $is_usda_only",
                             "  )",
                             "  ON CONFLICT(distribution, family_name)",
                             "    DO UPDATE SET ",
-                            "      usda_eligible_signature = $signature,",
-                            "      is_usda_current = $is_usda_current;"
+                            "      usda_eligible_signature = $signature;",
                           ].join(" "));
                         })
 
                       .then(
                         (stmt) =>
                         {
+                          let override = clientInfo.usda_eligible_next_distro;
                           return stmt.run(
-                            {
-                              $distribution      : distribution,
-                              $family_name       : clientInfo.family_name,
-                              $appt_day          : null,
-                              $appt_time         : null,
-                              $notes             : '',
-                              $perishables       : '',
-                              $fulfilled         : 0,
-                              $fulfillment_time  : null,
-                              $is_usda_current   : 1,    // is client override
-                              $signature         : signatureRequired
-                            });
+                          {
+                            $distribution      : distribution,
+                            $family_name       : clientInfo.family_name,
+                            $appt_day          : null,
+                            $appt_time         : null,
+                            $notes             : '',
+                            $perishables       : '',
+                            $fulfilled         : 0,
+                            $fulfillment_time  : null,
+                            $is_usda_only      : 1,    // is auto added
+                            $signature         : (override == "yes"
+                                                  ? signatureRequired
+                                                  : null)
+                          });
                       });
                   }
                   else
                   {
-                    // Otherwise, ensure there's no
-                    // automatically-added Fulfillment record
+                    // Otherwise, ensure there's no automatically
+                    // added Fulfillment record, and if a Fulfillment
+                    // record remains, remove its signature.
                     return Promise.resolve()
                       .then(
                         () =>
@@ -842,8 +845,30 @@ qx.Class.define("bcp.server.Rpc",
                             "DELETE FROM Fulfillment",
                             "  WHERE distribution = $distribution",
                             "    AND family_name = $family_name",
-                            "    AND is_usda_current;"
-                          ]);
+                            "    AND is_usda_only;"
+                          ].join(""));
+                        })
+
+                      .then(
+                        (stmt) =>
+                        {
+                          return stmt.run(
+                            {
+                                $distribution      : distribution,
+                                $family_name       : clientInfo.family_name,
+                            });
+                        })
+
+                      .then(
+                        () =>
+                        {
+                          return this._db.prepare(
+                            [
+                              "UPDATE Fulfillment",
+                              "  SET usda_eligible_signature = NULL",
+                              "  WHERE distribution = $distribution",
+                              "    AND family_name = $family_name;"
+                            ].join(""));
                         })
 
                       .then(
@@ -1182,9 +1207,14 @@ qx.Class.define("bcp.server.Rpc",
         .then(
           () =>
           {
+            // We need to be careful here. We can't use our typical
+            // INSERT OR REPLACE because there could be an existing
+            // USDA override record there with a signature. Instead,
+            // we'll try to insert and if it fails, handle it in a
+            // conflict clause.
             return this._db.prepare(
               [
-                "INSERT OR REPLACE INTO Fulfillment",
+                "INSERT INTO Fulfillment",
                 "  (",
                 "    distribution,",
                 "    family_name,",
@@ -1194,7 +1224,7 @@ qx.Class.define("bcp.server.Rpc",
                 "    perishables,",
                 "    fulfilled,",
                 "    fulfillment_time,",
-                "    is_usda_current",
+                "    is_usda_only",
                 "  )",
                 "  VALUES",
                 "  (",
@@ -1206,8 +1236,17 @@ qx.Class.define("bcp.server.Rpc",
                 "    $perishables,",
                 "    $fulfilled,",
                 "    $fulfillment_time,",
-                "    $is_usda_current",
-                "  );"
+                "    $is_usda_only",
+                "  )",
+                "  ON CONFLICT(distribution, family_name)",
+                "    DO UPDATE SET ",
+                "      appt_day = $appt_day,",
+                "      appt_time = $appt_time,",
+                "      notes = $notes,",
+                "      perishables = $perishables,",
+                "      fulfilled = $fulfilled,",
+                "      fulfillment_time = $fulfillment_time,",
+                "      is_usda_only = $is_usda_only;"
               ].join(" "));
           })
         .then(stmt => stmt.run(
@@ -1220,7 +1259,7 @@ qx.Class.define("bcp.server.Rpc",
             $perishables       : fulfillmentInfo.perishables,
             $fulfilled         : fulfillmentInfo.fulfilled,
             $fulfillment_time  : fulfillmentInfo.fulfillment_time,
-            $is_usda_current   : 0     // only true for client override
+            $is_usda_only      : 0
           }))
 
         .then(
@@ -2279,7 +2318,7 @@ qx.Class.define("bcp.server.Rpc",
                 "UPDATE Fulfillment",
                 "  SET ",
                 "    usda_eligible_signature = $usda_eligible_signature, ",
-                "    is_usda_current = FALSE", // only true for client override
+                "    is_usda_only = FALSE",
                 "  WHERE distribution = $distribution",
                 "    AND family_name = $family_name;"
               ].join(" "));
