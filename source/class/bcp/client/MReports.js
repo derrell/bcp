@@ -527,12 +527,31 @@ qx.Mixin.define("bcp.client.MReports",
                           if (heading == "Signature" &&
                               row[heading].length > 0)
                           {
-                            row[heading] = `<img src='${row[heading]}'/>`;
-                          }
+                            row[heading] =
+                              [
+                                `<img src='${row[heading]}'`,
+                                "  style='",
+                                "    max-height: 30px;",
+                                "    height: 30px;",
+                                "    width: auto;",
+                                "  '",
+                                "/>"
+                              ].join(" ");
 
-                          // Write this column's data
-                          this._reportWin.document.write(
-                            `<td>${row[heading]}</td>`);
+                            // Write this column's data ensuring adequate width
+                            this._reportWin.document.write(
+                              [
+                                "<td style='width: 400px;'>",
+                                `${row[heading]}`,
+                                "</td>"
+                              ].join(" "));
+                          }
+                          else
+                          {
+                            // Non-signature column. Automatic width.
+                            this._reportWin.document.write(
+                              `<td>${row[heading]}</td>`);
+                          }
                         });
 
                       // That's the end of this row
