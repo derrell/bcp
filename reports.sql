@@ -1517,3 +1517,71 @@ REPLACE INTO Report
   '
 );
 
+REPLACE INTO Report
+(
+  name,
+  description,
+  landscape,
+  input_fields,
+  subtitle_field,
+  separate_by,
+  pre_query,
+  query
+)
+ VALUES
+(
+  'USDA signatures',
+  'USDA signatures provided during a distribution, for following distribution',
+  1,
+  '{
+     "$distribution" :
+     {
+       "type"  : "SelectBox",
+       "label" : "Closing Distribution Date"
+     }
+   }',
+  '$distribution',
+  '',
+  '
+   INSERT INTO StoredProc_UpdateAge
+       (birthday, asOf, family_name, member_name)
+     SELECT
+         date_of_birth,
+         (SELECT MAX(start_date) FROM DistributionPeriod),
+         family_name,
+         member_name
+       FROM FamilyMember;
+  ',
+  '
+   SELECT
+       c.family_name AS "Family name",
+       c.count_senior + c.count_adult + c.count_child AS "Family size",
+       c.count_senior AS Seniors,
+       c.count_adult AS Adults,
+       c.count_child AS Children,
+       CASE (c.count_senior + c.count_adult + c.count_child)
+         WHEN 1 THEN "$2,683"
+         WHEN 2 THEN "$3,629"
+         WHEN 3 THEN "$4,575"
+         WHEN 4 THEN "$5,521"
+         WHEN 5 THEN "$6,467"
+         WHEN 6 THEN "$7,413"
+         WHEN 7 THEN "$8,358"
+         WHEN 8 THEN "$9,304"
+         WHEN 9 THEN "$10,250"
+         WHEN 10 THEN "$11,196"
+         WHEN 11 THEN "$12,142"
+         WHEN 12 THEN "$13,088"
+         WHEN 13 THEN "$14,034"
+         WHEN 14 THEN "$14,980"
+         ELSE "See Taryn"
+       END AS "Income does not exceed",
+       f.usda_eligible_signature AS Signature
+     FROM Client c
+     LEFT JOIN Fulfillment f
+       ON f.family_name = c.family_name
+     WHERE f.distribution = $distribution
+       AND f.usda_eligible_signature IS NOT NULL
+     ORDER BY c.family_name;
+   '
+);
