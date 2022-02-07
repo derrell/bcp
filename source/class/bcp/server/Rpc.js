@@ -1535,13 +1535,13 @@ qx.Class.define("bcp.server.Rpc",
             "   (    f.distribution = $distribution",
             "    AND f.family_name = c.family_name",
             "    AND (f.fulfilled OR f.usda_eligible_signature IS NOT NULL));"
-          ]);
+          ].join(""));
 
         prepareUsdaClearNextDistro = this._db.prepare(
           [
             "UPDATE Client",
             "  SET usda_eligible_next_distro = NULL;"
-          ]);
+          ].join(""));
       }
 
       // TODO: move prepared statements to constructor
@@ -1556,7 +1556,7 @@ qx.Class.define("bcp.server.Rpc",
             if (prepareUsda)    // only non-null if creating new distribution
             {
               return this._db .prepare(
-                "SELECT MAX(start_date) FROM DistributionPeriod AS distro");
+                "SELECT MAX(start_date) AS distro FROM DistributionPeriod");
             }
             else
             {
@@ -1635,10 +1635,11 @@ qx.Class.define("bcp.server.Rpc",
             if (prepareUsda && priorDistribution)
             {
               console.log("Updating USDA eligibility");
-              return prepareUsda.run(
-                {
-                  $distribution : priorDistribution
-                });
+              return prepareUsda
+                .then((stmt) => stmt.run(
+                  {
+                    $distribution : priorDistribution
+                  }));
             }
 
             return null;
@@ -1652,7 +1653,8 @@ qx.Class.define("bcp.server.Rpc",
             if (prepareUsdaClearNextDistro)
             {
               console.log("Clearing USDA next-distro overrides");
-              return prepareUsdaClearNextDistro.run({});
+              return prepareUsdaClearNextDistro
+                .then((stmt) => stmt.run({}));
             }
 
             return null;
@@ -2253,6 +2255,7 @@ qx.Class.define("bcp.server.Rpc",
                 "    AND dp.start_date = $distribution",
                 "    AND c.family_name = f.family_name",
                 "    AND cid.family_name = f.family_name",
+                "    AND NOT f.is_usda_only",
                 "  ORDER BY appt_day, appt_time, family_name"
               ].join(" "));
           })

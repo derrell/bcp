@@ -11,6 +11,10 @@
  * Authors:
  *   * Derrell Lipman (derrell)
  */
+
+/**
+ * @asset(script/signature_pad.umd.js)
+ */
 qx.Class.define("bcp.client.Signature",
 {
   type      : "singleton",
@@ -44,8 +48,8 @@ qx.Class.define("bcp.client.Signature",
     canvas.set(
       {
         backgroundColor: "#cccccc",
-        height        : 400,
-        canvasHeight  : 400,
+        height        : 300,
+        canvasHeight  : 300,
 //        canvasWidth   : 200,
         syncDimension : true,
         decorator     : border

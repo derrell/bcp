@@ -359,7 +359,7 @@ qx.Mixin.define("bcp.client.MDistribution",
           let             date;
 
           // Get the distribution start date
-          date = new Date(startDate);
+          date = new Date(startDate + " 12:00:00");
 
           // Assume days are sequential, and get the date for each day
           date = new Date(date.getTime() + ((i - 1) * oneDay));

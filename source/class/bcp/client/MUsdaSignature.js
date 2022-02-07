@@ -64,7 +64,6 @@ qx.Mixin.define("bcp.client.MUsdaSignature",
             .then(
               (result) =>
               {
-console.log("getUsdaSignature data:", result);
                 if (! result || result.appointments.length === 0)
                 {
                   qxl.dialog.Dialog.alert("No appointments scheduled");
@@ -546,6 +545,9 @@ console.log("getUsdaSignature data:", result);
           value   : "PIN",
           enabled : false
         });
+
+      // Password is a PIN (numeric). Show only number keypad on mobile device
+      loginWidget._password.getContentElement().setAttribute("type", "number");
 
       loginWidget.addListener(
         "appear",

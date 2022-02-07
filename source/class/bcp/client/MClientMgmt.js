@@ -447,7 +447,6 @@ qx.Mixin.define("bcp.client.MClientMgmt",
                 this._mungeClient(client);
                 return client;
               });
-console.log("client list:", result);
             this._tm.setDataAsMapArray(result, true);
 
             // Sort initially by the Family column
