@@ -193,6 +193,7 @@ CREATE TABLE KeyValueStore
   value             VARCHAR
 );
 
+-- REPLACE INTO KeyValueStore (key, value) VALUES ('greeterPin', "111222");
 
 --
 -- "Stored Procedures"

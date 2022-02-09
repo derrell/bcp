@@ -86,10 +86,10 @@ qx.Class.define("bcp.server.WebSocket",
           let             session;
           let             userTimer;
           let             pingTimer;
+          let             greeterPin = "321";
           const           now = (new Date()).getTime();
           const           { userId, username } = req.session;
-          const           stampedUsername =
-            username + "#" + now;
+          const           stampedUsername = username + "#" + now;
 
           // Keep track of this user and his websocket
           this._userWsMap[stampedUsername] =
@@ -159,12 +159,17 @@ qx.Class.define("bcp.server.WebSocket",
             30000);
 
           // If there's a message of the day, send it
-          db.prepare(
-            [
-              "SELECT value",
-              "  FROM KeyValueStore",
-              "  WHERE key = 'motd';"
-            ].join(" "))
+          Promise.resolve()
+            .then(
+              () =>
+              {
+                return db.prepare(
+                  [
+                    "SELECT value",
+                    "  FROM KeyValueStore",
+                    "  WHERE key = 'greeterPin';"
+                  ].join(" "));
+              })
             .then(
               (stmt) =>
               {
@@ -175,11 +180,42 @@ qx.Class.define("bcp.server.WebSocket",
               {
                 if (result.length > 0 && result[0].value.trim().length > 0)
                 {
+                  greeterPin = result[0].value.trim();
+                }
+              })
+            .then(
+              () =>
+              {
+                return db.prepare(
+                  [
+                    "SELECT value",
+                    "  FROM KeyValueStore",
+                    "  WHERE key = 'motd';"
+                  ].join(" "));
+              })
+            .then(
+              (stmt) =>
+              {
+                return stmt.all({});
+              })
+            .then(
+              (result) =>
+              {
+                let             motd;
+
+                if (result.length > 0 && result[0].value.trim().length > 0)
+                {
+                  motd = result[0].value.trim();
+                }
+
+                // If either motd or greeterPin is available, send config msg
+                if (motd || greeterPin)
+                {
                   ws.send(
                     JSON.stringify(
                       {
-                        messageType : "motd",
-                        data        : result[0].value
+                        messageType : "config",
+                        data        : { motd, greeterPin }
                       }));
                 }
               })

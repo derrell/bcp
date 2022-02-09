@@ -533,7 +533,7 @@ qx.Mixin.define("bcp.client.MUsdaSignature",
       loginWidget = new qxl.dialog.Login(
         {
           text                  : "Please provide PIN to continue",
-          checkCredentials      : this.loginCheckCredentials,
+          checkCredentials      : this.loginCheckCredentials.bind(this),
           callback              : callback,
           showForgotPassword    : false,
           caption               : caption
@@ -577,7 +577,7 @@ qx.Mixin.define("bcp.client.MUsdaSignature",
      */
     loginCheckCredentials : function(username, password, callback)
     {
-      if (username === "PIN" && password === "1234")
+      if (username === "PIN" && password === this._greeterPin)
       {
         callback(null, username);
       }

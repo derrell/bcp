@@ -38,6 +38,7 @@ qx.Class.define("bcp.client.Client",
     _me             : null,
     _tabView        : null,
     _mostRecentMotd : "",
+    _greeterPin     : "",
 
     /**
      * @ignore(WebSocket)
@@ -339,8 +340,6 @@ qx.Class.define("bcp.client.Client",
               let             listItem;
               let             wsMessage = JSON.parse(e.data);
 
-              console.log(JSON.stringify(wsMessage));
-
               if (! ("messageType" in wsMessage))
               {
                 return;
@@ -382,10 +381,12 @@ qx.Class.define("bcp.client.Client",
                   });
                 break;
 
-              case "motd" :
-                // Save this most recent message of the day, and set color
-                this._mostRecentMotd = wsMessage.data;
+              case "config" :
+                // Save this most recent message of the day and greeter PIN
+                this._mostRecentMotd = wsMessage.data.motd;
+                this._greeterPin = wsMessage.data.greeterPin;
 
+                // Set color of message of the day
                 color = "red";
                 text =
                   [
