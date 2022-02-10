@@ -64,6 +64,8 @@ qx.Class.define("bcp.client.Client",
       let             userList;
       let             createWebSocket;
       let             ws;
+      const           identity =
+            "Billerica Community Pantry<br>Management Console";
 
       this.base(arguments);
 
@@ -102,13 +104,16 @@ qx.Class.define("bcp.client.Client",
       header.add(new qx.ui.core.Spacer(), { flex : 1 });
 
       label = new qx.ui.basic.Label(
-        "Billerica Community Pantry<br>Management Console");
+        location.port == 3000
+          ? identity
+          : `${identity}<br>(Test Server)`);
       label.set(
         {
           paddingTop : 20,
           font       : "header",
           rich       : true,
-          textAlign  : "center"
+          textAlign  : "center",
+          textColor  : location.port == 3000 ? "black" : "red"
         });
       header.add(label);
 
