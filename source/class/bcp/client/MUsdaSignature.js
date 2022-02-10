@@ -289,7 +289,33 @@ qx.Mixin.define("bcp.client.MUsdaSignature",
         () =>
         {
           // Create the form for obtaining a signature
-          this._usdaForm = new qxl.dialog.Form({});
+          this._usdaForm = new qxl.dialog.Form(
+            {
+              afterButtonsFunction : function(buttonBar, form)
+              {
+                let             butClear;
+
+                // Center the Save and Cancel buttons (but right-justify Clear)
+                buttonBar.addAt(new qx.ui.core.Spacer(100), 0);
+                buttonBar.addAt(new qx.ui.core.Spacer(), 1, { flex: 1 });
+
+                // Create the Clear button
+                butClear = new qx.ui.form.Button("Clear");
+                butClear.setWidth(100);
+
+                butClear.addListener(
+                  "execute",
+                  () =>
+                  {
+                    // Clear the signature
+                    form._formElements["signature"].clear();
+                  });
+
+                // Right-justify the Clear button
+                buttonBar.add(new qx.ui.core.Spacer(), { flex: 1 });
+                buttonBar.add(butClear);
+              }
+            });
 
           // If eligibility changed to false...
           if (! checkbox.getValue())
