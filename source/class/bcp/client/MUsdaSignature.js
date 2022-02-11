@@ -33,7 +33,7 @@ qx.Mixin.define("bcp.client.MUsdaSignature",
      * @param tabView {qx.ui.tabview.TabView}
      *   The tabview in which to add the page being created
      */
-    _createUsdaSignatureTab(tabView)
+    _createUsdaSignatureTab(tabView, me)
     {
       let             page;
       let             button;
@@ -47,7 +47,18 @@ qx.Mixin.define("bcp.client.MUsdaSignature",
       tabView.add(page);
 
       button = page.getChildControl("button");
-      button.setRich(true);
+
+      // Exclude the button if permission level is low (only
+      // displaying this one tab)
+      if (me.permissionLevel <= 40)
+      {
+        button.exclude();
+      }
+      else
+      {
+        // Otherwise, set button rich so it can show shortcut
+        button.setRich(true);
+      }
 
       command = new qx.ui.command.Command("Alt+S");
       command.addListener("execute", () => tabView.setSelection( [ page ] ));

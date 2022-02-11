@@ -52,6 +52,7 @@ qx.Class.define("bcp.client.Client",
       let             header;
       let             font;
       let             label;
+      let             idLabel;
       let             butLogin;
       let             butLogout;
       let             butMotd;
@@ -103,11 +104,11 @@ qx.Class.define("bcp.client.Client",
       // Spread out the title
       header.add(new qx.ui.core.Spacer(), { flex : 1 });
 
-      label = new qx.ui.basic.Label(
+      idLabel = new qx.ui.basic.Label(
         location.port == 3000
           ? identity
           : `${identity}<br>(Test Server)`);
-      label.set(
+      idLabel.set(
         {
           paddingTop : 20,
           font       : "header",
@@ -115,7 +116,7 @@ qx.Class.define("bcp.client.Client",
           textAlign  : "center",
           textColor  : location.port == 3000 ? "black" : "red"
         });
-      header.add(label);
+      header.add(idLabel);
 
       // Spread out the message box
       header.add(new qx.ui.core.Spacer(), { flex : 1 });
@@ -479,6 +480,9 @@ qx.Class.define("bcp.client.Client",
             {
               passwordChange.exclude();
               butMotd.exclude();
+
+              // Reduce the application identity padding to save space
+              idLabel.setPaddingTop(0);
             }
 
             // Regardless, the logout button needs to be shown
@@ -524,7 +528,7 @@ qx.Class.define("bcp.client.Client",
               {
                 if (me.permissionLevel >= pageInfo.requiredPermission)
                 {
-                  pageInfo.implementation.bind(this)(this._tabView);
+                  pageInfo.implementation.bind(this)(this._tabView, me);
                 }
               });
 
