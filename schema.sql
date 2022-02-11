@@ -187,6 +187,28 @@ CREATE TABLE Report
 
 -- ALTER TABLE Report ADD COLUMN pre_query VARCHAR;
 
+CREATE TABLE UsdaMaxIncome
+(
+  family_size       INTEGER PRIMARY KEY,
+  max_income_num    INTEGER NOT NULL,
+  max_income_text   VARCHAR NOT NULL
+);
+
+INSERT INTO UsdaMaxIncome VALUES (1, 2683, '$2,683');
+INSERT INTO UsdaMaxIncome VALUES (2, 3629, '$3,629');
+INSERT INTO UsdaMaxIncome VALUES (3, 4575, '$4,575');
+INSERT INTO UsdaMaxIncome VALUES (4, 5521, '$5,521');
+INSERT INTO UsdaMaxIncome VALUES (5, 6467, '$6,467');
+INSERT INTO UsdaMaxIncome VALUES (6, 7413, '$7,413');
+INSERT INTO UsdaMaxIncome VALUES (7, 8358, '$8,358');
+INSERT INTO UsdaMaxIncome VALUES (8, 9304, '$9,304');
+INSERT INTO UsdaMaxIncome VALUES (9, 10250, '$10,250');
+INSERT INTO UsdaMaxIncome VALUES (10, 11196, '$11,196');
+INSERT INTO UsdaMaxIncome VALUES (11, 12142, '$12,142');
+INSERT INTO UsdaMaxIncome VALUES (12, 13088, '$13,088');
+INSERT INTO UsdaMaxIncome VALUES (13, 14034, '$14,034');
+INSERT INTO UsdaMaxIncome VALUES (14, 14980, '$14,980');
+
 CREATE TABLE KeyValueStore
 (
   key               VARCHAR PRIMARY KEY NOT NULL,

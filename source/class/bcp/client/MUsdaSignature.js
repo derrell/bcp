@@ -504,7 +504,9 @@ qx.Mixin.define("bcp.client.MUsdaSignature",
 
       treeItem.addWidget(checkbox);
 
-      o = new qx.ui.basic.Label(`Family size:<br>${data.family_size}`);
+      o = new qx.ui.basic.Label(
+        "Family size:<br>" +
+          `${data.family_size_count} (${data.family_size_text})`);
       o.set(
         {
           rich   : true,
