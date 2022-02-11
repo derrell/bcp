@@ -102,7 +102,7 @@ qx.Mixin.define("bcp.client.MUsdaSignature",
 
       tree = new qx.ui.tree.Tree().set(
         {
-          width: 1400
+          width: 950
         });
       tree.addListener(
         "changeSelection",
@@ -188,6 +188,7 @@ qx.Mixin.define("bcp.client.MUsdaSignature",
     configureSigTreeItem : function(treeItem, data, distribution)
     {
       let             o;
+      let             text;
       let             checkbox;
       let             signature;
       let             formData;
@@ -224,6 +225,14 @@ qx.Mixin.define("bcp.client.MUsdaSignature",
         return treeItem;
       }
 
+      // Set the width of the label
+      treeItem.getChildControl("label").set(
+        {
+          maxWidth : 156,
+          minWidth : 156,
+          width    : 156
+        });
+
       // Right-justify the rest
       treeItem.addWidget(new qx.ui.core.Spacer(), { flex: 1 });
 
@@ -239,10 +248,11 @@ qx.Mixin.define("bcp.client.MUsdaSignature",
         });
       treeItem.addWidget(o);
 
-      o = new qx.ui.basic.Label(`USDA: ${data.usda_amount}`);
+      o = new qx.ui.basic.Label(`USDA:<br>${data.usda_amount}`);
       o.set(
         {
-          width  : 100,
+          rich   : true,
+          width  : 50,
           alignY : "middle"
         });
       treeItem.addWidget(o);
@@ -494,19 +504,22 @@ qx.Mixin.define("bcp.client.MUsdaSignature",
 
       treeItem.addWidget(checkbox);
 
-      o = new qx.ui.basic.Label(`Family size: ${data.family_size}`);
+      o = new qx.ui.basic.Label(`Family size:<br>${data.family_size}`);
       o.set(
         {
-          width  : 100,
+          rich   : true,
+          width  : 70,
           alignY : "middle"
         });
       treeItem.addWidget(o);
 
-      o = new qx.ui.basic.Label(
-        data.pet_types ? `Pets: ${data.pet_types}` : "");
+      text = qx.bom.String.escape(
+        data.pet_types ? `${data.pet_types}` : "");
+      o = new qx.ui.basic.Label(text ? `Pets:<br>${text}` : "");
       o.set(
         {
-          width  : 150,
+          rich   : true,
+          width  : 78,
           alignY : "middle"
         });
       treeItem.addWidget(o);
@@ -515,7 +528,7 @@ qx.Mixin.define("bcp.client.MUsdaSignature",
       o.set(
         {
           singleStep        : 5,
-          width             : 300,
+          width             : 160,
           alignY            : "middle",
           readOnly          : true,
           appearance        : "label"
