@@ -1497,3 +1497,42 @@ REPLACE INTO Report
      ORDER BY c.family_name;
    '
 );
+
+
+REPLACE INTO Report
+(
+  name,
+  description,
+  landscape,
+  input_fields,
+  subtitle_field,
+  separate_by,
+  pre_query,
+  query
+)
+ VALUES
+(
+  'USDA eligibility overrides next distro',
+  'Currently configured overrides to next distribution''s USDA eligibility',
+  1,
+  '',
+  '',
+  '',
+  '',
+  '
+   SELECT
+       c.family_name AS "Family name",
+       CASE c.usda_eligible_next_distro
+         WHEN "yes" THEN "Yes"
+         WHEN "no"  THEN "No"
+         ELSE ""
+       END AS "Override eligibility with",
+       c.count_senior + c.count_adult + c.count_child AS "Family size",
+       c.count_senior AS Seniors,
+       c.count_adult AS Adults,
+       c.count_child AS Children
+     FROM Client c
+     WHERE c.usda_eligible_next_distro IS NOT NULL
+     ORDER BY c.family_name;
+   '
+);
