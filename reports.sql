@@ -1518,7 +1518,16 @@ REPLACE INTO Report
   '',
   '_asOf',
   '',
-  '',
+  '
+   INSERT INTO StoredProc_UpdateAge
+       (birthday, asOf, family_name, member_name)
+     SELECT
+         date_of_birth,
+         (SELECT MAX(start_date) FROM DistributionPeriod),
+         family_name,
+         member_name
+       FROM FamilyMember;
+  ',
   '
    SELECT
        c.family_name AS "Family name",
