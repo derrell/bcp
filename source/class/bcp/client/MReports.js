@@ -381,7 +381,8 @@ qx.Mixin.define("bcp.client.MReports",
                   this._insertPrefix(
                     this._reportWin,
                     result.name,
-                    result[reportInfo.subtitle_field],
+                    result[reportInfo.subtitle_field] ||
+                      report[0][reportInfo.subtitle_field],
                     reportInfo.landscape);
 
                   // Write the heading

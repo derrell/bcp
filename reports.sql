@@ -1512,11 +1512,11 @@ REPLACE INTO Report
 )
  VALUES
 (
-  'USDA eligibility overrides next distro',
+  'USDA eligibility overrides, next distro',
   'Currently configured overrides to next distribution''s USDA eligibility',
   1,
   '',
-  '',
+  '_asOf',
   '',
   '',
   '
@@ -1530,7 +1530,8 @@ REPLACE INTO Report
        c.count_senior + c.count_adult + c.count_child AS "Family size",
        c.count_senior AS Seniors,
        c.count_adult AS Adults,
-       c.count_child AS Children
+       c.count_child AS Children,
+       "As of " || datetime("now", "localtime") AS _asOf
      FROM Client c
      WHERE c.usda_eligible_next_distro IS NOT NULL
      ORDER BY c.family_name;
