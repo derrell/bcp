@@ -200,6 +200,7 @@ qx.Mixin.define("bcp.client.MUsdaSignature",
     {
       let             o;
       let             text;
+      let             label;
       let             checkbox;
       let             signature;
       let             formData;
@@ -223,7 +224,22 @@ qx.Mixin.define("bcp.client.MUsdaSignature",
         treeItem.addOpenButton();
       }
       // Add the label. Branches are given strings; leaves, appointment map.
-      treeItem.addLabel(typeof data == "string" ? data : data.family_name);
+      if (typeof data == "string")
+      {
+        treeItem.addLabel(data);
+      }
+      else
+      {
+        label = treeItem.getChildControl("label");
+        label.setRich(true);
+        if (! data.verified)
+        {
+          label.setTextColor("red");
+        }
+        data.family_name = qx.bom.String.escape(data.family_name);
+        treeItem.addLabel(
+          data.family_name + (data.verified ? "" : " UNVERIFIED"));
+      }
 
       // There's no additional information on branches
       if (treeItem instanceof qx.ui.tree.TreeFolder)
