@@ -238,7 +238,7 @@ qx.Mixin.define("bcp.client.MUsdaSignature",
         }
         data.family_name = qx.bom.String.escape(data.family_name);
         treeItem.addLabel(
-          data.family_name + (data.verified ? "" : " UNVERIFIED"));
+          data.family_name + (data.verified ? "" : "<br>RESIDENCY UNVERIFIED"));
       }
 
       // There's no additional information on branches
