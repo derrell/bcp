@@ -193,6 +193,12 @@ qx.Mixin.define("bcp.client.MAppointment",
                   {
                     const           dist = formElements.distribution;
 
+                    // If they're not sure, don't do it
+                    if (! result)
+                    {
+                      return;
+                    }
+
                     form._cancelButton.execute();
                     _this.rpc(
                       "deleteFulfillment",
