@@ -357,16 +357,70 @@ qx.Mixin.define("bcp.client.MUsdaSignature",
           // If eligibility changed to false...
           if (! checkbox.getValue())
           {
-            this.rpc(
-              "updateUsdaSignature",
-              [
-                distribution,
-                data.family_name,
-                null
-              ])
+            Promise.resolve()
               .then(
                 () =>
                 {
+                  let             confirm;
+                  const           message =
+                      "Are you sure you want to switch back to " +
+                      "'Not Eligible' and lose the signature?";
+
+                  confirm = new qxl.dialog.Confirm({ message });
+
+                  // Make the confirm box easily usable on a phone/tablet
+                  confirm.set(
+                    {
+                      width : 500
+                    });
+                  confirm._yesButton.set(
+                    {
+                      width  : 100,
+                      height : 50
+                    });
+                  confirm._noButton.set(
+                    {
+                      width  : 100,
+                      height : 50
+                    });
+
+                  return confirm.show().promise();
+                })
+              .then(
+                (result) =>
+                {
+                  // If cancelled, don't do anything
+                  if (! result)
+                  {
+                    checkbox.setValue(true); // restore back to Eligible
+                    return false;
+                  }
+
+                  return Promise.resolve()
+                    .then(
+                      () =>
+                      {
+                        return this.rpc(
+                          "updateUsdaSignature",
+                          [
+                            distribution,
+                            data.family_name,
+                            null
+                          ]);
+                      })
+                    .then(() =>
+                      {
+                        return true;
+                      });
+                })
+              .then(
+                (bUpdateSignature) =>
+                {
+                  if (! bUpdateSignature)
+                  {
+                    return;
+                  }
+
                   // remove the signature from the tree
                   signature.setSource(null);
                 })
