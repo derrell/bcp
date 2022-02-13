@@ -1648,9 +1648,6 @@ qx.Mixin.define("bcp.client.MClientMgmt",
           delete formValues["genderHeading"];
           delete formValues["veteranHeading"];
 
-          console.log("formValues=", formValues);
-          console.log("familyMembers=", familyMembers);
-
           this.rpc("saveClient", [ formValues, familyMembers, bNew ])
             .then(
               (result) =>

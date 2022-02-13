@@ -806,7 +806,8 @@ qx.Class.define("bcp.server.Rpc",
                             "  )",
                             "  ON CONFLICT(distribution, family_name)",
                             "    DO UPDATE SET ",
-                            "      usda_eligible_signature = $signature;",
+                            "      usda_eligible_signature = $signature",
+                            "      WHERE usda_eligible_signature IS NULL;"
                           ].join(" "));
                         })
 
@@ -867,7 +868,8 @@ qx.Class.define("bcp.server.Rpc",
                               "UPDATE Fulfillment",
                               "  SET usda_eligible_signature = NULL",
                               "  WHERE distribution = $distribution",
-                              "    AND family_name = $family_name;"
+                              "    AND family_name = $family_name",
+                              "    AND usda_eligible_signature = $sig_required"
                             ].join(""));
                         })
 
@@ -876,8 +878,9 @@ qx.Class.define("bcp.server.Rpc",
                         {
                           return stmt.run(
                             {
-                                $distribution      : distribution,
-                                $family_name       : clientInfo.family_name,
+                              $distribution      : distribution,
+                              $family_name       : clientInfo.family_name,
+                              $sig_required      : signatureRequired
                             });
                         });
                   }
