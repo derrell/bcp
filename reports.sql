@@ -1477,7 +1477,7 @@ REPLACE INTO Report
        FROM FamilyMember;
   ',
   '
-   SELECT
+   SELECT DISTINCT
        c.family_name AS "Family name",
        c.count_senior + c.count_adult + c.count_child AS "Family size",
        c.count_senior AS Seniors,
@@ -1488,12 +1488,17 @@ REPLACE INTO Report
           FROM UsdaMaxIncome
           WHERE family_size = c.count_senior + c.count_adult + c.count_child
           ) AS "Income does not exceed",
-       f.usda_eligible_signature AS Signature
+       COALESCE(
+         f.usda_eligible_signature,
+         -- X image to request board member signature
+         "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAB4AAAAeCAYAAAA7MK6iAAAACXBIWXMAAA3XAAAN1wFCKJt4AAAAB3RJTUUH5gIDDhEZWZAIawAAAJpJREFUSMfNl80OgCAMg9u9/zvjxYvGABtd6i4kyPqZyX4ETMZ7HR97answYnGgAwoAiN2DSug7rGPxXAXll7ASPtVi1kEBnQmewLd8eSpQ9ZEJZV+UotClo6P4bqX7wNNCUNVUpElJj6LCkNYKd1v8dagtl8uSTpYCYimZliZhaYuWQcAy+liGvQ7oFB7C5pHKnGiGdv8W5e0C2k4tIsqHIKsAAAAASUVORK5CYII="
+         ) AS Signature
      FROM Client c
      LEFT JOIN Fulfillment f
        ON f.family_name = c.family_name
-     WHERE f.distribution = $distribution
-       AND f.usda_eligible_signature IS NOT NULL
+     WHERE c.usda_eligible_next_distro = "yes"
+        OR (f.distribution = $distribution
+            AND f.usda_eligible_signature IS NOT NULL)
      ORDER BY c.family_name;
    '
 );

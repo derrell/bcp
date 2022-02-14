@@ -364,7 +364,7 @@ qx.Mixin.define("bcp.client.MUsdaSignature",
                   let             confirm;
                   const           message =
                       "Are you sure you want to switch back to " +
-                      "'Not Eligible' and lose the signature?";
+                      "'Not Eligible' and discard the signature?";
 
                   confirm = new qxl.dialog.Confirm({ message });
 
