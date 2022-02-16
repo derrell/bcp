@@ -1498,7 +1498,8 @@ REPLACE INTO Report
        ON f.family_name = c.family_name
      WHERE c.usda_eligible_next_distro = "yes"
         OR (f.distribution = $distribution
-            AND f.usda_eligible_signature IS NOT NULL)
+            AND f.usda_eligible_signature IS NOT NULL
+            AND length(f.usda_eligible_signature) > 0)
      ORDER BY c.family_name;
    '
 );
