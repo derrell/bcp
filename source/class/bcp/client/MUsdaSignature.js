@@ -26,6 +26,7 @@ qx.Mixin.define("bcp.client.MUsdaSignature",
   {
     _nextSigAppointmentRowColor : 0,
     _tabLabelUsdaSignature      : null,
+    _loginWidget                : null,
 
     /**
      * Create the delivery day page
@@ -101,8 +102,16 @@ qx.Mixin.define("bcp.client.MUsdaSignature",
       let             scroller;
       let             container;
       let             root;
+      let             today;
       let             nodes = {};
       const           { distribution, appointments } = deliveryInfo;
+
+      // Get today's date in the same format as a distribution appointment date
+      today = new Date();
+      today =
+        today.getFullYear() + "-" +
+        ("0" + (today.getMonth() + 1)).substr(-2) + "-" +
+        ("0" + today.getDate()).substr(-2);
 
       scroller = new qx.ui.container.Scroll();
       container = new qx.ui.container.Composite(new qx.ui.layout.VBox());
@@ -140,13 +149,6 @@ qx.Mixin.define("bcp.client.MUsdaSignature",
           const           Branch = qx.ui.tree.TreeFolder;
           const           Leaf = qx.ui.tree.TreeFile;
 
-          // If this appointment is already fulfilled, ...
-          if (appointment.fulfilled)
-          {
-            // ... then exclude this item
-            return;
-          }
-
           // Have we not yet created a node for this day?
           if (! nodes[day])
           {
@@ -164,8 +166,8 @@ qx.Mixin.define("bcp.client.MUsdaSignature",
               parent = nodes[day];
             }
 
-            // Open day and delivery nodes
-            nodes[day].setOpen(true);
+            // Open only today's appointments
+            nodes[day].setOpen(appointment.appt_date == today);
           }
 
           // If we don't yet have a parent...
@@ -209,6 +211,7 @@ qx.Mixin.define("bcp.client.MUsdaSignature",
       let             fUsdaSigResizeForm;
       let             fUsdaFormHandler;
       const           MUsdaSignature = bcp.client.MUsdaSignature;
+      const           _this = this;
 
       // We don't want any icons on branches or leaves
       treeItem.set(
@@ -236,9 +239,9 @@ qx.Mixin.define("bcp.client.MUsdaSignature",
         {
           label.setTextColor("red");
         }
-        data.family_name = qx.bom.String.escape(data.family_name);
+        text = qx.bom.String.escape(data.family_name);
         treeItem.addLabel(
-          data.family_name + (data.verified ? "" : "<br>RESIDENCY UNVERIFIED"));
+          text + (data.verified ? "" : "<br>RESIDENCY UNVERIFIED"));
       }
 
       // There's no additional information on branches
@@ -285,30 +288,30 @@ qx.Mixin.define("bcp.client.MUsdaSignature",
       treeItem.addWidget(o);
 
       // On leaves, add a checkbox for indicating whether they're USDA eligible
-      checkbox = new qx.ui.form.ToggleButton(
-        "Not Eligible", "qxl.dialog.icon.warning");
+      checkbox = new qx.ui.form.ToggleButton("Sign", null);
 
       checkbox.set(
         {
           focusable   : false,
-          value       : !! data.usda_eligible_signature,
           height      : 18,
           width       : 100,
           marginRight : 12,
-          paddingTop  : 2
+          paddingTop  : 2,
+          triState    : true,
+          value       : null
         });
-      if (!! data.usda_eligible_signature)
-      {
-        checkbox.setIcon("qxl.dialog.icon.ok");
-        checkbox.setLabel("Eligible");
-      }
 
       // Keep the button label synchronized with the button's state
       checkbox.addListener(
         "changeValue",
-        () =>
+        (e) =>
         {
-          if (! checkbox.getValue())
+          if (checkbox.getValue() === null)
+          {
+            checkbox.setIcon(null);
+            checkbox.setLabel("Sign");
+          }
+          else if (! checkbox.getValue())
           {
             checkbox.setIcon("qxl.dialog.icon.warning");
             checkbox.setLabel("Not Eligible");
@@ -320,17 +323,64 @@ qx.Mixin.define("bcp.client.MUsdaSignature",
           }
         });
 
+      // If set to ineligible (indicated by zero-length signature),
+      // set button state to Not Eligible. If there's already a
+      // signature, set button state to Eligible
+      if (typeof data.usda_eligible_signature == "string" &&
+          data.usda_eligible_signature.length === 0)
+      {
+        checkbox.setValue(false);
+      }
+      else if (typeof data.usda_eligible_signature == "string")
+      {
+        checkbox.setValue(true);
+      }
+
+      // If we need to reset the value on form cancellation, track its
+      // prior value
+      checkbox.setUserData("priorValue", checkbox.getValue());
+
       // When this checkbox is tapped, obtain a signature
       checkbox.addListener(
         "tap",
         () =>
         {
+          let             priorValue = checkbox.getUserData("priorValue");
+          let             value = checkbox.getValue();
+
+          // Update the prior value with the current value
+          checkbox.setUserData("priorValue", value);
+
           // Create the form for obtaining a signature
           this._usdaForm = new qxl.dialog.Form(
             {
               afterButtonsFunction : function(buttonBar, form)
               {
                 let             butClear;
+                let             butNotEligible;
+
+                // Add the Not Eligible button
+                butNotEligible = new qx.ui.form.Button(
+                  "Not Eligible", "qxl.dialog.icon.warning");
+                buttonBar.add(butNotEligible);
+
+                butNotEligible.addListener(
+                  "execute",
+                  () =>
+                  {
+                    // List items are in order 0=Eligible, 1=Not Eligible
+                    let listItems = form._formElements["eligible"]._getItems();
+
+                    // Set to not eligible
+                    form._formElements["eligible"].setSelection(
+                      [ listItems[1] ]);
+
+                    // Clear the signature
+                    form._formElements["signature"].clear();
+
+                    // Submit the form
+                    form._okButton.execute();
+                  });
 
                 // Center the Save and Cancel buttons (but right-justify Clear)
                 buttonBar.addAt(new qx.ui.core.Spacer(100), 0);
@@ -351,11 +401,26 @@ qx.Mixin.define("bcp.client.MUsdaSignature",
                 // Right-justify the Clear button
                 buttonBar.add(new qx.ui.core.Spacer(), { flex: 1 });
                 buttonBar.add(butClear);
+
+                [
+                  form._okButton,
+                  form._cancelButton,
+                  butNotEligible,
+                  butClear
+                ].forEach(
+                  (button) =>
+                  {
+                    button.set(
+                      {
+                        height : 50,
+                        width  : 100
+                      });
+                  });
               }
             });
 
-          // If eligibility changed to false...
-          if (! checkbox.getValue())
+          // If eligibility changed to false, we'll set it back to null (Sign)
+          if (value === false)
           {
             Promise.resolve()
               .then(
@@ -364,7 +429,7 @@ qx.Mixin.define("bcp.client.MUsdaSignature",
                   let             confirm;
                   const           message =
                       "Are you sure you want to switch back to " +
-                      "'Not Eligible' and discard the signature?";
+                      "'Sign' and discard the signature?";
 
                   confirm = new qxl.dialog.Confirm({ message });
 
@@ -392,7 +457,8 @@ qx.Mixin.define("bcp.client.MUsdaSignature",
                   // If cancelled, don't do anything
                   if (! result)
                   {
-                    checkbox.setValue(true); // restore back to Eligible
+                    checkbox.setValue(priorValue); // restore back to Eligible
+                    checkbox.setUserData("priorValue", priorValue);
                     return false;
                   }
 
@@ -423,6 +489,10 @@ qx.Mixin.define("bcp.client.MUsdaSignature",
 
                   // remove the signature from the tree
                   signature.setSource(null);
+
+                  // Set the button back to Sign
+                  checkbox.setValue(null);
+                  checkbox.setUserData("priorValue", null);
                 })
               .catch(
                 (e) =>
@@ -444,6 +514,23 @@ qx.Mixin.define("bcp.client.MUsdaSignature",
                 type       : "signature",
                 label      : "",
                 value      : ""
+              },
+
+              eligible :
+              {
+                type  : "SelectBox",
+                label : "",
+                value : 1,
+                options :
+                [
+                  { 'label' : "Eligible",     "value" : 1 },
+                  { 'label' : "Not Eligible", "value" : 0 }
+                ],
+                properties :
+                {
+                  // manipulated by "Not Eligible" button in button bar
+                  visibility : "excluded"
+                }
               }
             };
 
@@ -452,7 +539,8 @@ qx.Mixin.define("bcp.client.MUsdaSignature",
           this._usdaForm.set(
             {
               message          : this.bold(
-                "I affirm that my monthly income is no greater than " +
+                "I affirm that my family's combined monthly income " +
+                  "is no greater than " +
                   data.usda_amount +
                   "."),
               labelColumnWidth : 150,
@@ -490,7 +578,7 @@ qx.Mixin.define("bcp.client.MUsdaSignature",
             });
 
           this._usdaForm._message.setFont(
-            qx.bom.Font.fromString("bold 30px Arial"));
+            qx.bom.Font.fromString("bold 50px Arial"));
 
           this._usdaForm._okButton.set(
             {
@@ -516,7 +604,7 @@ qx.Mixin.define("bcp.client.MUsdaSignature",
               // Prompt for the password that allows returning to
               // the secure environment
               this.createLogin(
-                "Accept signature",
+                "Accept",
                 (err, username) =>
                 {
                   // Was the password accepted?
@@ -536,6 +624,12 @@ qx.Mixin.define("bcp.client.MUsdaSignature",
                     return;
                   }
 
+                  // If they said Not Eligible, set signature to 0-length
+                  if (! result.eligible)
+                  {
+                    result.signature = "";
+                  }
+
                   this.rpc(
                     "updateUsdaSignature",
                     [
@@ -546,8 +640,15 @@ qx.Mixin.define("bcp.client.MUsdaSignature",
                     .then(
                       () =>
                       {
+                        const         bEligible = result.signature.length > 0;
+
                         // Add the signature to the tree
-                        signature.setSource(result.signature);
+                        signature.setSource(
+                          bEligible ? result.signature : null);
+
+                        // Set checkbox to Eligible
+                        checkbox.setValue(bEligible);
+                        checkbox.setUserData("priorValue", bEligible);
                       })
                     .catch(
                       (e) =>
@@ -579,7 +680,8 @@ qx.Mixin.define("bcp.client.MUsdaSignature",
             () =>
             {
               fUsdaFormHandler(null);
-              checkbox.setValue(! checkbox.getValue()); // revert indicator
+              checkbox.setValue(priorValue); // revert indicator
+              checkbox.setUserData("priorValue", priorValue);
             });
         });
 
@@ -650,9 +752,7 @@ qx.Mixin.define("bcp.client.MUsdaSignature",
      */
     createLogin : function(caption, callback)
     {
-      let             loginWidget;
-
-      loginWidget = new qxl.dialog.Login(
+      this._loginWidget = new qxl.dialog.Login(
         {
           text                  : "Please provide PIN to continue",
           checkCredentials      : this.loginCheckCredentials.bind(this),
@@ -662,24 +762,21 @@ qx.Mixin.define("bcp.client.MUsdaSignature",
       });
 
       // User need not enter the name, only the actual PIN
-      loginWidget._username.set(
+      this._loginWidget._username.set(
         {
           value   : "PIN",
           enabled : false
         });
 
-      // Password is a PIN (numeric). Show only number keypad on mobile device
-      loginWidget._password.getContentElement().setAttribute("type", "number");
-
-      loginWidget.addListener(
+      this._loginWidget.addListener(
         "appear",
         () =>
         {
           // Focus the password field
-          loginWidget._password.focus();
+          this._loginWidget._password.focus();
         });
 
-      loginWidget.show();
+      this._loginWidget.show();
     },
 
     /**
@@ -706,6 +803,7 @@ qx.Mixin.define("bcp.client.MUsdaSignature",
       else
       {
         callback("Wrong PIN");
+        this._loginWidget._password.setValue("");
       }
     }
   }
