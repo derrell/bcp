@@ -95,7 +95,6 @@ CREATE TABLE Fulfillment
   fulfillment_time  VARCHAR,                -- %Y-%m-%d %H:%M:%S
   notes             VARCHAR,
   perishables       VARCHAR,
-  is_usda_only      BOOLEAN DEFAULT FALSE,  -- usda override sans appointment
   usda_eligible_signature VARCHAR DEFAULT NULL
   PRIMARY KEY (distribution, family_name)
 );
@@ -103,7 +102,6 @@ CREATE TABLE Fulfillment
 -- ALTER TABLE Fulfillment ADD COLUMN perishables VARCHAR;
 -- ALTER TABLE Fulfillment ADD COLUMN usda_eligible_signature VARCHAR DEFAULT NULL;
 -- ALTER TABLE Fulfillment DROP COLUMN is_usda_current;
--- ALTER TABLE Fulfillment ADD COLUMN is_usda_only BOOLEAN DEFAULT FALSE;
 
 
 CREATE INDEX Fulfillment_appt_idx
