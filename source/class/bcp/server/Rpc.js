@@ -602,6 +602,7 @@ qx.Class.define("bcp.server.Rpc",
             "    $perishables_default,",
             "    $income_source,",
             "    $income_amount,",
+            "    $usda_eligible,",
             "    $usda_eligible_next_distro,",
             "    $pet_types,",
             "    $address_default,",
@@ -1049,8 +1050,7 @@ qx.Class.define("bcp.server.Rpc",
                 "    notes,",
                 "    perishables,",
                 "    fulfilled,",
-                "    fulfillment_time,",
-                "    is_usda_only",
+                "    fulfillment_time",
                 "  )",
                 "  VALUES",
                 "  (",
@@ -1061,8 +1061,7 @@ qx.Class.define("bcp.server.Rpc",
                 "    $notes,",
                 "    $perishables,",
                 "    $fulfilled,",
-                "    $fulfillment_time,",
-                "    $is_usda_only",
+                "    $fulfillment_time",
                 "  )",
                 "  ON CONFLICT(distribution, family_name)",
                 "    DO UPDATE SET ",
@@ -1071,8 +1070,7 @@ qx.Class.define("bcp.server.Rpc",
                 "      notes = $notes,",
                 "      perishables = $perishables,",
                 "      fulfilled = $fulfilled,",
-                "      fulfillment_time = $fulfillment_time,",
-                "      is_usda_only = $is_usda_only;"
+                "      fulfillment_time = $fulfillment_time;"
               ].join(" "));
           })
         .then(stmt => stmt.run(
@@ -1084,8 +1082,7 @@ qx.Class.define("bcp.server.Rpc",
             $notes             : fulfillmentInfo.notes,
             $perishables       : fulfillmentInfo.perishables,
             $fulfilled         : fulfillmentInfo.fulfilled,
-            $fulfillment_time  : fulfillmentInfo.fulfillment_time,
-            $is_usda_only      : 0
+            $fulfillment_time  : fulfillmentInfo.fulfillment_time
           }))
 
         .then(
@@ -1451,8 +1448,8 @@ qx.Class.define("bcp.server.Rpc",
             return null;
           })
 
-        // Update the usda_eligible field of the client, for the
-        // upcoming distribution if this is a new distribution being
+        // Update the usda_eligible field of the client for the
+        // upcoming distribution, if this is a new distribution being
         // created
         .then(
           () =>
@@ -2086,7 +2083,6 @@ qx.Class.define("bcp.server.Rpc",
                 "    AND dp.start_date = $distribution",
                 "    AND c.family_name = f.family_name",
                 "    AND cid.family_name = f.family_name",
-                "    AND NOT f.is_usda_only",
                 "  ORDER BY appt_day, appt_time, family_name"
               ].join(" "));
           })
@@ -2151,8 +2147,7 @@ qx.Class.define("bcp.server.Rpc",
               [
                 "UPDATE Fulfillment",
                 "  SET ",
-                "    usda_eligible_signature = $usda_eligible_signature, ",
-                "    is_usda_only = FALSE",
+                "    usda_eligible_signature = $usda_eligible_signature",
                 "  WHERE distribution = $distribution",
                 "    AND family_name = $family_name;"
               ].join(" "));
