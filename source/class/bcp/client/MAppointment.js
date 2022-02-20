@@ -555,24 +555,29 @@ qx.Mixin.define("bcp.client.MAppointment",
 
                 usda_eligible :
                 {
-                  type       : "TextField",
-                  label      : "Eligible",
+                  type       : "SelectBox",
+                  label      : "Eligible (current distribution)",
                   value      : client.usda_eligible,
-                  enabled    : false
+                  options :
+                  [
+                    { label : "",    value : "" },
+                    { label : "Yes", value : "yes" },
+                    { label : "No",  value : "no" }
+                  ]
                 },
 
-/*
-                is_usda_current :
+                usda_eligible_next_distro :
                 {
-                  type       : "CheckBox",
-                  label      : "Current",
-                  value      : !! fulfillment.is_usda_current,
-                  properties :
-                  {
-                    marginLeft : 156
-                  }
+                  type       : "SelectBox",
+                  label      : "Eligible (next distribution)",
+                  value      : client.usda_eligible_next_distro,
+                  options :
+                  [
+                    { label : "Automatic",     value : null },
+                    { label : "Override: Yes", value : "yes" },
+                    { label : "Override: No",  value : "no" }
+                  ]
                 },
-*/
 
                 appointments :
                 {
@@ -639,7 +644,7 @@ qx.Mixin.define("bcp.client.MAppointment",
             this._appointmentForm.set(
               {
                 message          : this.bold(familyName || ""),
-                labelColumnWidth : 150,
+                labelColumnWidth : 180,
                 formData         : formData
               });
 

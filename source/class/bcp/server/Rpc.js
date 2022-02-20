@@ -872,7 +872,8 @@ qx.Class.define("bcp.server.Rpc",
                 "    family_name,",
                 "    appt_day_default,",
                 "    appt_time_default,",
-                "    usda_eligible",
+                "    usda_eligible,",
+                "    usda_eligible_next_distro",
                 "  FROM Client",
                 "  WHERE appt_time_default IS NOT NULL",
                 "    AND length(trim(appt_time_default)) > 0",
@@ -1086,13 +1087,25 @@ qx.Class.define("bcp.server.Rpc",
           }))
 
         .then(
-          function (result)
+          () =>
           {
-            return result;
+            return this._db.prepare(
+              [
+                "UPDATE Client",
+                "  SET usda_eligible = $usda_eligible,",
+                "      usda_eligible_next_distro = $usda_eligible_next_distro",
+                "  WHERE family_name = $family_name;"
+              ].join(" "));
           })
+        .then(stmt => stmt.run(
+          {
+            $family_name               : fulfillmentInfo.family_name,
+            $usda_eligible             : fulfillmentInfo.usda_eligible,
+            $usda_eligible_next_distro : fulfillmentInfo.usda_eligible_next_distro
+          }))
 
         // Give 'em what they came for!
-        .then((result) => callback(null, null))
+        .then(() => callback(null, null))
         .catch((e) =>
           {
             let             error = { message : e.toString() };
@@ -1143,14 +1156,8 @@ qx.Class.define("bcp.server.Rpc",
             $family_name       : fulfillmentInfo.family_name
           }))
 
-        .then(
-          function (result)
-          {
-            return result;
-          })
-
         // Give 'em what they came for!
-        .then((result) => callback(null, null))
+        .then(() => callback(null, null))
         .catch((e) =>
           {
             let             error = { message : e.toString() };
@@ -2073,7 +2080,8 @@ qx.Class.define("bcp.server.Rpc",
                 "      ELSE 'Small'",
                 "    END AS 'family_size_text',",
                 "    c.pet_types AS pet_types,",
-                "    c.verified AS verified",
+                "    c.verified AS verified,",
+                "    c.usda_eligible_next_distro AS usda_eligible_next_distro",
                 "  FROM",
                 "    Fulfillment f,",
                 "    Client c,",

@@ -336,6 +336,32 @@ qx.Mixin.define("bcp.client.MUsdaSignature",
         checkbox.setValue(true);
       }
 
+      // If there is a manual override, show it and prevent changes
+      switch (data.usda_eligible_next_distro)
+      {
+      case "yes" :
+        checkbox.set(
+          {
+            icon    : null,
+            label   : "Override: Yes",
+            enabled : false
+          });
+        break;
+
+      case "no" :
+        checkbox.set(
+          {
+            icon    : null,
+            label   : "Override: No",
+            enabled : false
+          });
+        break;
+
+      default :
+        break;
+      }
+
+
       // If we need to reset the value on form cancellation, track its
       // prior value
       checkbox.setUserData("priorValue", checkbox.getValue());
