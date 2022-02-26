@@ -1461,11 +1461,7 @@ REPLACE INTO Report
      "$distribution" :
      {
        "type"  : "SelectBox",
-       "label" : "Closing Distribution Date",
-       "properties" :
-       {
-         "enabled" : false
-       }
+       "label" : "Closing Distribution Date"
      }
    }',
   '$distribution',
@@ -1500,7 +1496,10 @@ REPLACE INTO Report
      FROM Client c
      LEFT JOIN Fulfillment f
        ON f.family_name = c.family_name
-     WHERE c.usda_eligible_next_distro = "yes"
+     LEFT JOIN UsdaEligibleNextDistro uend
+       ON uend.family_name = c.family_name
+     WHERE (uend.distribution = $distribution
+            AND uend.usda_eligible_next_distro = "yes")
         OR (f.distribution = $distribution
             AND f.usda_eligible_signature IS NOT NULL
             AND length(f.usda_eligible_signature) > 0)

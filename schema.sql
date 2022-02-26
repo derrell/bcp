@@ -43,7 +43,46 @@ CREATE TABLE Client
 -- ALTER TABLE Client ADD COLUMN perishables_default VARCHAR NOT NULL DEFAULT '-- ALTER TABLE Client ADD COLUMN usda_eligible VARCHAR NOT NULL DEFAULT '';
 -- ALTER TABLE Client ADD COLUMN usda_eligible_next_distro VARCHAR DEFAULT NULL;
 
+--
+-- Maintain a permanent copy of the next-distribution eligibility, per
+-- distribution, so that the USDA report can be generated for any
+-- distribution
+--
+-- First, for a new client...
+CREATE TRIGGER tr_ai_Client
+AFTER INSERT ON Client
+BEGIN
+  REPLACE INTO UsdaEligibleNextDistro (
+      distribution,
+      family_name,
+      usda_eligible_next_distro
+    ) VALUES (
+      (SELECT MAX(start_date) FROM DistributionPeriod),
+      new.family_name,
+      new.usda_eligible_next_distro
+    );
+END;
 
+-- ... and then for an update of an existing client
+CREATE TRIGGER tr_au_Client
+AFTER UPDATE ON Client
+BEGIN
+  REPLACE INTO UsdaEligibleNextDistro (
+      distribution,
+      family_name,
+      usda_eligible_next_distro
+    ) VALUES (
+      (SELECT MAX(start_date) FROM DistributionPeriod),
+      new.family_name,
+      new.usda_eligible_next_distro
+    );
+
+  DELETE FROM UsdaEligibleNextDistro
+    WHERE
+      family_name = new.family_name
+      AND distribution = (SELECT MAX(start_date) FROM DistributionPeriod)
+      AND usda_eligible_next_distro IS NULL;
+END;
 
 CREATE TABLE ClientId
 (
@@ -206,6 +245,20 @@ INSERT INTO UsdaMaxIncome VALUES (11, 12142, '$12,142');
 INSERT INTO UsdaMaxIncome VALUES (12, 13088, '$13,088');
 INSERT INTO UsdaMaxIncome VALUES (13, 14034, '$14,034');
 INSERT INTO UsdaMaxIncome VALUES (14, 14980, '$14,980');
+
+
+CREATE TABLE UsdaEligibleNextDistro
+(
+  distribution              VARCHAR REFERENCES DistributionPeriod
+                                ON DELETE CASCADE
+                                ON UPDATE CASCADE,
+  family_name               VARCHAR REFERENCES Client
+                                ON DELETE CASCADE
+                                ON UPDATE CASCADE,
+  usda_eligible_next_distro BOOLEAN DEFAULT NULL,
+  PRIMARY KEY (distribution, family_name)
+);
+
 
 CREATE TABLE KeyValueStore
 (
