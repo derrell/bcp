@@ -1461,7 +1461,11 @@ REPLACE INTO Report
      "$distribution" :
      {
        "type"  : "SelectBox",
-       "label" : "Closing Distribution Date"
+       "label" : "Closing Distribution Date",
+       "properties" :
+       {
+         "enabled" : false
+       }
      }
    }',
   '$distribution',
