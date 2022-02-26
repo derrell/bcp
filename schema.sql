@@ -95,7 +95,7 @@ CREATE TABLE Fulfillment
   fulfillment_time  VARCHAR,                -- %Y-%m-%d %H:%M:%S
   notes             VARCHAR,
   perishables       VARCHAR,
-  usda_eligible_signature VARCHAR DEFAULT NULL
+  usda_eligible_signature VARCHAR DEFAULT NULL,
   PRIMARY KEY (distribution, family_name)
 );
 
@@ -136,7 +136,7 @@ CREATE TABLE DistributionPeriod
   start_date        VARCHAR PRIMARY KEY,    -- %Y-%m-%d
 
   -- This might later change to a separate table of appointment
-  -- start/end per day, if we need more than one week.
+  -- start/end per day, if we need more seven days per distribution
   day_1_date        VARCHAR DEFAULT '', --%&-%m-%d
   day_1_first_appt  VARCHAR,            -- %H:%M
   day_1_last_appt   VARCHAR,
