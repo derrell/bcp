@@ -1,154 +1,107 @@
-#+STARTUP: content
-* Family Member / Birth date update
+#+STARTUP: showeverything
+* USDA Signature update
 ** Iterations
 *** #1: copy db from production to dev; perform following ops locally
 *** #2: perform following ops on production
 ** Merge to master
-** Database changes
-CREATE TABLE FamilyMember
+** COMMENT Database changes
+ALTER TABLE Client ADD COLUMN usda_eligible_next_distro VARCHAR DEFAULT NULL;
+ALTER TABLE Fulfillment ADD COLUMN usda_eligible_signature VARCHAR DEFAULT NULL;
+ALTER TABLE DistributionPeriod ADD COLUMN day_1_date VARCHAR DEFAULT '';
+ALTER TABLE DistributionPeriod ADD COLUMN day_2_date VARCHAR DEFAULT '';
+ALTER TABLE DistributionPeriod ADD COLUMN day_3_date VARCHAR DEFAULT '';
+ALTER TABLE DistributionPeriod ADD COLUMN day_4_date VARCHAR DEFAULT '';
+ALTER TABLE DistributionPeriod ADD COLUMN day_5_date VARCHAR DEFAULT '';
+ALTER TABLE DistributionPeriod ADD COLUMN day_6_date VARCHAR DEFAULT '';
+ALTER TABLE DistributionPeriod ADD COLUMN day_7_date VARCHAR DEFAULT '';
+
+UPDATE Client
+  SET usda_eligible_next_distro = usda_eligible
+  WHERE usda_eligible IS NOT NULL AND length(usda_eligible) > 0;
+
+ALTER TABLE Fulfillment DROP COLUMN is_usda_current;
+
+CREATE TABLE UsdaMaxIncome
 (
-  family_name     VARCHAR REFERENCES Client
-                          ON DELETE CASCADE
-                          ON UPDATE CASCADE,
-  member_name     VARCHAR NOT NULL,
-  date_of_birth   VARCHAR NOT NULL, -- in format YYYY-MM-DD
-  gender          VARCHAR NOT NULL, -- M, F, O
-  is_veteran      BOOLEAN NOT NULL, -- 0=false, 1=true,
-
-  -- transient:
-  -- updated as needed by StoredProc_UpdateAge, with an as-of date
-  age             INTEGER,
-
-  PRIMARY KEY (family_name, member_name)
+  family_size       INTEGER PRIMARY KEY,
+  max_income_num    INTEGER NOT NULL,
+  max_income_text   VARCHAR NOT NULL
 );
 
-ALTER TABLE Report ADD COLUMN pre_query VARCHAR;
+INSERT INTO UsdaMaxIncome VALUES (1, 2683, '$2,683');
+INSERT INTO UsdaMaxIncome VALUES (2, 3629, '$3,629');
+INSERT INTO UsdaMaxIncome VALUES (3, 4575, '$4,575');
+INSERT INTO UsdaMaxIncome VALUES (4, 5521, '$5,521');
+INSERT INTO UsdaMaxIncome VALUES (5, 6467, '$6,467');
+INSERT INTO UsdaMaxIncome VALUES (6, 7413, '$7,413');
+INSERT INTO UsdaMaxIncome VALUES (7, 8358, '$8,358');
+INSERT INTO UsdaMaxIncome VALUES (8, 9304, '$9,304');
+INSERT INTO UsdaMaxIncome VALUES (9, 10250, '$10,250');
+INSERT INTO UsdaMaxIncome VALUES (10, 11196, '$11,196');
+INSERT INTO UsdaMaxIncome VALUES (11, 12142, '$12,142');
+INSERT INTO UsdaMaxIncome VALUES (12, 13088, '$13,088');
+INSERT INTO UsdaMaxIncome VALUES (13, 14034, '$14,034');
+INSERT INTO UsdaMaxIncome VALUES (14, 14980, '$14,980');
 
---
--- "Stored Procedures"
---
 
--- Update a family member's age as of a given date
--- The AFTER INSERT trigger modifies table FamilyMember
-CREATE TABLE StoredProc_UpdateAge
+CREATE TABLE UsdaEligibleNextDistro
 (
-  id              INTEGER PRIMARY KEY,
-
-  -- parameters
-  birthday        TEXT,
-  asOf            TEXT,
-  family_name     TEXT,
-  member_name     TEXT,
-
-  -- "local variables"
-  age             INTEGER,
-  mDiff           INTEGER
+  distribution              VARCHAR REFERENCES DistributionPeriod
+                                ON DELETE CASCADE
+                                ON UPDATE CASCADE,
+  family_name               VARCHAR REFERENCES Client
+                                ON DELETE CASCADE
+                                ON UPDATE CASCADE,
+  usda_eligible_next_distro BOOLEAN DEFAULT NULL,
+  PRIMARY KEY (distribution, family_name)
 );
 
-CREATE TRIGGER tr_ai_StoredProc_UpdateAge
-AFTER INSERT ON StoredProc_UpdateAge
+--
+-- Maintain a permanent copy of the next-distribution eligibility, per
+-- distribution, so that the USDA report can be generated for any
+-- distribution
+--
+-- First, for a new client...
+CREATE TRIGGER tr_ai_Client
+AFTER INSERT ON Client
 BEGIN
-  -- age = today.year - birthday.year
-  UPDATE StoredProc_UpdateAge
-    SET age =
-      (SELECT strftime('%Y', new.asOf)) -
-      (SELECT strftime('%Y', new.birthday))
-    WHERE id = new.rowid;
-
-  -- mDiff = today.month - birthday.month
-  -- (see if birthday month has passed yet)
-  UPDATE StoredProc_UpdateAge
-    SET mDiff =
-      (SELECT strftime('%m', new.asOf)) -
-      (SELECT strftime('%m', new.birthday))
-    WHERE id = new.rowid;
-
-  -- if (mDiff < 0 || (mDiff === 0 && today.day <= birthday.day)) --age;
-  UPDATE StoredProc_UpdateAge
-    SET age = age - 1
-    WHERE id == new.rowid
-      AND ((SELECT mDiff FROM StoredProc_UpdateAge WHERE id = new.rowid) < 0
-           OR (    (SELECT mDiff FROM StoredProc_UpdateAge WHERE id = new.rowid) = 0
-               AND (SELECT
-                      strftime('%d', new.asOf)
-                      <=
-                      strftime('%d', new.birthday))));
-
-  -- update the specified family member record
-  UPDATE FamilyMember
-    SET age = (SELECT age FROM StoredProc_UpdateAge WHERE id = new.rowid)
-    WHERE family_name = new.family_name
-      AND member_name = new.member_name;
-
-  --
-  -- update the client with counts based on FamilyMember entries
-  --
-  -- This is slow, Slow, SLOW, as it recalculates counts after each
-  -- family member age is calculated, rather than once after all
-  -- family members' ages are calculated. There is no current
-  -- implementation to do the latter, though, and this should be fast
-  -- enough for ~1000 clients totalling ~4000 family members. We'll see.
-  --
-  UPDATE Client
-    SET count_senior =
-      (SELECT COUNT(*)
-         FROM FamilyMember
-         WHERE family_name = new.family_name
-           AND age >= 65)
-      WHERE family_name = new.family_name;
-
-  UPDATE Client
-    SET count_adult =
-      (SELECT COUNT(*)
-         FROM FamilyMember
-         WHERE family_name = new.family_name
-           AND age >= 18 AND age < 65)
-      WHERE family_name = new.family_name;
-
-  UPDATE Client
-    SET count_child =
-      (SELECT COUNT(*)
-         FROM FamilyMember
-         WHERE family_name = new.family_name
-           AND age < 18)
-      WHERE family_name = new.family_name;
-
-  UPDATE Client
-    SET count_sex_male =
-      (SELECT COUNT(*)
-         FROM FamilyMember
-         WHERE family_name = new.family_name
-           AND gender = 'M')
-      WHERE family_name = new.family_name;
-
-  UPDATE Client
-    SET count_sex_female =
-      (SELECT COUNT(*)
-         FROM FamilyMember
-         WHERE family_name = new.family_name
-           AND gender = 'F')
-      WHERE family_name = new.family_name;
-
-  UPDATE Client
-    SET count_sex_other =
-      (SELECT COUNT(*)
-         FROM FamilyMember
-         WHERE family_name = new.family_name
-           AND gender = 'O')
-      WHERE family_name = new.family_name;
-
-  UPDATE Client
-    SET count_veteran =
-      (SELECT COUNT(*)
-         FROM FamilyMember
-         WHERE family_name = new.family_name
-           AND is_veteran = 1)
-      WHERE family_name = new.family_name;
-
-  DELETE FROM StoredProc_UpdateAge
-    WHERE id = new.rowid;
+  REPLACE INTO UsdaEligibleNextDistro (
+      distribution,
+      family_name,
+      usda_eligible_next_distro
+    ) VALUES (
+      (SELECT MAX(start_date) FROM DistributionPeriod),
+      new.family_name,
+      new.usda_eligible_next_distro
+    );
 END;
 
-** Add the entirety of reports.sql
+-- ... and then for an update of an existing client
+CREATE TRIGGER tr_au_Client
+AFTER UPDATE ON Client
+BEGIN
+  REPLACE INTO UsdaEligibleNextDistro (
+      distribution,
+      family_name,
+      usda_eligible_next_distro
+    ) VALUES (
+      (SELECT MAX(start_date) FROM DistributionPeriod),
+      new.family_name,
+      new.usda_eligible_next_distro
+    );
+
+  DELETE FROM UsdaEligibleNextDistro
+    WHERE
+      family_name = new.family_name
+      AND distribution = (SELECT MAX(start_date) FROM DistributionPeriod)
+      AND usda_eligible_next_distro IS NULL;
+END;
+
+
+REPLACE INTO KeyValueStore (key, value) VALUES ('greeterPin', "111222");
+
+** Reports changes
+*** DELETE FROM Report;
+*** Add the entirety of reports.sql
 ** mkdir <toplevel>/reports
 ** Install new software
