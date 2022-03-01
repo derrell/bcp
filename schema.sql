@@ -61,6 +61,12 @@ BEGIN
       new.family_name,
       new.usda_eligible_next_distro
     );
+
+  DELETE FROM UsdaEligibleNextDistro
+    WHERE
+      family_name = new.family_name
+      AND distribution = (SELECT MAX(start_date) FROM DistributionPeriod)
+      AND usda_eligible_next_distro IS NULL;
 END;
 
 -- ... and then for an update of an existing client

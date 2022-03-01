@@ -1035,11 +1035,6 @@ qx.Class.define("bcp.server.Rpc",
         .then(
           () =>
           {
-            // We need to be careful here. We can't use our typical
-            // INSERT OR REPLACE because there could be an existing
-            // USDA override record there with a signature. Instead,
-            // we'll try to insert and if it fails, handle it in a
-            // conflict clause.
             return this._db.prepare(
               [
                 "INSERT INTO Fulfillment",
