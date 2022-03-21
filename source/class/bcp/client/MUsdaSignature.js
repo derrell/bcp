@@ -72,26 +72,39 @@ qx.Mixin.define("bcp.client.MUsdaSignature",
         {
           page.removeAll();
 
-          this.rpc("getUsdaSignature", [])
-            .then(
-              (result) =>
+          // Prompt for the PIN before showing the client list
+          this.createLogin(
+            "Accept",
+            (err, username) =>
+            {
+              // Was the password accepted?
+              if (err)
               {
-                if (! result || result.appointments.length === 0)
-                {
-                  qxl.dialog.Dialog.alert("No appointments scheduled");
-                  return;
-                }
+                // Nope. Let them re-enter it
+                return;
+              }
 
-                this._buildUsdaSignatureTree(page, result);
-              })
-            .catch(
-              (e) =>
-              {
-                console.warn("getUsdaSignature:", e);
-                qxl.dialog.Dialog.alert(
-                  "Could not retrieve USDA Signature information: " +
-                  e.message);
-              });
+              this.rpc("getUsdaSignature", [])
+                .then(
+                  (result) =>
+                  {
+                    if (! result || result.appointments.length === 0)
+                    {
+                      qxl.dialog.Dialog.alert("No appointments scheduled");
+                      return;
+                    }
+
+                    this._buildUsdaSignatureTree(page, result);
+                  })
+                .catch(
+                  (e) =>
+                  {
+                    console.warn("getUsdaSignature:", e);
+                    qxl.dialog.Dialog.alert(
+                      "Could not retrieve USDA Signature information: " +
+                      e.message);
+                  });
+            });
         });
     },
 
