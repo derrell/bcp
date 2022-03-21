@@ -100,6 +100,14 @@ END;
 
 REPLACE INTO KeyValueStore (key, value) VALUES ('greeterPin', "111222");
 
+REPLACE INTO User
+    (username, password, permission_level)
+  VALUES
+    ('greeter', '<sha256sum>', 40);
+
+** Fix 'greeterPin' in KeyValueStore
+** Fix 'greeter' password in User
+
 ** Reports changes
 *** DELETE FROM Report;
 *** Add the entirety of reports.sql
