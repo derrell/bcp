@@ -70,41 +70,55 @@ qx.Mixin.define("bcp.client.MUsdaSignature",
         "appear",
         () =>
         {
+          const buildUsdaSignatureTree =
+                () =>
+                {
+                  this.rpc("getUsdaSignature", [])
+                    .then(
+                      (result) =>
+                      {
+                        if (! result || result.appointments.length === 0)
+                        {
+                          qxl.dialog.Dialog.alert("No appointments scheduled");
+                          return;
+                        }
+
+                        this._buildUsdaSignatureTree(page, result);
+                      })
+                    .catch(
+                      (e) =>
+                      {
+                        console.warn("getUsdaSignature:", e);
+                        qxl.dialog.Dialog.alert(
+                          "Could not retrieve USDA Signature information: " +
+                          e.message);
+                      });
+                };
+
           page.removeAll();
 
-          // Prompt for the PIN before showing the client list
-          this.createLogin(
-            "Accept",
-            (err, username) =>
-            {
-              // Was the password accepted?
-              if (err)
+          if (me.permissionLevel <= 40)
+          {
+            // Prompt for the PIN before showing the client list
+            this.createLogin(
+              "Accept",
+              (err, username) =>
               {
-                // Nope. Let them re-enter it
-                return;
-              }
+                // Was the password accepted?
+                if (err)
+                {
+                  // Nope. Let them re-enter it
+                  return;
+                }
 
-              this.rpc("getUsdaSignature", [])
-                .then(
-                  (result) =>
-                  {
-                    if (! result || result.appointments.length === 0)
-                    {
-                      qxl.dialog.Dialog.alert("No appointments scheduled");
-                      return;
-                    }
-
-                    this._buildUsdaSignatureTree(page, result);
-                  })
-                .catch(
-                  (e) =>
-                  {
-                    console.warn("getUsdaSignature:", e);
-                    qxl.dialog.Dialog.alert(
-                      "Could not retrieve USDA Signature information: " +
-                      e.message);
-                  });
-            });
+                buildUsdaSignatureTree();
+              });
+          }
+          else
+          {
+            // No need for PIN as it's not a greeter station
+            buildUsdaSignatureTree();
+          }
         });
     },
 
