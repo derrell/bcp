@@ -803,6 +803,10 @@ qx.Mixin.define("bcp.client.MDistribution",
                   // Remove everything from the list and re-retrieve
                   // it just as at startup
                   this._onDistributionListAppear();
+
+                  // Re-retrieve the client list since some fields may
+                  // have changed, e.g., usda_eligible_next_distro
+                  this._getClientList();
                 });
           });
 
