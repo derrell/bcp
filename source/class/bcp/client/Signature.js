@@ -75,6 +75,9 @@ qx.Class.define("bcp.client.Signature",
             let             canvasWrapper = canvas.getContentElement();
             let             htmlCanvas = canvasWrapper.getCanvas();
 
+            // Retain access to the canvas element
+            this._canvas = htmlCanvas;
+
             // Obtain the HTML canvas element, and attach SignaturePad to it
             this._signaturePad = new SignaturePad(htmlCanvas);
 
@@ -151,6 +154,7 @@ qx.Class.define("bcp.client.Signature",
 
   members :
   {
+    _canvas       : null,
     _signaturePad : null,
 
     clear : function()
@@ -159,6 +163,11 @@ qx.Class.define("bcp.client.Signature",
       {
         this._signaturePad.clear();
       }
+    },
+
+    getCanvas : function()
+    {
+      return this._canvas;
     }
   }
 });

@@ -141,11 +141,15 @@ CREATE TABLE Fulfillment
   notes             VARCHAR,
   perishables       VARCHAR,
   usda_eligible_signature VARCHAR DEFAULT NULL,
+  usda_signature_statement VARCHAR DEFAULT NULL,
+  usda_signature_hash      VARCHAR DEFAULT NULL,
   PRIMARY KEY (distribution, family_name)
 );
 
 -- ALTER TABLE Fulfillment ADD COLUMN perishables VARCHAR;
 -- ALTER TABLE Fulfillment ADD COLUMN usda_eligible_signature VARCHAR DEFAULT NULL;
+-- ALTER TABLE Fulfillment ADD COLUMN usda_signature_statement VARCHAR DEFAULT NULL;
+-- ALTER TABLE Fulfillment ADD COLUMN usda_signature_hash VARCHAR DEFAULT NULL;
 -- ALTER TABLE Fulfillment DROP COLUMN is_usda_current;
 
 

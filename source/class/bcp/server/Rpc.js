@@ -2129,8 +2129,12 @@ qx.Class.define("bcp.server.Rpc",
      *   args[1] {family_name}
      *     The name of the family whose fulfillment status is to be updated
      *
-     *   args[2] {signature|null}
-     *     The signature indicating eligibility, or null to indicate
+     *   args[2] {signature}
+     *     The signature indicating eligibility, or null or "" to indicate
+     *     not eligible
+     *
+     *   args[3] (signatureStatement)
+     *     The statement agreed to by the signature, or "" to indicate
      *     not eligible
      *
      * @param callback {Function}
@@ -2138,10 +2142,37 @@ qx.Class.define("bcp.server.Rpc",
      */
     _updateUsdaSignature(args, callback)
     {
+      let             signatureHash = "";
+      let
+      [
+        distribution,
+        familyName,
+        signature,
+        sigStatement
+      ] = args;
+
       // TODO: move prepared statements to constructor
       return Promise.resolve()
         .then(() => this._beginTransaction())
 
+        .then(
+          () =>
+          {
+            const           crypto = require("crypto");
+
+            // If there's a non-null, non-zero-length signature,
+            // combine the signature statement and signature into a
+            // single string (joined by a newline), and hash that
+            // string.
+            if (signature)
+            {
+              signatureHash =
+                crypto
+                .createHash("sha256")
+                .update(sigStatement + "\n" + signature + "\n")
+                .digest("hex");
+            }
+          })
         .then(
           () =>
           {
@@ -2150,7 +2181,9 @@ qx.Class.define("bcp.server.Rpc",
               [
                 "UPDATE Fulfillment",
                 "  SET ",
-                "    usda_eligible_signature = $usda_eligible_signature",
+                "    usda_eligible_signature = $usda_eligible_signature,",
+                "    usda_signature_statement = $usda_signature_statement,",
+                "    usda_signature_hash = $usda_signature_hash",
                 "  WHERE distribution = $distribution",
                 "    AND family_name = $family_name;"
               ].join(" "));
@@ -2160,9 +2193,11 @@ qx.Class.define("bcp.server.Rpc",
           {
             return stmt.all(
               {
-                $distribution            : args[0],
-                $family_name             : args[1],
-                $usda_eligible_signature : args[2]
+                $distribution             : distribution,
+                $family_name              : familyName,
+                $usda_eligible_signature  : signature,
+                $usda_signature_statement : sigStatement,
+                $usda_signature_hash      : signatureHash
               });
           })
         .then(

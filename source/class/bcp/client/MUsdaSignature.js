@@ -232,6 +232,7 @@ qx.Mixin.define("bcp.client.MUsdaSignature",
       let             label;
       let             checkbox;
       let             signature;
+      let             sigStatement;
       let             formData;
       let             root;
       let             rootSize;
@@ -411,6 +412,7 @@ qx.Mixin.define("bcp.client.MUsdaSignature",
               {
                 let             butClear;
                 let             butNotEligible;
+                let             butPaperSignature;
 
                 // Add the Not Eligible button
                 butNotEligible = new qx.ui.form.Button(
@@ -430,6 +432,37 @@ qx.Mixin.define("bcp.client.MUsdaSignature",
 
                     // Clear the signature
                     form._formElements["signature"].clear();
+
+                    // Submit the form
+                    form._okButton.execute();
+                  });
+
+                butPaperSignature = new qx.ui.form.Button("Paper Signature");
+                buttonBar.add(butPaperSignature);
+
+                butPaperSignature.addListener(
+                  "execute",
+                  ()  =>
+                  {
+                    let             canvas;
+                    let             context;
+                    const           sigFormField =
+                          form._formElements["signature"];
+
+                    // Clear the signature
+                    sigFormField.clear();
+
+                    // Get the canvas element and write "On file" to
+                    // it, to indicate that the client has signed on
+                    // paper
+                    canvas = sigFormField.getCanvas();
+                    context = canvas.getContext("2d");
+                    context.font = "bold 100px Arial";
+                    context.fillText("On file", 10, 100);
+
+                    // Convert the "On file" text to a data URL, for
+                    // saving as signature
+                    sigFormField.setValue(canvas.toDataURL("image/png"));
 
                     // Submit the form
                     form._okButton.execute();
@@ -587,15 +620,37 @@ qx.Mixin.define("bcp.client.MUsdaSignature",
               }
             };
 
+          // Determine today's date
+          let dateString = () =>
+            {
+              let             now = new Date();
+              const           months =
+                    [
+                      "January", "February", "March",
+                      "April",   "May",      "June",
+                      "July",    "August",   "September",
+                      "October", "November", "December"
+                    ];
+              return [
+                now.getDate(),
+                months[now.getMonth()],
+                now.getFullYear()
+              ].join(" ");
+            };
+
+          // Generate the statement they'll be signing
+          sigStatement =
+            `I am an adult member of the "${data.family_name}" family. ` +
+            `I affirm that as of today, ${dateString()}, ` +
+            "my family's combined monthly income " +
+            `is no greater than ${data.usda_amount}. ` +
+            "By signing I declare my eligibility to receive USDA food.";
+
           root = this.getRoot();
           rootSize = root.getInnerSize();
           this._usdaForm.set(
             {
-              message          : this.bold(
-                "I affirm that my family's combined monthly income " +
-                  "is no greater than " +
-                  data.usda_amount +
-                  "."),
+              message          : this.bold(sigStatement),
               labelColumnWidth : 150,
               formData         : formData,
               width            : rootSize.width,
@@ -631,7 +686,7 @@ qx.Mixin.define("bcp.client.MUsdaSignature",
             });
 
           this._usdaForm._message.setFont(
-            qx.bom.Font.fromString("bold 50px Arial"));
+            qx.bom.Font.fromString("35px Arial"));
 
           this._usdaForm._okButton.set(
             {
@@ -688,7 +743,8 @@ qx.Mixin.define("bcp.client.MUsdaSignature",
                     [
                       distribution,
                       data.family_name,
-                      result.signature
+                      result.signature,
+                      result.signature ? sigStatement : ""
                     ])
                     .then(
                       () =>
