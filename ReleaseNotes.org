@@ -20,6 +20,9 @@ UPDATE Client
   WHERE usda_eligible IS NOT NULL AND length(usda_eligible) > 0;
 
 ALTER TABLE Fulfillment DROP COLUMN is_usda_current;
+ALTER TABLE Fulfillment ADD COLUMN usda_eligible_signature VARCHAR DEFAULT NULL;
+ALTER TABLE Fulfillment ADD COLUMN usda_signature_statement VARCHAR DEFAULT NULL;
+ALTER TABLE Fulfillment ADD COLUMN usda_signature_hash VARCHAR DEFAULT NULL;
 
 CREATE TABLE UsdaMaxIncome
 (
