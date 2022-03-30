@@ -1608,8 +1608,8 @@ REPLACE INTO Report
             WHERE distribution IN
               (SELECT start_date
                  FROM DistributionPeriod
-                 ORDER BY start_date
-                 DESC LIMIT 3))
+                 ORDER BY start_date DESC
+                 LIMIT 3))
      ORDER BY family_name, age;
   '
 );
@@ -1655,8 +1655,8 @@ REPLACE INTO Report
             WHERE distribution IN
               (SELECT start_date
                  FROM DistributionPeriod
-                 ORDER BY start_date
-                 DESC LIMIT 3))
+                 ORDER BY start_date DESC
+                 LIMIT 3))
      ORDER BY family_name;
   '
 );
