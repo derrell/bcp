@@ -1362,3 +1362,106 @@ REPLACE INTO Report
   '
 );
 
+REPLACE INTO Report
+(
+  name,
+  description,
+  landscape,
+  input_fields,
+  subtitle_field,
+  separate_by,
+  number_style,
+  number_remaining,
+  pre_query,
+  query
+)
+ VALUES
+(
+  'Recent family/child attendees',
+  'Children who attended within most recent three distributions',
+  0,
+  '',
+  '',
+  'Family name',
+  '',
+  '',
+  '
+   INSERT INTO StoredProc_UpdateAge
+       (birthday, asOf, family_name, member_name)
+     SELECT
+         date_of_birth,
+         (SELECT MAX(start_date) FROM DistributionPeriod),
+         family_name,
+         member_name
+       FROM FamilyMember;
+  ',
+  'SELECT
+       family_name AS "Family name",
+       member_name AS "Child name",
+       CASE gender
+         WHEN "M" THEN "Male"
+         WHEN "F" THEN "Female"
+         ELSE "Other"
+       END AS Gender,
+       age AS Age
+     FROM FamilyMember
+     WHERE
+       age < 18
+       AND family_name IN
+         (SELECT DISTINCT family_name
+            FROM Fulfillment
+            WHERE distribution IN
+              (SELECT start_date
+                 FROM DistributionPeriod
+                 ORDER BY start_date
+                 DESC LIMIT 3))
+     ORDER BY family_name, age;
+  '
+);
+
+REPLACE INTO Report
+(
+  name,
+  description,
+  landscape,
+  input_fields,
+  subtitle_field,
+  separate_by,
+  number_style,
+  number_remaining,
+  pre_query,
+  query
+)
+ VALUES
+(
+  'Recent family/veteran attendees',
+  'Veterans who attended within most recent three distributions',
+  0,
+  '',
+  '',
+  'Family name',
+  '',
+  '',
+  '',
+  'SELECT
+       family_name AS "Family name",
+       member_name AS "Child name",
+       CASE gender
+         WHEN "M" THEN "Male"
+         WHEN "F" THEN "Female"
+         ELSE "Other"
+       END AS Gender
+     FROM FamilyMember
+     WHERE
+       is_veteran
+       AND family_name IN
+         (SELECT DISTINCT family_name
+            FROM Fulfillment
+            WHERE distribution IN
+              (SELECT start_date
+                 FROM DistributionPeriod
+                 ORDER BY start_date
+                 DESC LIMIT 3))
+     ORDER BY family_name;
+  '
+);
