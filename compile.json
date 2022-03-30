@@ -137,7 +137,6 @@
     }
   ],
   "libraries": [
-    "../../qxl.dialog.git",
     "../../incubator.qx.io.jsonrpc.git",
     "."
   ],
