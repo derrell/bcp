@@ -15,10 +15,8 @@ qx.Class.define("bcp.server.Server",
       let           portPrimary;
       let           portAlternate;
       let           server;
-      let           options;
-      let           privateKey;
-      let           certificate;
       let           protocol;
+      let           securityContext = null;
       const         fs = require("fs");
       const         http = require("http"); // TODO: remove
       const         https = require("https");
@@ -51,13 +49,6 @@ qx.Class.define("bcp.server.Server",
         protocol = https;
         portPrimary = 4000;
         portAlternate = undefined;
-        privateKey = fs.readFileSync(PRIVATE_KEY_FILE);
-        certificate = fs.readFileSync(CERTIFICATE_FILE);
-        options =
-          {
-            key  : privateKey,
-            cert : certificate
-          };
       }
       else if (qx.core.Environment.get("qx.debug"))
       {
@@ -69,16 +60,7 @@ qx.Class.define("bcp.server.Server",
       else
       {
         // We'll use HTTPS
-        // Read the private key and certificate
-        // TODO: specify proper key, cert file names
         protocol = https;
-        privateKey = fs.readFileSync(PRIVATE_KEY_FILE);
-        certificate = fs.readFileSync(CERTIFICATE_FILE);
-        options =
-          {
-            key  : privateKey,
-            cert : certificate
-          };
 
         // We'll listen on both HTTPS for the app and HTTP as redirector
         portPrimary = 3000;
@@ -91,10 +73,53 @@ qx.Class.define("bcp.server.Server",
       // Create the web server
       if (protocol === https)
       {
-        server = https.createServer(options, app);
+        const readCertAndKey = () =>
+        {
+          let             privateKey;
+          let             certificate;
+          const           tls = require("tls");
+
+          // Read the current (possibly recently updated) certificate
+          // and private key. Generate a security context with them
+          // that will be used for subsequent connection requests.
+          console.log("Server: reading " +
+                      (securityContext == null ? "initial" : "potentially new") +
+                      " certificate and key");
+          certificate = fs.readFileSync(CERTIFICATE_FILE);
+          privateKey = fs.readFileSync(PRIVATE_KEY_FILE);
+          securityContext = new tls.createSecureContext(
+            {
+		      cert : certificate,
+		      key  : privateKey,
+	        });
+        };
+
+        // Read the certificate and key now, for immediate use
+        readCertAndKey();
+
+        // Read the certificate and key daily so we always have
+        // current ones
+        setInterval(readCertAndKey, 1000 * 60 * 60 * 24);
+
+        // Called on each connenction request, and can specify which
+        // security context to use. We always use the security context
+        // generated from the most recently read certificate and
+        // private key.
+        const sniCallback = (serverName, callback) =>
+        {
+	      callback(null, securityContext);
+        };
+
+        // Create the server!
+        server = https.createServer(
+          {
+            SNICallback : sniCallback
+          },
+          app);
       }
 
 /*
+      // Uncomment for debugging
       app.use(
         (req, res, next) =>
         {
@@ -118,6 +143,7 @@ qx.Class.define("bcp.server.Server",
       app.use(bodyParser.urlencoded( { extended : true } ));
 
 /*
+      // Uncomment for voluminous debugging (includes body)
       app.use(
         (req, res, next) =>
         {
