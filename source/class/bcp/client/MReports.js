@@ -550,7 +550,7 @@ qx.Mixin.define("bcp.client.MReports",
                             // Write this column's data ensuring adequate width
                             this._reportWin.document.write(
                               [
-                                "<td style='width: 400px;'>",
+                                "<td style='width: 300px;'>",
                                 `${row[heading]}`,
                                 "</td>"
                               ].join(" "));

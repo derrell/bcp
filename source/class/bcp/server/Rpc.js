@@ -2170,7 +2170,9 @@ qx.Class.define("bcp.server.Rpc",
                 crypto
                 .createHash("sha256")
                 .update(sigStatement + "\n" + signature + "\n")
-                .digest("hex");
+                .digest("hex")
+                .match(/.{1,8}/g)
+                .join(" ");
             }
           })
         .then(

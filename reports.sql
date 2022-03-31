@@ -1483,11 +1483,7 @@ REPLACE INTO Report
        c.count_senior AS Seniors,
        c.count_adult AS Adults,
        c.count_child AS Children,
-       (SELECT
-          COALESCE(max_income_text, "See Taryn")
-          FROM UsdaMaxIncome
-          WHERE family_size = c.count_senior + c.count_adult + c.count_child
-          ) AS "Income does not exceed",
+       f.usda_signature_statement AS "Statement&nbsp;attested&nbsp;to&nbsp;with&nbsp;signature",
        COALESCE(
          f.usda_eligible_signature,
          -- X image to request board member signature
