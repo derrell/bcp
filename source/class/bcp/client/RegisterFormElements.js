@@ -2,7 +2,7 @@
  * Billerica Community Pantry
  *
  * Copyright:
- *   2020 Derrell Lipman
+ *   2020-2022 Derrell Lipman
  *
  * License:
  *   MIT: https://opensource.org/licenses/MIT
