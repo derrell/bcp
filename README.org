@@ -3,12 +3,10 @@ The installation is assumed to be on Ubuntu 20.04 or equivalent
 ** Install apt dependencies
 ~sudo apt install build-essential sqlite3 nodejs~
 ** Clone this repository
-~git clone https://github.com/derrell/bcp.git bcp.git~
-
+~git clone https://github.com/derrell/bcp.git bcp.git~\\
 (or ~git clone use git@github.com:derrell/bcp.git bcp.git~)
 ** Install npm dependencies
-~cd bcp.git~
-
+~cd bcp.git~\\
 ~npm install~
 ** Build the software for local use (debug version)
 ~npx qx compile~
