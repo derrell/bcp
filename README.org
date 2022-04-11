@@ -1,0 +1,64 @@
+* Quickstart
+The installation is assumed to be on Ubuntu 20.04 or equivalent
+** Install apt dependencies
+~sudo apt install build-essential sqlite3 nodejs~
+** Clone this repository
+~git clone https://github.com/derrell/bcp.git bcp.git~
+(or ~git clone use git@github.com:derrell/bcp.git bcp.git~)
+** Install npm dependencies
+~cd bcp.git~
+~npm install~
+** Build the software for local use (debug version)
+~npx qx compile~
+** Run the server locally
+~node output/source-node/bcp.server/index.js~
+** Build the software for deployment
+~npx qx deploy --out=deploy --clean~
+** Deploy this new version to an existing cloud server
+~rsync -av deploy/ ${SERVER}:${DIR}/~
+
+* High-level Architecture
+** Introduction
+The Billerica Community Pantry (BCP) Management Console is,
+collectively, between its server and client software, used for
+managing the day-to-day operation of tracking and serving Pantry
+clients. The requisite information is stored about each client family
+and the ages, ethnicity, and veteran status of the family members;
+appointments for food distribution, fulfillment of food delivery, and
+specifics required by USDA. The user interface allows entering and
+modifying data pertaining to clients and their family members,
+appointments, "delivery day" operations, creating new distribution
+periods, and generating per-distribution, monthly, and yearly reports.
+
+The software is divided into two primary components: a server that
+runs in the cloud, and client software, retrieved from the server,
+that runs in the user's browser.
+
+Both client- and server-side software are developed using the [[https://qooxdoo.org/][qooxdoo]]
+framework. 
+
+*** Server
+The BCP server maintains an SQLite database that stores user
+authentication information, client, appointment, and fulfillment data,
+and report configurations, among other things. It listens for HTTPS
+requests requesting the user interface itself, or that actions be
+performed. Action requests are in the form of remote procedure calls.
+
+Some requests are allowed by the server without any authentication,
+such as requests to retrieve the user interface code. Other requests
+require that the user be authenticated. No clear-text or even
+encrypted pass phrase are stored in the database. Rather, only hashes
+of pass phrases are stored.
+
+Each user has a permission level which dictates what other requests,
+including which remote procedure calls, that user may issue.
+
+Remote procedure calls are issued and parsed in standard [[https://www.jsonrpc.org/specification][JSON-RPC 2.0]]
+format.
+
+*** Client
+
+** Server Implementation Details
+*** Database schema
+
+** Client Implementation Details
