@@ -59,15 +59,15 @@ by the [[https://www.jsonrpc.org/specification][JSON-RPC 2.0]] standard. The pro
 the server makes use of the [[https://www.npmjs.com/package/jayson][jayson]] module.
 
 **** Implementation
-The server's entry point is `main` in the `bcp.server.Server` class.
+The server's entry point is ~main~ in the ~bcp.server.Server~ class.
 There, it initializes an HTTPS server; creates a session using
-singleton class `bcp.server.Session`; provides routes to the graphical
-user interface code with singleton class `bcp.server.Gui` and to
-remote procedure calls with singleton class `bcp.server.Rpc`. To allow
+singleton class ~bcp.server.Session~; provides routes to the graphical
+user interface code with singleton class ~bcp.server.Gui~ and to
+remote procedure calls with singleton class ~bcp.server.Rpc~. To allow
 access to generated CSV-format reports, a route is created by
-singleton class `bcp.server.GetReport`. For all of these, [[https://www.npmjs.com/package/express][express]] is
+singleton class ~bcp.server.GetReport~. For all of these, [[https://www.npmjs.com/package/express][express]] is
 used. Finally, the database is opened, and a Websocket server is
-established with singleton class `bcp.server.WebSocket`. The websocket
+established with singleton class ~bcp.server.WebSocket~. The websocket
 is used to keep each user informed of other active users, and for
 other miscellaneous purposes.
 
