@@ -19,16 +19,18 @@ The development environment is assumed to be Ubuntu 20.04.
 
 * High-level Architecture
 ** Introduction
-The Billerica Community Pantry (BCP) Management Console is,
-collectively, between its server and client software, used for
+The Billerica Community Pantry (BCP) Management Console is
+collectively -- between its server and client software -- used for
 managing the day-to-day operation of tracking and serving Pantry
 clients. The requisite information is stored about each client family
-and the ages, ethnicity, and veteran status of the family members;
-appointments for food distribution, fulfillment of food delivery, and
-specifics required by USDA. The user interface allows entering and
-modifying data pertaining to clients and their family members,
-appointments, "delivery day" operations, creating new distribution
-periods, and generating per-distribution, monthly, and yearly reports.
+along with the ages, ethnicity, and veteran status of the family
+members; appointments for food distribution, fulfillment of food
+delivery, and specifics required by USDA. The user interface allows
+entering and modifying data pertaining to clients and their family
+members, appointments, "delivery day" operations, creating new
+distribution periods, and generating various types of reports,
+including those needed prior to each distribution; monthly, after a
+distribution; and for end of year.
 
 The software is divided into two primary components: a server that
 runs in the cloud, and client software, retrieved from the server,
