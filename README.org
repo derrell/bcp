@@ -1,0 +1,93 @@
+* Quickstart
+The development environment is assumed to be Ubuntu 20.04.
+** Install apt dependencies
+~sudo apt install build-essential sqlite3 nodejs~
+** Clone this repository
+~git clone https://github.com/derrell/bcp.git bcp.git~\\
+(or ~git clone git@github.com:derrell/bcp.git bcp.git~)
+** Install npm dependencies
+~cd bcp.git~\\
+~npm install~
+** Build the software for local use (debug version)
+~npx qx compile~
+** Run the server locally
+~node output/source-node/bcp.server/index.js~
+** Build the software for deployment
+~npx qx deploy --out=deploy --clean~
+** Deploy this new version to an existing cloud server
+~rsync -av deploy/ ${SERVER}:${DIR}/~
+
+* High-level Architecture
+** Introduction
+The Billerica Community Pantry (BCP) Management Console is
+collectively -- between its server and client software -- used for
+managing the day-to-day operation of tracking and serving Pantry
+clients. The requisite information is stored about each client family
+along with the ages, ethnicity, and veteran status of the family
+members; appointments for food distribution, fulfillment of food
+delivery, and specifics required by USDA. The user interface allows
+entering and modifying data pertaining to clients and their family
+members, appointments, "delivery day" operations, creating new
+distribution periods, and generating various types of reports,
+including those needed prior to each distribution; monthly, after a
+distribution; and for end of year.
+
+The software is divided into two primary components: a server that
+runs in the cloud, and client software, retrieved from the server,
+that runs in the user's browser.
+
+Both client- and server-side software are developed using the [[https://qooxdoo.org/][qooxdoo]]
+framework. 
+
+*** Server
+**** Overview
+The BCP server maintains an SQLite database that stores user
+authentication information, client, appointment, and fulfillment data,
+and report configurations, among other things. It listens for HTTPS
+requests requesting the user interface itself, or that actions be
+performed. Action requests are in the form of remote procedure calls.
+
+Some requests are allowed by the server without any authentication,
+such as requests to retrieve the user interface code. Other requests
+require that the user be authenticated. No clear-text or even
+encrypted pass phrases are stored in the database. For security, only
+hashes of pass phrases are stored.
+
+Each user has a permission level which dictates what requests,
+including which remote procedure calls, that user may issue.
+
+Remote procedure calls are expected and parsed in the format specified
+by the [[https://www.jsonrpc.org/specification][JSON-RPC 2.0]] standard. The processing remote procedure calls,
+the server makes use of the [[https://www.npmjs.com/package/jayson][jayson]] module.
+
+**** Implementation
+The server's entry point is ~main~ in the ~bcp.server.Server~ class.
+There, it initializes an HTTPS server; creates a session using
+singleton class ~bcp.server.Session~; provides routes to the graphical
+user interface code with singleton class ~bcp.server.Gui~ and to
+remote procedure calls with singleton class ~bcp.server.Rpc~. To allow
+access to generated CSV-format reports, a route is created by
+singleton class ~bcp.server.GetReport~. For all of these, [[https://www.npmjs.com/package/express][express]] is
+used. Finally, the database is opened, and a Websocket server is
+established with singleton class ~bcp.server.WebSocket~. The websocket
+is used to keep each user informed of other active users, and for
+other miscellaneous purposes.
+
+*** Client
+**** Overview
+The BCP client is a standard qooxdoo desktop client app. It provides a
+tabbed interface, allowing the user to configure client families and
+their family members, schedule appointments, manage delivery day, keep
+track of USDA signatures, create new distribution periods, and request
+reports in on-screen (human-readable) or CSV formats.
+
+** Implementation
+TBD
+*** Tabs as mixins
+TBD
+
+** Database schema
+TBD
+
+** Building a new report
+TBD
