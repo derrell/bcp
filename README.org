@@ -1,10 +1,10 @@
 * Quickstart
-The installation is assumed to be on Ubuntu 20.04 or equivalent
+The development environment is assumed to be Ubuntu 20.04.
 ** Install apt dependencies
 ~sudo apt install build-essential sqlite3 nodejs~
 ** Clone this repository
 ~git clone https://github.com/derrell/bcp.git bcp.git~\\
-(or ~git clone use git@github.com:derrell/bcp.git bcp.git~)
+(or ~git clone git@github.com:derrell/bcp.git bcp.git~)
 ** Install npm dependencies
 ~cd bcp.git~\\
 ~npm install~
@@ -38,6 +38,7 @@ Both client- and server-side software are developed using the [[https://qooxdoo.
 framework. 
 
 *** Server
+**** Overview
 The BCP server maintains an SQLite database that stores user
 authentication information, client, appointment, and fulfillment data,
 and report configurations, among other things. It listens for HTTPS
@@ -47,18 +48,41 @@ performed. Action requests are in the form of remote procedure calls.
 Some requests are allowed by the server without any authentication,
 such as requests to retrieve the user interface code. Other requests
 require that the user be authenticated. No clear-text or even
-encrypted pass phrase are stored in the database. Rather, only hashes
-of pass phrases are stored.
+encrypted pass phrases are stored in the database. For security, only
+hashes of pass phrases are stored.
 
-Each user has a permission level which dictates what other requests,
+Each user has a permission level which dictates what requests,
 including which remote procedure calls, that user may issue.
 
-Remote procedure calls are issued and parsed in standard [[https://www.jsonrpc.org/specification][JSON-RPC 2.0]]
-format.
+Remote procedure calls are expected and parsed in the format specified
+by the [[https://www.jsonrpc.org/specification][JSON-RPC 2.0]] standard. The processing remote procedure calls,
+the server makes use of the [[https://www.npmjs.com/package/jayson][jayson]] module.
+
+**** Implementation
+The server's entry point is `main` in the `bcp.server.Server` class.
+There, it initializes an HTTPS server; creates a session using
+singleton class `bcp.server.Session`; provides routes to the graphical
+user interface code with singleton class `bcp.server.Gui` and to
+remote procedure calls with singleton class `bcp.server.Rpc`. To allow
+access to generated CSV-format reports, a route is created by
+singleton class `bcp.server.GetReport`. For all of these, [[https://www.npmjs.com/package/express][express]] is
+used. Finally, the database is opened, and a Websocket server is
+established with singleton class `bcp.server.WebSocket`. The websocket
+is used to keep each user informed of other active users, and for
+other miscellaneous purposes.
 
 *** Client
+**** Overview
+The BCP client is a standard qooxdoo desktop client app. It provides a
+tabbed interface, allowing configuration of client families and their
+family members, scheduling appointments, managing delivery day, entry
+of USDA signatures, creating new distribution periods, and requesting
+reports in on-screen or CSV formats.
 
-** Server Implementation Details
-*** Database schema
+** Implementation
+*** Tabs as mixins
 
-** Client Implementation Details
+
+** Database schema
+
+** Building a new report
