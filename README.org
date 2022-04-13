@@ -74,15 +74,18 @@ other miscellaneous purposes.
 *** Client
 **** Overview
 The BCP client is a standard qooxdoo desktop client app. It provides a
-tabbed interface, allowing configuration of client families and their
-family members, scheduling appointments, managing delivery day, entry
-of USDA signatures, creating new distribution periods, and requesting
-reports in on-screen or CSV formats.
+tabbed interface, allowing the user to configure client families and
+their family members, schedule appointments, manage delivery day, keep
+track of USDA signatures, create new distribution periods, and request
+reports in on-screen (human-readable) or CSV formats.
 
 ** Implementation
+TBD
 *** Tabs as mixins
-
+TBD
 
 ** Database schema
+TBD
 
 ** Building a new report
+TBD
