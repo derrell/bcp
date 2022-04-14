@@ -61,17 +61,18 @@ by the [[https://www.jsonrpc.org/specification][JSON-RPC 2.0]] standard. The pro
 the server makes use of the [[https://www.npmjs.com/package/jayson][jayson]] module.
 
 **** Implementation
-The server's entry point is ~main~ in the ~bcp.server.Server~ class.
-There, it initializes an HTTPS server; creates a session using
-singleton class ~bcp.server.Session~; provides routes to the graphical
-user interface code with singleton class ~bcp.server.Gui~ and to
-remote procedure calls with singleton class ~bcp.server.Rpc~. To allow
-access to generated CSV-format reports, a route is created by
-singleton class ~bcp.server.GetReport~. For all of these, [[https://www.npmjs.com/package/express][express]] is
-used. Finally, the database is opened, and a Websocket server is
-established with singleton class ~bcp.server.WebSocket~. The websocket
-is used to keep each user informed of other active users, and for
-other miscellaneous purposes.
+The BCP server is a qooxdoo [[https://qooxdoo.org/documentation/v7.1/#/server/][server app]]. The server's entry point is
+~main~ in the ~bcp.server.Server~ class. There, it initializes an
+HTTPS server; creates a session using singleton class
+~bcp.server.Session~; provides routes to the graphical user interface
+code with singleton class ~bcp.server.Gui~ and to remote procedure
+calls with singleton class ~bcp.server.Rpc~. To allow access to
+generated CSV-format reports, a route is created by singleton class
+~bcp.server.GetReport~. For all of these, [[https://www.npmjs.com/package/express][express]] is used. Finally,
+the database is opened, and a Websocket server is established with
+singleton class ~bcp.server.WebSocket~. The websocket is used to keep
+each user informed of other active users, and for other miscellaneous
+purposes.
 
 *** Client
 **** Overview
@@ -80,10 +81,36 @@ tabbed interface, allowing the user to configure client families and
 their family members, schedule appointments, manage delivery day, keep
 track of USDA signatures, create new distribution periods, and request
 reports in on-screen (human-readable) or CSV formats.
-
 ** Implementation
-TBD
+The client's entry point is ~main~ in the ~bcp.client.Client~ class.
+There, it creates the structure of the user interface, and establishes
+a websocket connection to the server. It then issues a remote
+procedure call to obtain information about the logged-in user,
+including the user's permission level. (If no user is yet logged in,
+that result is interpreted by the `rpc` method, and a login process is
+initiated. A subsequently succssful login causes a page refresh, and
+therefore `main` is re-entered, now with a logged-in user.) Using the
+permission level of the logged-in user, the tab configuration is
+iterated, with each tab being created if its required permission is no
+lower than the user's permission level.
 *** Tabs as mixins
+Each tab in the user interface is implemented as a
+Mixin[fn:tab-as-mixin].
+
+[fn:tab-as-mixin] Implementing each tab as a mixin was an experiment
+in this project. It allows easy access to common code in one tab from
+another tab, but requires discipline in method naming, as no methods
+in two separate tab mixins can have the same name. With this
+experiment now completed, I don't recommend using a mixin for each
+tab, but it works fine in this implementation and there are no plans
+to change it.
+*** Remote procedure calls
+Requests are issued from the client as remote procedure calls, using
+qooxdoo's JSON RPC client class, ~qx.io.jsonrpc.Client~, over the XHR
+transport, ~qx.io.transport.Xhr~, to the server, which processes the
+request and returns a response/result.
+
+
 TBD
 
 ** Database schema
