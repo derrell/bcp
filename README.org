@@ -94,16 +94,13 @@ permission level of the logged-in user, the tab configuration is
 iterated, with each tab being created if its required permission is no
 lower than the user's permission level.
 *** Tabs as mixins
-Each tab in the user interface is implemented as a
-Mixin[fn:tab-as-mixin].
-
-[fn:tab-as-mixin] Implementing each tab as a mixin was an experiment
-in this project. It allows easy access to common code in one tab from
-another tab, but requires discipline in method naming, as no methods
-in two separate tab mixins can have the same name. With this
-experiment now completed, I don't recommend using a mixin for each
-tab, but it works fine in this implementation and there are no plans
-to change it.
+Each tab in the user interface is implemented as a Mixin[fn::
+Implementing each tab as a mixin was an experiment in this project. It
+allows easy access to common code in one tab from another tab, but
+requires discipline in method naming, as no methods in two separate
+tab mixins can have the same name. With this experiment now completed,
+I don't recommend using a mixin for each tab, but it works fine in
+this implementation and there are no plans to change it.]
 *** Remote procedure calls
 Requests are issued from the client as remote procedure calls, using
 qooxdoo's JSON RPC client class, ~qx.io.jsonrpc.Client~, over the XHR
