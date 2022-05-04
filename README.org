@@ -61,17 +61,18 @@ by the [[https://www.jsonrpc.org/specification][JSON-RPC 2.0]] standard. The pro
 the server makes use of the [[https://www.npmjs.com/package/jayson][jayson]] module.
 
 **** Implementation
-The server's entry point is ~main~ in the ~bcp.server.Server~ class.
-There, it initializes an HTTPS server; creates a session using
-singleton class ~bcp.server.Session~; provides routes to the graphical
-user interface code with singleton class ~bcp.server.Gui~ and to
-remote procedure calls with singleton class ~bcp.server.Rpc~. To allow
-access to generated CSV-format reports, a route is created by
-singleton class ~bcp.server.GetReport~. For all of these, [[https://www.npmjs.com/package/express][express]] is
-used. Finally, the database is opened, and a Websocket server is
-established with singleton class ~bcp.server.WebSocket~. The websocket
-is used to keep each user informed of other active users, and for
-other miscellaneous purposes.
+The BCP server is a qooxdoo [[https://qooxdoo.org/documentation/v7.1/#/server/][server app]]. The server's entry point is
+~main~ in the ~bcp.server.Server~ class. There, it initializes an
+HTTPS server; creates a session using singleton class
+~bcp.server.Session~; provides routes to the graphical user interface
+code with singleton class ~bcp.server.Gui~ and to remote procedure
+calls with singleton class ~bcp.server.Rpc~. To allow access to
+generated CSV-format reports, a route is created by singleton class
+~bcp.server.GetReport~. For all of these, [[https://www.npmjs.com/package/express][express]] is used. Finally,
+the database is opened, and a Websocket server is established with
+singleton class ~bcp.server.WebSocket~. The websocket is used to keep
+each user informed of other active users, and for other miscellaneous
+purposes.
 
 *** Client
 **** Overview
@@ -80,14 +81,103 @@ tabbed interface, allowing the user to configure client families and
 their family members, schedule appointments, manage delivery day, keep
 track of USDA signatures, create new distribution periods, and request
 reports in on-screen (human-readable) or CSV formats.
-
 ** Implementation
-TBD
+The client's entry point is ~main~ in the ~bcp.client.Client~ class.
+There, it creates the structure of the user interface, and establishes
+a websocket connection to the server. It then issues a remote
+procedure call to obtain information about the logged-in user,
+including the user's permission level. (If no user is yet logged in,
+that result is interpreted by the `rpc` method, and a login process is
+initiated. A subsequently succssful login causes a page refresh, and
+therefore `main` is re-entered, now with a logged-in user.) Using the
+permission level of the logged-in user, the tab configuration is
+iterated, with each tab being created if its required permission is no
+lower than the user's permission level.
 *** Tabs as mixins
-TBD
+Each tab in the user interface is implemented as a [[https://qooxdoo.org/documentation/v7.1/#/core/mixins?id=mixins][Mixin]] that
+implements that tab's functionality. (Implementing each tab as a mixin
+was an experiment in this project. It allows common code in one tab to
+be easily accessed from another tab, but requires discipline in method
+naming, as no methods in two separate tabs/mixins can have the same
+name. With this experiment now completed, I can't say I recommend
+using a mixin for each tab, but it works fine in this implementation
+and there are no plans to change it.)
+*** Remote procedure calls
+Requests are issued from the client as remote procedure calls, using
+qooxdoo's JSON RPC client class, ~qx.io.jsonrpc.Client~, over the XHR
+transport, ~qx.io.transport.Xhr~, to the server, which processes the
+request and returns a response/result.
 
 ** Database schema
-TBD
+The database schema is defined in the top-level file ~schema.sql~. The
+only time this file is required is when creating a new pantry's
+database. For use at Billerica Community Pantry, the database already
+exists, so although schema changes occur occasionaly, those
+alterations are accomplished on the existing database; a new database
+is not created from the schema.
+
+To that end, the ~schema.sql~ file contains, in some cases,
+commented-out ~ALTER TABLE~ statements, following the ~CREATE
+DATABASE~ statements, which have been applied to the original schema
+over time. The column names in the full ~CREATE TABLE~ has been kept
+up to date, though, so that the ~ALTER TABLE~ statements should not be
+necessary if the ~schema.sql~ file is used as input to create a brand
+new database.
+
+In the follow discussion, "triggers" are named according to these
+conventions:
+**** "tr_" indicates that this is a trigger
+**** "ai_" is used for "after insert" triggers; "au" for "after update"
+
+Details pertaining to selected tables:
+
+**** User
+The password field of the ~User~ table is an ~sha256~ hash of the user's
+actual password. To generate a password, the following command is
+used, replacing "user_password" with the actual user password:
+
+~echo -n "user_password" | sha256sum~
+
+Note carefully the use of the ~-n~ option. This option says not to
+append a newline after the echoed password, which would cause an
+entirely different sha256 hash.
+
+**** ClientId
+When this schema was first created, no unique numeric value for a
+client was required, and the ~Client~ table had no such value. When
+such a need was identified, rather than adding it to the Client table
+itself, this new ~ClientId~ table was created, and a new record is
+automatically added to this table whenever a ~Fulfillment~ appointment
+record is added and the client does not already have a ~ClientId~
+record. The trigger ~tr_ai_CleintId~ automatically generates the ID
+when a new ~ClientId~ record is added.
+
+**** FamilyMember
+The ~Client~ table keeps track of client "families". There are many
+cases where counts by family member age, gender, and veteran status
+are required. To complicate things, ages vary over time. For these
+reasons, the ~FamilyMember~ table keeps track of the birthdates of
+each of the family members, as well as each member's gender and
+veteran status.
+
+There is also a "transient" ~age~ column in the table. This column is
+updated regularly by the "stored procedure" ~StoredProc_UpdateAge~,
+described below.
+
+**** Fulfillment
+The ~Fulfillment~ table keeps track of clients' appointments, and the
+fullment state of that appointment (did they collect their food
+distribution). Every client who has an appointment must have a client
+ID, so whenever a new ~Fulfillment~ record is added, the trigger,
+~tr_ai_fulfillment~ checks whether the client has a ClientId record
+associated with it, and if not, creates one by inserting a record into
+the ~ClientId~ table.
+
+**** Report
+
+**** KeyValueStore
+
+**** StoredProc_UpdateAge
 
 ** Building a new report
 TBD

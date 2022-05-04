@@ -697,7 +697,8 @@ qx.Class.define("bcp.client.Client",
      *   Array of arguments to the function
      *
      * @return {Promise}
-     *   Promise that resolves with the RPC result. */
+     *   Promise that resolves with the RPC result.
+     */
     rpc(functionName, args)
     {
       let             client;
