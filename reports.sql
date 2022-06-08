@@ -1594,7 +1594,8 @@ REPLACE INTO Report
          WHEN "F" THEN "Female"
          ELSE "Other"
        END AS Gender,
-       age AS Age
+       age AS Age,
+       date_of_birth AS Birthday
      FROM FamilyMember
      WHERE
        age < 18
