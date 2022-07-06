@@ -132,7 +132,7 @@ REPLACE INTO Report
   '$distribution',
   '_separatorWithTime',
   '$remaining',
-  'Day',
+  '_day',
   '
    INSERT INTO StoredProc_UpdateAge
        (birthday, asOf, family_name, member_name)
@@ -143,7 +143,8 @@ REPLACE INTO Report
   '
    SELECT
        ci.id AS _id,
-       f.appt_day as Day,
+       f.appt_day as _day,
+       "" AS Here,
        f.appt_time AS Time,
        "Day " || f.appt_day || " (" ||
          CASE f.appt_day
@@ -177,8 +178,8 @@ REPLACE INTO Report
                 WHERE start_date = $distribution)
          END ||
          ") at " || f.appt_time AS _separatorWithTime,
-       c.family_name || CASE c.verified WHEN 1 THEN "&check;" ELSE "" END
-          AS "Family name",
+       c.family_name AS "Family name",
+       CASE c.verified WHEN 1 THEN "&check;" ELSE "" END AS ID,
        (c.count_senior + c.count_adult + c.count_child) ||
          CASE
            WHEN c.count_senior + c.count_adult + c.count_child >= 4
@@ -187,7 +188,6 @@ REPLACE INTO Report
              THEN " (Single)"
            ELSE " (Small)"
          END AS "Family size",
-       COALESCE(pet_types, "") AS Pets,
        (SELECT
           COALESCE(max_income_text, "See Taryn")
           FROM UsdaMaxIncome
@@ -206,7 +206,7 @@ REPLACE INTO Report
        ON ci.family_name = c.family_name
      WHERE f.distribution = $distribution
        AND length(COALESCE(f.appt_time, "")) > 0
-     ORDER BY Day, Time, "Family name";
+     ORDER BY _day, Time, "Family name";
   '
 );
 
