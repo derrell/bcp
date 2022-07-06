@@ -117,7 +117,7 @@ REPLACE INTO Report
   '$distribution',
   '_separatorWithTime',
   '$remaining',
-  'Day',
+  '_day',
   '
    INSERT INTO StoredProc_UpdateAge
        (birthday, asOf, family_name, member_name)
@@ -128,11 +128,12 @@ REPLACE INTO Report
   '
    SELECT
        ci.id AS _id,
-       f.appt_day as Day,
+       " " AS Here,
+       f.appt_day as _day,
        f.appt_time AS Time,
        "Day " || f.appt_day || " at " || f.appt_time AS _separatorWithTime,
-       c.family_name || CASE c.verified WHEN 1 THEN "&check;" ELSE "" END
-          AS "Family name",
+       c.family_name AS "Family name",
+       CASE c.verified WHEN 1 THEN "&check;" ELSE "" END AS ID,
        (c.count_senior + c.count_adult + c.count_child) ||
          CASE
            WHEN c.count_senior + c.count_adult + c.count_child >= 4
@@ -141,7 +142,6 @@ REPLACE INTO Report
              THEN " (Single)"
            ELSE " (Small)"
          END AS "Family size",
-       COALESCE(pet_types, "") AS Pets,
        CASE (c.count_senior + c.count_adult + c.count_child)
          WHEN 1 THEN "$2,683"
          WHEN 2 THEN "$3,629"
@@ -167,7 +167,7 @@ REPLACE INTO Report
        CASE f.is_usda_current
          WHEN 1 THEN "&check;"
          ELSE ""
-       END AS "&check;",
+       END AS "SIG",
        COALESCE(notes, "") AS Notes
      FROM Fulfillment f
      LEFT JOIN Client c
@@ -176,7 +176,7 @@ REPLACE INTO Report
        ON ci.family_name = c.family_name
      WHERE f.distribution = $distribution
        AND length(COALESCE(f.appt_time, "")) > 0
-     ORDER BY Day, Time, "Family name";
+     ORDER BY _day, Time, "Family name";
   '
 );
 
