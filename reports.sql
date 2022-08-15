@@ -104,6 +104,73 @@ REPLACE INTO Report
 )
  VALUES
 (
+  'Distribution perishables, no name',
+  'Schedule of appointments for a specified distribution, with perishables, no name',
+  1,
+  '{
+     "$distribution" :
+     {
+       "type"  : "SelectBox",
+       "label" : "Distribution Date"
+     }
+   }',
+  '$distribution',
+  '_separatorWithTime',
+  '$remaining',
+  'Day',
+  '
+   INSERT INTO StoredProc_UpdateAge
+       (birthday, asOf, family_name, member_name)
+     SELECT
+         date_of_birth, $distribution, family_name, member_name
+       FROM FamilyMember;
+  ',
+  '
+   SELECT
+       ci.id AS _id,
+       f.appt_day as Day,
+       f.appt_time AS Time,
+       "Day " || f.appt_day || " at " || f.appt_time AS _separatorWithTime,
+       (c.count_senior + c.count_adult + c.count_child) ||
+         CASE
+           WHEN c.count_senior + c.count_adult + c.count_child >= 4
+             THEN " (Large)"
+           WHEN c.count_senior + c.count_adult + c.count_child = 1
+             THEN " (Single)"
+           ELSE " (Small)"
+         END AS "Family size",
+       COALESCE(perishables, "") AS Perishables,
+       CASE c.usda_eligible
+         WHEN "yes" THEN "Yes"
+         WHEN "no" THEN "No"
+         ELSE ""
+       END AS "USDA Eligible"
+     FROM Fulfillment f
+     LEFT JOIN Client c
+       ON c.family_name = f.family_name
+     LEFT JOIN ClientId ci
+       ON ci.family_name = c.family_name
+     WHERE f.distribution = $distribution
+       AND length(COALESCE(f.appt_time, "")) > 0
+     ORDER BY Day, Time, f.family_name;
+  '
+);
+
+REPLACE INTO Report
+(
+  name,
+  description,
+  landscape,
+  input_fields,
+  subtitle_field,
+  separate_by,
+  number_style,
+  number_remaining,
+  pre_query,
+  query
+)
+ VALUES
+(
   'Distribution appointments with name',
   'Schedule of appointments for a specified distribution, including family name',
   1,
