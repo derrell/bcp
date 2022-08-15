@@ -15,9 +15,9 @@ ALTER TABLE DistributionPeriod ADD COLUMN day_5_date VARCHAR DEFAULT '';
 ALTER TABLE DistributionPeriod ADD COLUMN day_6_date VARCHAR DEFAULT '';
 ALTER TABLE DistributionPeriod ADD COLUMN day_7_date VARCHAR DEFAULT '';
 
-UPDATE Client
-  SET usda_eligible_next_distro = usda_eligible
-  WHERE usda_eligible IS NOT NULL AND length(usda_eligible) > 0;
+-- UPDATE Client
+--   SET usda_eligible_next_distro = usda_eligible
+--   WHERE usda_eligible IS NOT NULL AND length(usda_eligible) > 0;
 
 ALTER TABLE Fulfillment DROP COLUMN is_usda_current;
 ALTER TABLE Fulfillment ADD COLUMN usda_eligible_signature VARCHAR DEFAULT NULL;
