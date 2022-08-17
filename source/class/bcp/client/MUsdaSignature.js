@@ -316,7 +316,7 @@ qx.Mixin.define("bcp.client.MUsdaSignature",
       treeItem.addWidget(o);
 
       // On leaves, add a checkbox for indicating whether they're USDA eligible
-      checkbox = new qx.ui.form.ToggleButton("Sign", null);
+      checkbox = new qx.ui.form.ToggleButton(this.tr("Sign"), null);
 
       checkbox.set(
         {
@@ -337,7 +337,7 @@ qx.Mixin.define("bcp.client.MUsdaSignature",
           if (checkbox.getValue() === null)
           {
             checkbox.setIcon(null);
-            checkbox.setLabel("Sign");
+            checkbox.setLabel(this.tr("Sign"));
           }
           else if (! checkbox.getValue())
           {
@@ -368,19 +368,11 @@ qx.Mixin.define("bcp.client.MUsdaSignature",
       switch (data.usda_eligible_next_distro)
       {
       case "yes" :
-        checkbox.set(
-          {
-            icon    : null,
-            label   : "Override: Yes",
-            enabled : false
-          });
-        break;
-
       case "no" :
         checkbox.set(
           {
             icon    : null,
-            label   : "Override: No",
+            label   : "No sig req'd",
             enabled : false
           });
         break;
@@ -416,7 +408,7 @@ qx.Mixin.define("bcp.client.MUsdaSignature",
 
                 // Add the Not Eligible button
                 butNotEligible = new qx.ui.form.Button(
-                  "Not Eligible", "qxl.dialog.icon.warning");
+                  this.tr("Not Eligible"), "qxl.dialog.icon.warning");
                 buttonBar.add(butNotEligible);
 
                 butNotEligible.addListener(
@@ -437,7 +429,8 @@ qx.Mixin.define("bcp.client.MUsdaSignature",
                     form._okButton.execute();
                   });
 
-                butPaperSignature = new qx.ui.form.Button("Paper Signature");
+                butPaperSignature =
+                  new qx.ui.form.Button(this.tr("Paper Signature"));
                 buttonBar.add(butPaperSignature);
 
                 butPaperSignature.addListener(
@@ -626,10 +619,18 @@ qx.Mixin.define("bcp.client.MUsdaSignature",
               let             now = new Date();
               const           months =
                     [
-                      "January", "February", "March",
-                      "April",   "May",      "June",
-                      "July",    "August",   "September",
-                      "October", "November", "December"
+                      this.tr("January"),
+                      this.tr("February"),
+                      this.tr("March"),
+                      this.tr("April"),
+                      this.tr("May"),
+                      this.tr("June"),
+                      this.tr("July"),
+                      this.tr("August"),
+                      this.tr("September"),
+                      this.tr("October"),
+                      this.tr("November"),
+                      this.tr("December")
                     ];
               return [
                 now.getDate(),
@@ -640,11 +641,14 @@ qx.Mixin.define("bcp.client.MUsdaSignature",
 
           // Generate the statement they'll be signing
           sigStatement =
-            `I am an adult member of the "${data.family_name}" family. ` +
-            `I affirm that as of today, ${dateString()}, ` +
-            "my family's combined monthly income " +
-            `is no greater than ${data.usda_amount}. ` +
-            "By signing I declare my eligibility to receive USDA food.";
+            this.tr(
+              "I am eligible to receive USDA food because my family's " +
+              "combined monthly income as of today, %1, " +
+              "is no greater than %2. " +
+              "I am an adult member of the \"%3\" family.",
+              dateString(),
+              data.usda_amount,
+              data.family_name);
 
           root = this.getRoot();
           rootSize = root.getInnerSize();
@@ -693,6 +697,11 @@ qx.Mixin.define("bcp.client.MUsdaSignature",
               rich    : true,
               label   : this.underlineChar("Save"),
               command : new qx.ui.command.Command("Alt+S")
+            });
+
+          this._usdaForm._cancelButton.set(
+            {
+              label   : this.tr("Cancel")
             });
 
           this._usdaForm.center();
