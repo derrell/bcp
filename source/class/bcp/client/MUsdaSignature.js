@@ -316,7 +316,7 @@ qx.Mixin.define("bcp.client.MUsdaSignature",
       treeItem.addWidget(o);
 
       // On leaves, add a checkbox for indicating whether they're USDA eligible
-      checkbox = new qx.ui.form.ToggleButton(this.tr("Sign"), null);
+      checkbox = new qx.ui.form.ToggleButton("Sign", null);
 
       checkbox.set(
         {
@@ -337,7 +337,7 @@ qx.Mixin.define("bcp.client.MUsdaSignature",
           if (checkbox.getValue() === null)
           {
             checkbox.setIcon(null);
-            checkbox.setLabel(this.tr("Sign"));
+            checkbox.setLabel("Sign");
           }
           else if (! checkbox.getValue())
           {
@@ -393,6 +393,7 @@ qx.Mixin.define("bcp.client.MUsdaSignature",
         {
           let             priorValue = checkbox.getUserData("priorValue");
           let             value = checkbox.getValue();
+          let             _this = this;
 
           // Update the prior value with the current value
           checkbox.setUserData("priorValue", value);
@@ -408,7 +409,7 @@ qx.Mixin.define("bcp.client.MUsdaSignature",
 
                 // Add the Not Eligible button
                 butNotEligible = new qx.ui.form.Button(
-                  this.tr("Not Eligible"), "qxl.dialog.icon.warning");
+                  "Not Eligible", "qxl.dialog.icon.warning");
                 buttonBar.add(butNotEligible);
 
                 butNotEligible.addListener(
@@ -430,7 +431,7 @@ qx.Mixin.define("bcp.client.MUsdaSignature",
                   });
 
                 butPaperSignature =
-                  new qx.ui.form.Button(this.tr("Paper Signature"));
+                  new qx.ui.form.Button(_this.tr("Paper Signature"));
                 buttonBar.add(butPaperSignature);
 
                 butPaperSignature.addListener(
@@ -648,7 +649,7 @@ qx.Mixin.define("bcp.client.MUsdaSignature",
               "I am an adult member of the \"%3\" family.",
               dateString(),
               data.usda_amount,
-              data.family_name);
+              data.family_name).toString();
 
           root = this.getRoot();
           rootSize = root.getInnerSize();
@@ -694,9 +695,7 @@ qx.Mixin.define("bcp.client.MUsdaSignature",
 
           this._usdaForm._okButton.set(
             {
-              rich    : true,
-              label   : this.underlineChar("Save"),
-              command : new qx.ui.command.Command("Alt+S")
+              label   : this.tr("Save")
             });
 
           this._usdaForm._cancelButton.set(
