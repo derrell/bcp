@@ -580,7 +580,7 @@ qx.Mixin.define("bcp.client.MReports",
     _insertPrefix(win, title, subtitle, bLandscape)
     {
       let             separatorHeight = 48 / 2; // separators always in pairs
-      let             media =
+      let             landscape =
           bLandscape ? "@media print{@page {size: landscape}}" : "";
 
       // Write the boilerplate prefix stuff
@@ -590,7 +590,15 @@ qx.Mixin.define("bcp.client.MReports",
           "  <head>",
           `    <title>${title}</title>`,
           "    <style>",
-          `      ${media}`,
+          `      ${landscape}`,
+          "      @media print {",
+          "        tbody {",
+          "          page-break-inside: avoid;",
+          "        }",
+          "        thead {",
+          "          display: table-header-group;",
+          "        }",
+          "      }",
           "      table {",
           "        border-collapse: collapse;",
           "      }",

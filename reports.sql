@@ -131,7 +131,7 @@ REPLACE INTO Report
    }',
   '$distribution',
   '_separatorWithTime',
-  '$remaining',
+  '',
   'Day',
   '
    INSERT INTO StoredProc_UpdateAge
