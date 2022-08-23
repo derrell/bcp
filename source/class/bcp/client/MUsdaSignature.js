@@ -815,17 +815,6 @@ qx.Mixin.define("bcp.client.MUsdaSignature",
         });
       treeItem.addWidget(o);
 
-      text = qx.bom.String.escape(
-        data.pet_types ? `${data.pet_types}` : "");
-      o = new qx.ui.basic.Label(text ? `Pets:<br>${text}` : "");
-      o.set(
-        {
-          rich   : true,
-          width  : 78,
-          alignY : "middle"
-        });
-      treeItem.addWidget(o);
-
       o = new qx.ui.form.TextArea(data.notes ? `Notes: ${data.notes}` : "");
       o.set(
         {

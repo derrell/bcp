@@ -539,46 +539,6 @@ qx.Mixin.define("bcp.client.MAppointment",
                   }
                 },
 
-                usda_label :
-                {
-                  type       : "Label",
-                  label      : this.bold("USDA")
-                },
-
-                usda_amount :
-                {
-                  type       : "TextField",
-                  label      : "Amount",
-                  value      : fulfillment.usda_amount,
-                  enabled    : false
-                },
-
-                usda_eligible :
-                {
-                  type       : "SelectBox",
-                  label      : "Eligible (current distribution)",
-                  value      : client.usda_eligible,
-                  options :
-                  [
-                    { label : "",    value : "" },
-                    { label : "Yes", value : "yes" },
-                    { label : "No",  value : "no" }
-                  ]
-                },
-
-                usda_eligible_next_distro :
-                {
-                  type       : "SelectBox",
-                  label      : "Eligible (next distribution)",
-                  value      : client.usda_eligible_next_distro,
-                  options :
-                  [
-                    { label : "Automatic",     value : null },
-                    { label : "Override: Yes", value : "yes" },
-                    { label : "Override: No",  value : "no" }
-                  ]
-                },
-
                 appointments :
                 {
                   type       : "appointments",
