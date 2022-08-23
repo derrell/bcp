@@ -1,0 +1,71 @@
+#. NO LONGER USED
+msgid "Sign"
+msgstr ""
+
+#. NO LONGER USED
+msgid "Not Eligible"
+msgstr ""
+
+#: bcp/client/MUsdaSignature.js
+msgid "Paper Signature"
+msgstr ""
+
+#: bcp/client/MUsdaSignature.js
+msgid "January"
+msgstr ""
+
+#: bcp/client/MUsdaSignature.js
+msgid "February"
+msgstr ""
+
+#: bcp/client/MUsdaSignature.js
+msgid "March"
+msgstr ""
+
+#: bcp/client/MUsdaSignature.js
+msgid "April"
+msgstr ""
+
+#: bcp/client/MUsdaSignature.js
+msgid "May"
+msgstr ""
+
+#: bcp/client/MUsdaSignature.js
+msgid "June"
+msgstr ""
+
+#: bcp/client/MUsdaSignature.js
+msgid "July"
+msgstr ""
+
+#: bcp/client/MUsdaSignature.js
+msgid "August"
+msgstr ""
+
+#: bcp/client/MUsdaSignature.js
+msgid "September"
+msgstr ""
+
+#: bcp/client/MUsdaSignature.js
+msgid "October"
+msgstr ""
+
+#: bcp/client/MUsdaSignature.js
+msgid "November"
+msgstr ""
+
+#: bcp/client/MUsdaSignature.js
+msgid "December"
+msgstr ""
+
+#: bcp/client/MUsdaSignature.js
+msgid "I am eligible to receive USDA food because my family's combined monthly income as of today, %1, is no greater than %2. I am an adult member of the \"%3\" family."
+msgstr ""
+
+#: bcp/client/MUsdaSignature.js
+msgid "Cancel"
+msgstr ""
+
+#: bcp/client/MUsdaSignature.js
+msgid "Save"
+msgstr ""
