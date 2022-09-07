@@ -153,6 +153,9 @@ qx.Class.define("bcp.server.Auth",
             return;
           }
 
+          // Convert username to lower case (make case-insensitive)
+          username = username.toLowerCase();
+
           // Hash the provided password
           hash =
             crypto

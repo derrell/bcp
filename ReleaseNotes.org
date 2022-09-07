@@ -1,5 +1,6 @@
 #+STARTUP: showeverything
 * USDA Signature update
+** Shut down and back up production
 ** Iterations
 *** #1: copy db from production to dev; perform following ops locally
 *** #2: perform following ops on production
