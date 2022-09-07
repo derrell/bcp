@@ -95,8 +95,9 @@ qx.Mixin.define("bcp.client.MClientMgmt",
           "Notes",
           "Perishables",
           "Income source",
-          "Income amount",
-          "USDA eligible",
+//          "Income amount",
+          "USDA eligible (current)",
+          "USDA override (next)",
           "Pet types",
           "Address",
           "Appt day",
@@ -111,47 +112,22 @@ qx.Mixin.define("bcp.client.MClientMgmt",
           "notes_default",
           "perishables_default",
           "income_source",
-          "income_amount",
+//          "income_amount",
           "usda_eligible",
+          "usda_eligible_next_distro",
           "pet_types",
           "address_default",
           "appt_day_default",
           "appt_time_default"
         ]);
 
-      // TODO
-      this.rpc("getClientList", [])
-        .then(
-          (result) =>
-          {
-            if (! result)
-            {
-              return;
-            }
-
-            // Add the provided client list, munging column data as necessary
-            result = result.map(
-              (client) =>
-              {
-                this._mungeClient(client);
-                return client;
-              });
-            this._tm.setDataAsMapArray(result, true);
-
-            // Sort initially by the Family column
-            this._tm.sortByColumn(
-              this._tm.getColumnIndexById("family_name"), true);
-
-            // Build the search trees
-            this._generateTrieSearch();
-          })
-        .catch(
-          (e) =>
-          {
-            console.warn("getClientList:", e);
-            qxl.dialog.Dialog.alert(
-              `Could not retrieve client list: ${e.message}`);
-          });
+      // Refresh the client list whenever returning to the Client tab
+      page.addListener(
+        "appear",
+        () =>
+        {
+          this._getClientList();
+        });
 
       // Prepare to use the Resize column model, for better column widths
       custom =
@@ -180,8 +156,9 @@ qx.Mixin.define("bcp.client.MClientMgmt",
       behavior.setWidth(tm.getColumnIndexById("notes_default"), 200);
       behavior.setWidth(tm.getColumnIndexById("perishables_default"), 200);
       behavior.setWidth(tm.getColumnIndexById("income_source"), 100);
-      behavior.setWidth(tm.getColumnIndexById("income_amount"), 100);
-      behavior.setWidth(tm.getColumnIndexById("usda_eligible"), 100);
+//      behavior.setWidth(tm.getColumnIndexById("income_amount"), 100);
+      behavior.setWidth(tm.getColumnIndexById("usda_eligible"), 150);
+      behavior.setWidth(tm.getColumnIndexById("usda_eligible_next_distro"), 150);
       behavior.setWidth(tm.getColumnIndexById("pet_types"), 100);
       behavior.setWidth(tm.getColumnIndexById("address_default"), 100);
       behavior.setWidth(tm.getColumnIndexById("appt_day_default"), 60);
@@ -449,6 +426,46 @@ qx.Mixin.define("bcp.client.MClientMgmt",
     },
 
     /**
+     * Request the client list from the server. Build the trie search
+     * datastructure for the newly obtained data.
+     */
+    _getClientList()
+    {
+      this.rpc("getClientList", [])
+        .then(
+          (result) =>
+          {
+            if (! result)
+            {
+              return;
+            }
+
+            // Add the provided client list, munging column data as necessary
+            result = result.map(
+              (client) =>
+              {
+                this._mungeClient(client);
+                return client;
+              });
+            this._tm.setDataAsMapArray(result, true);
+
+            // Sort initially by the Family column
+            this._tm.sortByColumn(
+              this._tm.getColumnIndexById("family_name"), true);
+
+            // Build the search trees
+            this._generateTrieSearch();
+          })
+        .catch(
+          (e) =>
+          {
+            console.warn("getClientList:", e);
+            qxl.dialog.Dialog.alert(
+              `Could not retrieve client list: ${e.message}`);
+          });
+    },
+
+    /**
      * The database data isn't quite in the form that we want to display it.
      * Alter some fields for display.
      *
@@ -653,6 +670,7 @@ qx.Mixin.define("bcp.client.MClientMgmt",
               tabIndex   : 6
             }
           },
+/*
           income_amount :
           {
             type       : "TextField",
@@ -663,16 +681,33 @@ qx.Mixin.define("bcp.client.MClientMgmt",
               tabIndex   : 7
             }
           },
+*/
           usda_eligible :
           {
             type       : "SelectBox",
-            label      : "USDA eligible",
+            label      : "Eligible for USDA<br>(current distribution)",
             value      : clientInfo.usda_eligible || "",
             options :
             [
               { label : "",    value : "" },
               { label : "Yes", value : "yes" },
               { label : "No",  value : "no" }
+            ],
+            properties :
+            {
+              tabIndex   : 7
+            }
+          },
+          usda_eligible_next_distro :
+          {
+            type       : "SelectBox",
+            label      : "Eligible for USDA<br>(next distribution)",
+            value      : clientInfo.usda_eligible_next_distro || "",
+            options :
+            [
+              { label : "Automatic",     value : null },
+              { label : "Override: Yes", value : "yes" },
+              { label : "Override: No",  value : "no" }
             ],
             properties :
             {
@@ -1612,9 +1647,6 @@ qx.Mixin.define("bcp.client.MClientMgmt",
           delete formValues["dobHeading"];
           delete formValues["genderHeading"];
           delete formValues["veteranHeading"];
-
-          console.log("formValues=", formValues);
-          console.log("familyMembers=", familyMembers);
 
           this.rpc("saveClient", [ formValues, familyMembers, bNew ])
             .then(

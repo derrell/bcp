@@ -39,7 +39,38 @@ REPLACE INTO Report
        ci.id AS _id,
        f.appt_day as Day,
        f.appt_time AS Time,
-       "Day " || f.appt_day || " at " || f.appt_time AS _separatorWithTime,
+       "Day " || f.appt_day || " (" ||
+         CASE f.appt_day
+           WHEN 1 THEN
+             (SELECT day_1_date
+                FROM DistributionPeriod
+                WHERE start_date = $distribution)
+           WHEN 2 THEN
+             (SELECT day_2_date
+                FROM DistributionPeriod
+                WHERE start_date = $distribution)
+           WHEN 3 THEN
+             (SELECT day_3_date
+                FROM DistributionPeriod
+                WHERE start_date = $distribution)
+           WHEN 4 THEN
+             (SELECT day_4_date
+                FROM DistributionPeriod
+                WHERE start_date = $distribution)
+           WHEN 5 THEN
+             (SELECT day_5_date
+                FROM DistributionPeriod
+                WHERE start_date = $distribution)
+           WHEN 6 THEN
+             (SELECT day_6_date
+                FROM DistributionPeriod
+                WHERE start_date = $distribution)
+           WHEN 7 THEN
+             (SELECT day_7_date
+                FROM DistributionPeriod
+                WHERE start_date = $distribution)
+         END ||
+         ") at " || f.appt_time AS _separatorWithTime,
        c.family_name || CASE c.verified WHEN 1 THEN "&check;" ELSE "" END
           AS "Family name",
        (c.count_senior + c.count_adult + c.count_child) ||
@@ -51,32 +82,16 @@ REPLACE INTO Report
            ELSE " (Small)"
          END AS "Family size",
        COALESCE(perishables, "") AS Perishables,
-       CASE (c.count_senior + c.count_adult + c.count_child)
-         WHEN 1 THEN "$2,683"
-         WHEN 2 THEN "$3,629"
-         WHEN 3 THEN "$4,575"
-         WHEN 4 THEN "$5,521"
-         WHEN 5 THEN "$6,467"
-         WHEN 6 THEN "$7,413"
-         WHEN 7 THEN "$8,358"
-         WHEN 8 THEN "$9,304"
-         WHEN 9 THEN "$10,250"
-         WHEN 10 THEN "$11,196"
-         WHEN 11 THEN "$12,142"
-         WHEN 12 THEN "$13,088"
-         WHEN 13 THEN "$14,034"
-         WHEN 14 THEN "$14,980"
-         ELSE "See Taryn"
-       END AS USDA,
+       (SELECT
+          COALESCE(max_income_text, "See Taryn")
+          FROM UsdaMaxIncome
+          WHERE family_size = c.count_senior + c.count_adult + c.count_child
+          ) AS USDA,
        CASE c.usda_eligible
          WHEN "yes" THEN "Yes"
          WHEN "no" THEN "No"
          ELSE ""
        END AS "USDA Eligible",
-       CASE f.is_usda_current
-         WHEN 1 THEN "&check;"
-         ELSE ""
-       END AS "&check;",
        COALESCE(notes, "") AS Notes
      FROM Fulfillment f
      LEFT JOIN Client c
@@ -116,7 +131,7 @@ REPLACE INTO Report
    }',
   '$distribution',
   '_separatorWithTime',
-  '$remaining',
+  '',
   'Day',
   '
    INSERT INTO StoredProc_UpdateAge
@@ -130,7 +145,38 @@ REPLACE INTO Report
        ci.id AS _id,
        f.appt_day as Day,
        f.appt_time AS Time,
-       "Day " || f.appt_day || " at " || f.appt_time AS _separatorWithTime,
+       "Day " || f.appt_day || " (" ||
+         CASE f.appt_day
+           WHEN 1 THEN
+             (SELECT day_1_date
+                FROM DistributionPeriod
+                WHERE start_date = $distribution)
+           WHEN 2 THEN
+             (SELECT day_2_date
+                FROM DistributionPeriod
+                WHERE start_date = $distribution)
+           WHEN 3 THEN
+             (SELECT day_3_date
+                FROM DistributionPeriod
+                WHERE start_date = $distribution)
+           WHEN 4 THEN
+             (SELECT day_4_date
+                FROM DistributionPeriod
+                WHERE start_date = $distribution)
+           WHEN 5 THEN
+             (SELECT day_5_date
+                FROM DistributionPeriod
+                WHERE start_date = $distribution)
+           WHEN 6 THEN
+             (SELECT day_6_date
+                FROM DistributionPeriod
+                WHERE start_date = $distribution)
+           WHEN 7 THEN
+             (SELECT day_7_date
+                FROM DistributionPeriod
+                WHERE start_date = $distribution)
+         END ||
+         ") at " || f.appt_time AS _separatorWithTime,
        (c.count_senior + c.count_adult + c.count_child) ||
          CASE
            WHEN c.count_senior + c.count_adult + c.count_child >= 4
@@ -195,10 +241,41 @@ REPLACE INTO Report
   '
    SELECT
        ci.id AS _id,
-       " " AS Here,
        f.appt_day as _day,
+       "" AS Here,
        f.appt_time AS Time,
-       "Day " || f.appt_day || " at " || f.appt_time AS _separatorWithTime,
+       "Day " || f.appt_day || " (" ||
+         CASE f.appt_day
+           WHEN 1 THEN
+             (SELECT day_1_date
+                FROM DistributionPeriod
+                WHERE start_date = $distribution)
+           WHEN 2 THEN
+             (SELECT day_2_date
+                FROM DistributionPeriod
+                WHERE start_date = $distribution)
+           WHEN 3 THEN
+             (SELECT day_3_date
+                FROM DistributionPeriod
+                WHERE start_date = $distribution)
+           WHEN 4 THEN
+             (SELECT day_4_date
+                FROM DistributionPeriod
+                WHERE start_date = $distribution)
+           WHEN 5 THEN
+             (SELECT day_5_date
+                FROM DistributionPeriod
+                WHERE start_date = $distribution)
+           WHEN 6 THEN
+             (SELECT day_5_date
+                FROM DistributionPeriod
+                WHERE start_date = $distribution)
+           WHEN 7 THEN
+             (SELECT day_6_date
+                FROM DistributionPeriod
+                WHERE start_date = $distribution)
+         END ||
+         ") at " || f.appt_time AS _separatorWithTime,
        c.family_name AS "Family name",
        CASE c.verified WHEN 1 THEN "&check;" ELSE "" END AS ID,
        (c.count_senior + c.count_adult + c.count_child) ||
@@ -209,32 +286,16 @@ REPLACE INTO Report
              THEN " (Single)"
            ELSE " (Small)"
          END AS "Family size",
-       CASE (c.count_senior + c.count_adult + c.count_child)
-         WHEN 1 THEN "$2,683"
-         WHEN 2 THEN "$3,629"
-         WHEN 3 THEN "$4,575"
-         WHEN 4 THEN "$5,521"
-         WHEN 5 THEN "$6,467"
-         WHEN 6 THEN "$7,413"
-         WHEN 7 THEN "$8,358"
-         WHEN 8 THEN "$9,304"
-         WHEN 9 THEN "$10,250"
-         WHEN 10 THEN "$11,196"
-         WHEN 11 THEN "$12,142"
-         WHEN 12 THEN "$13,088"
-         WHEN 13 THEN "$14,034"
-         WHEN 14 THEN "$14,980"
-         ELSE "See Taryn"
-       END AS USDA,
+       (SELECT
+          COALESCE(max_income_text, "See Taryn")
+          FROM UsdaMaxIncome
+          WHERE family_size = c.count_senior + c.count_adult + c.count_child
+          ) AS USDA,
        CASE c.usda_eligible
          WHEN "yes" THEN "Yes"
          WHEN "no" THEN "No"
          ELSE ""
        END AS "USDA Eligible",
-       CASE f.is_usda_current
-         WHEN 1 THEN "&check;"
-         ELSE ""
-       END AS "SIG",
        COALESCE(notes, "") AS Notes
      FROM Fulfillment f
      LEFT JOIN Client c
@@ -288,7 +349,38 @@ REPLACE INTO Report
        ci.id AS _id,
        f.appt_day as Day,
        f.appt_time AS Time,
-       "Day " || f.appt_day || " at " || f.appt_time AS _separatorWithTime,
+       "Day " || f.appt_day || " (" ||
+         CASE f.appt_day
+           WHEN 1 THEN
+             (SELECT day_1_date
+                FROM DistributionPeriod
+                WHERE start_date = $distribution)
+           WHEN 2 THEN
+             (SELECT day_2_date
+                FROM DistributionPeriod
+                WHERE start_date = $distribution)
+           WHEN 3 THEN
+             (SELECT day_3_date
+                FROM DistributionPeriod
+                WHERE start_date = $distribution)
+           WHEN 4 THEN
+             (SELECT day_4_date
+                FROM DistributionPeriod
+                WHERE start_date = $distribution)
+           WHEN 5 THEN
+             (SELECT day_5_date
+                FROM DistributionPeriod
+                WHERE start_date = $distribution)
+           WHEN 6 THEN
+             (SELECT day_6_date
+                FROM DistributionPeriod
+                WHERE start_date = $distribution)
+           WHEN 7 THEN
+             (SELECT day_7_date
+                FROM DistributionPeriod
+                WHERE start_date = $distribution)
+         END ||
+         ") at " || f.appt_time AS _separatorWithTime,
        c.family_name || CASE c.verified WHEN 1 THEN "&check;" ELSE "" END
           AS "Family name",
        (c.count_senior + c.count_adult + c.count_child) ||
@@ -301,32 +393,16 @@ REPLACE INTO Report
          END AS "Family size",
        COALESCE(pet_types, "") AS Pets,
        COALESCE(phone, "") AS Phone,
-       CASE (c.count_senior + c.count_adult + c.count_child)
-         WHEN 1 THEN "$2,683"
-         WHEN 2 THEN "$3,629"
-         WHEN 3 THEN "$4,575"
-         WHEN 4 THEN "$5,521"
-         WHEN 5 THEN "$6,467"
-         WHEN 6 THEN "$7,413"
-         WHEN 7 THEN "$8,358"
-         WHEN 8 THEN "$9,304"
-         WHEN 9 THEN "$10,250"
-         WHEN 10 THEN "$11,196"
-         WHEN 11 THEN "$12,142"
-         WHEN 12 THEN "$13,088"
-         WHEN 13 THEN "$14,034"
-         WHEN 14 THEN "$14,980"
-         ELSE "See Taryn"
-       END AS USDA,
+       (SELECT
+          COALESCE(max_income_text, "See Taryn")
+          FROM UsdaMaxIncome
+          WHERE family_size = c.count_senior + c.count_adult + c.count_child
+          ) AS USDA,
        CASE c.usda_eligible
          WHEN "yes" THEN "Yes"
          WHEN "no" THEN "No"
          ELSE ""
        END AS "USDA Eligible",
-       CASE f.is_usda_current
-         WHEN 1 THEN "&check;"
-         ELSE ""
-       END AS "&check;",
        COALESCE(notes, "") AS Notes
      FROM Fulfillment f
      LEFT JOIN Client c
@@ -380,7 +456,38 @@ REPLACE INTO Report
        ci.id as _id,
        f.appt_day as Day,
        f.appt_time AS Time,
-       "Day " || f.appt_day || " at " || f.appt_time AS _separatorWithTime,
+       "Day " || f.appt_day || " (" ||
+         CASE f.appt_day
+           WHEN 1 THEN
+             (SELECT day_1_date
+                FROM DistributionPeriod
+                WHERE start_date = $distribution)
+           WHEN 2 THEN
+             (SELECT day_2_date
+                FROM DistributionPeriod
+                WHERE start_date = $distribution)
+           WHEN 3 THEN
+             (SELECT day_3_date
+                FROM DistributionPeriod
+                WHERE start_date = $distribution)
+           WHEN 4 THEN
+             (SELECT day_4_date
+                FROM DistributionPeriod
+                WHERE start_date = $distribution)
+           WHEN 5 THEN
+             (SELECT day_5_date
+                FROM DistributionPeriod
+                WHERE start_date = $distribution)
+           WHEN 6 THEN
+             (SELECT day_6_date
+                FROM DistributionPeriod
+                WHERE start_date = $distribution)
+           WHEN 7 THEN
+             (SELECT day_7_date
+                FROM DistributionPeriod
+                WHERE start_date = $distribution)
+         END ||
+         ") at " || f.appt_time AS _separatorWithTime,
        CASE c.verified WHEN 1 THEN "&check;" ELSE "" END AS V,
        (c.count_senior + c.count_adult + c.count_child) ||
          CASE
@@ -403,90 +510,105 @@ REPLACE INTO Report
   '
 );
 
-REPLACE INTO Report
-(
-  name,
-  description,
-  landscape,
-  input_fields,
-  subtitle_field,
-  separate_by,
-  number_style,
-  number_remaining,
-  pre_query,
-  query
-)
- VALUES
-(
-  'Distribution appointments for USDA',
-  'Schedule of appointments for a specified distribution, for USDA',
-  1,
-  '{
-     "$distribution" :
-     {
-       "type"  : "SelectBox",
-       "label" : "Distribution Date"
-     }
-   }',
-  '$distribution',
-  '_separatorWithTime',
-  '',
-  'Day',
-  '
-   INSERT INTO StoredProc_UpdateAge
-       (birthday, asOf, family_name, member_name)
-     SELECT
-         date_of_birth, $distribution, family_name, member_name
-       FROM FamilyMember;
-  ',
-  '
-   SELECT
-       f.appt_day as Day,
-       f.appt_time AS Time,
-       "Day " || f.appt_day || " at " || f.appt_time AS _separatorWithTime,
-       c.family_name || CASE c.verified WHEN 1 THEN "&check;" ELSE "" END
-          AS "Family name",
-       c.count_senior AS "65+",
-       c.count_adult AS "18-64",
-       c.count_child AS "0-17",
-       (c.count_senior + c.count_adult + c.count_child) AS "Total",
-       CASE (c.count_senior + c.count_adult + c.count_child)
-         WHEN 1 THEN "$2,683"
-         WHEN 2 THEN "$3,629"
-         WHEN 3 THEN "$4,575"
-         WHEN 4 THEN "$5,521"
-         WHEN 5 THEN "$6,467"
-         WHEN 6 THEN "$7,413"
-         WHEN 7 THEN "$8,358"
-         WHEN 8 THEN "$9,304"
-         WHEN 9 THEN "$10,250"
-         WHEN 10 THEN "$11,196"
-         WHEN 11 THEN "$12,142"
-         WHEN 12 THEN "$13,088"
-         WHEN 13 THEN "$14,034"
-         WHEN 14 THEN "$14,980"
-         ELSE "See Taryn"
-       END AS "USDA$",
-       CASE c.usda_eligible
-         WHEN "yes" THEN "Yes"
-         WHEN "no" THEN "No"
-         ELSE ""
-       END AS "USDA",
-       CASE f.is_usda_current
-         WHEN 1 THEN "&check;"
-         ELSE ""
-       END AS "&check;",
-       "" AS "Board&nbsp;Member&nbsp;Signature"
-     FROM Fulfillment f
-     LEFT JOIN Client c
-       ON c.family_name = f.family_name
-     LEFT JOIN ClientId ci
-       ON ci.family_name = c.family_name
-     WHERE f.distribution = $distribution
-       AND length(COALESCE(f.appt_time, "")) > 0
-     ORDER BY Day, Time, "Family name";
-  '
-);
+-- REPLACE INTO Report
+-- (
+--   name,
+--   description,
+--   landscape,
+--   input_fields,
+--   subtitle_field,
+--   separate_by,
+--   number_style,
+--   number_remaining,
+--   pre_query,
+--   query
+-- )
+--  VALUES
+-- (
+--   'Distribution appointments for USDA',
+--   'Schedule of appointments for a specified distribution, for USDA',
+--   1,
+--   '{
+--      "$distribution" :
+--      {
+--        "type"  : "SelectBox",
+--        "label" : "Distribution Date"
+--      }
+--    }',
+--   '$distribution',
+--   '_separatorWithTime',
+--   '',
+--   'Day',
+--   '
+--    INSERT INTO StoredProc_UpdateAge
+--        (birthday, asOf, family_name, member_name)
+--      SELECT
+--          date_of_birth, $distribution, family_name, member_name
+--        FROM FamilyMember;
+--   ',
+--   '
+--    SELECT
+--        f.appt_day as Day,
+--        f.appt_time AS Time,
+--        "Day " || f.appt_day || " (" ||
+--          CASE f.appt_day
+--            WHEN 1 THEN
+--              (SELECT day_1_date
+--                 FROM DistributionPeriod
+--                 WHERE start_date = $distribution)
+--            WHEN 2 THEN
+--              (SELECT day_2_date
+--                 FROM DistributionPeriod
+--                 WHERE start_date = $distribution)
+--            WHEN 3 THEN
+--              (SELECT day_3_date
+--                 FROM DistributionPeriod
+--                 WHERE start_date = $distribution)
+--            WHEN 4 THEN
+--              (SELECT day_4_date
+--                 FROM DistributionPeriod
+--                 WHERE start_date = $distribution)
+--            WHEN 5 THEN
+--              (SELECT day_5_date
+--                 FROM DistributionPeriod
+--                 WHERE start_date = $distribution)
+--            WHEN 6 THEN
+--              (SELECT day_6_date
+--                 FROM DistributionPeriod
+--                 WHERE start_date = $distribution)
+--            WHEN 7 THEN
+--              (SELECT day_7_date
+--                 FROM DistributionPeriod
+--                 WHERE start_date = $distribution)
+--          END ||
+--          ") at " || f.appt_time AS _separatorWithTime,
+--        c.family_name || CASE c.verified WHEN 1 THEN "&check;" ELSE "" END
+--           AS "Family name",
+--        c.count_senior AS "65+",
+--        c.count_adult AS "18-64",
+--        c.count_child AS "0-17",
+--        (c.count_senior + c.count_adult + c.count_child) AS "Total",
+--        (SELECT
+--           COALESCE(max_income_text, "See Taryn")
+--           FROM UsdaMaxIncome
+--           WHERE family_size = c.count_senior + c.count_adult + c.count_child
+--           ) AS "USDA$",
+--        CASE c.usda_eligible
+--          WHEN "yes" THEN "Yes"
+--          WHEN "no" THEN "No"
+--          ELSE ""
+--        END AS "USDA",
+--        "" AS "Board&nbsp;Member&nbsp;Signature"
+--      FROM Fulfillment f
+--      LEFT JOIN Client c
+--        ON c.family_name = f.family_name
+--      LEFT JOIN ClientId ci
+--        ON ci.family_name = c.family_name
+--      WHERE f.distribution = $distribution
+--        AND length(COALESCE(f.appt_time, "")) > 0
+--      ORDER BY Day, Time, "Family name";
+--   '
+-- );
 
 
 REPLACE INTO Report
@@ -1213,23 +1335,11 @@ REPLACE INTO Report
              THEN " (Single)"
            ELSE " (Small)"
          END AS "Family size",
-       CASE (c.count_senior + c.count_adult + c.count_child)
-         WHEN 1 THEN "$2,683"
-         WHEN 2 THEN "$3,629"
-         WHEN 3 THEN "$4,575"
-         WHEN 4 THEN "$5,521"
-         WHEN 5 THEN "$6,467"
-         WHEN 6 THEN "$7,413"
-         WHEN 7 THEN "$8,358"
-         WHEN 8 THEN "$9,304"
-         WHEN 9 THEN "$10,250"
-         WHEN 10 THEN "$11,196"
-         WHEN 11 THEN "$12,142"
-         WHEN 12 THEN "$13,088"
-         WHEN 13 THEN "$14,034"
-         WHEN 14 THEN "$14,980"
-         ELSE "See Taryn"
-       END AS USDA,
+       (SELECT
+          COALESCE(max_income_text, "See Taryn")
+          FROM UsdaMaxIncome
+          WHERE family_size = c.count_senior + c.count_adult + c.count_child
+          ) AS USDA,
        CASE c.usda_eligible
          WHEN "yes" THEN "Yes"
          WHEN "no" THEN "No"
@@ -1437,6 +1547,118 @@ REPLACE INTO Report
   input_fields,
   subtitle_field,
   separate_by,
+  pre_query,
+  query
+)
+ VALUES
+(
+  'Distribution USDA signatures',
+  'USDA signatures provided during a distribution, for following distribution',
+  1,
+  '{
+     "$distribution" :
+     {
+       "type"  : "SelectBox",
+       "label" : "Closing Distribution Date"
+     }
+   }',
+  '$distribution',
+  '',
+  '
+   INSERT INTO StoredProc_UpdateAge
+       (birthday, asOf, family_name, member_name)
+     SELECT
+         date_of_birth,
+         (SELECT MAX(start_date) FROM DistributionPeriod),
+         family_name,
+         member_name
+       FROM FamilyMember;
+  ',
+  '
+   SELECT DISTINCT
+       c.family_name AS "Family name",
+       c.count_senior + c.count_adult + c.count_child AS "Family size",
+       c.count_senior AS Seniors,
+       c.count_adult AS Adults,
+       c.count_child AS Children,
+       f.usda_signature_statement AS "Statement&nbsp;attested&nbsp;to&nbsp;with&nbsp;signature",
+       COALESCE(
+         f.usda_eligible_signature,
+         -- X image to request board member signature
+         "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAB4AAAAeCAYAAAA7MK6iAAAACXBIWXMAAA3XAAAN1wFCKJt4AAAAB3RJTUUH5gIDDhEZWZAIawAAAJpJREFUSMfNl80OgCAMg9u9/zvjxYvGABtd6i4kyPqZyX4ETMZ7HR97answYnGgAwoAiN2DSug7rGPxXAXll7ASPtVi1kEBnQmewLd8eSpQ9ZEJZV+UotClo6P4bqX7wNNCUNVUpElJj6LCkNYKd1v8dagtl8uSTpYCYimZliZhaYuWQcAy+liGvQ7oFB7C5pHKnGiGdv8W5e0C2k4tIsqHIKsAAAAASUVORK5CYII="
+         ) AS Signature,
+       f.usda_signature_hash AS "Security Hash"
+     FROM Client c
+     LEFT JOIN Fulfillment f
+       ON f.family_name = c.family_name
+     LEFT JOIN UsdaEligibleNextDistro uend
+       ON uend.family_name = c.family_name
+     WHERE (uend.distribution = $distribution
+            AND uend.usda_eligible_next_distro = "yes")
+        OR (f.distribution = $distribution
+            AND f.usda_eligible_signature IS NOT NULL
+            AND length(f.usda_eligible_signature) > 0)
+     ORDER BY c.family_name;
+   '
+);
+
+
+REPLACE INTO Report
+(
+  name,
+  description,
+  landscape,
+  input_fields,
+  subtitle_field,
+  separate_by,
+  pre_query,
+  query
+)
+ VALUES
+(
+  'USDA eligibility overrides, next distro',
+  'Currently configured overrides to next distribution''s USDA eligibility',
+  1,
+  '',
+  '_asOf',
+  '',
+  '
+   INSERT INTO StoredProc_UpdateAge
+       (birthday, asOf, family_name, member_name)
+     SELECT
+         date_of_birth,
+         (SELECT MAX(start_date) FROM DistributionPeriod),
+         family_name,
+         member_name
+       FROM FamilyMember;
+  ',
+  '
+   SELECT
+       c.family_name AS "Family name",
+       CASE c.usda_eligible_next_distro
+         WHEN "yes" THEN "Yes"
+         WHEN "no"  THEN "No"
+         ELSE ""
+       END AS "Override eligibility with",
+       c.count_senior + c.count_adult + c.count_child AS "Family size",
+       c.count_senior AS Seniors,
+       c.count_adult AS Adults,
+       c.count_child AS Children,
+       "As of " || datetime("now", "localtime") AS _asOf
+     FROM Client c
+     WHERE c.usda_eligible_next_distro IS NOT NULL
+     ORDER BY c.family_name;
+   '
+);
+
+REPLACE INTO Report
+(
+  name,
+  description,
+  landscape,
+  input_fields,
+  subtitle_field,
+  separate_by,
   number_style,
   number_remaining,
   pre_query,
@@ -1470,7 +1692,8 @@ REPLACE INTO Report
          WHEN "F" THEN "Female"
          ELSE "Other"
        END AS Gender,
-       age AS Age
+       age AS Age,
+       date_of_birth AS Birthday
      FROM FamilyMember
      WHERE
        age < 18
@@ -1480,8 +1703,8 @@ REPLACE INTO Report
             WHERE distribution IN
               (SELECT start_date
                  FROM DistributionPeriod
-                 ORDER BY start_date
-                 DESC LIMIT 3))
+                 ORDER BY start_date DESC
+                 LIMIT 3))
      ORDER BY family_name, age;
   '
 );
@@ -1527,8 +1750,8 @@ REPLACE INTO Report
             WHERE distribution IN
               (SELECT start_date
                  FROM DistributionPeriod
-                 ORDER BY start_date
-                 DESC LIMIT 3))
+                 ORDER BY start_date DESC
+                 LIMIT 3))
      ORDER BY family_name;
   '
 );

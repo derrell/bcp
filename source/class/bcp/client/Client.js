@@ -23,6 +23,7 @@ qx.Class.define("bcp.client.Client",
     bcp.client.MClientMgmt,
     bcp.client.MAppointment,
     bcp.client.MDeliveryDay,
+    bcp.client.MUsdaSignature,
     bcp.client.MDistribution,
     bcp.client.MReports
   ],
@@ -37,6 +38,7 @@ qx.Class.define("bcp.client.Client",
     _me             : null,
     _tabView        : null,
     _mostRecentMotd : "",
+    _greeterPin     : "",
 
     /**
      * @ignore(WebSocket)
@@ -44,12 +46,13 @@ qx.Class.define("bcp.client.Client",
     main()
     {
       let             mainContainer;
-      let             vBox;
+      let             rightButtonContainer;
       let             hBox;
       let             logo;
       let             header;
       let             font;
       let             label;
+      let             idLabel;
       let             butLogin;
       let             butLogout;
       let             butMotd;
@@ -62,6 +65,8 @@ qx.Class.define("bcp.client.Client",
       let             userList;
       let             createWebSocket;
       let             ws;
+      const           identity =
+            "Billerica Community Pantry<br>Management Console";
 
       this.base(arguments);
 
@@ -99,16 +104,19 @@ qx.Class.define("bcp.client.Client",
       // Spread out the title
       header.add(new qx.ui.core.Spacer(), { flex : 1 });
 
-      label = new qx.ui.basic.Label(
-        "Billerica Community Pantry<br>Management Console");
-      label.set(
+      idLabel = new qx.ui.basic.Label(
+        location.port == 3000
+          ? identity
+          : `${identity}<br>(Test Server)`);
+      idLabel.set(
         {
           paddingTop : 20,
           font       : "header",
           rich       : true,
-          textAlign  : "center"
+          textAlign  : "center",
+          textColor  : location.port == 3000 ? "black" : "red"
         });
-      header.add(label);
+      header.add(idLabel);
 
       // Spread out the message box
       header.add(new qx.ui.core.Spacer(), { flex : 1 });
@@ -116,7 +124,7 @@ qx.Class.define("bcp.client.Client",
       // place the chat list and chat input vertically
       messageContainer =
         new qx.ui.container.Composite(new qx.ui.layout.VBox(0));
-      messageContainer.hide();  // hidden during login
+      messageContainer.exclude();  // hidden during login
       header.add(messageContainer);
 
       // Add the chat messages list
@@ -192,7 +200,7 @@ qx.Class.define("bcp.client.Client",
       // Create a vbox for the label and user list
       userListContainer =
         new qx.ui.container.Composite(new qx.ui.layout.VBox());
-      userListContainer.hide();
+      userListContainer.exclude();
       header.add(userListContainer);
 
       // Add the label
@@ -226,8 +234,9 @@ qx.Class.define("bcp.client.Client",
       header.add(new qx.ui.core.Spacer(), { flex : 1 });
 
       // Display the buttons vertically
-      vBox = new qx.ui.container.Composite(new qx.ui.layout.VBox());
-      header.add(vBox);
+      rightButtonContainer =
+        new qx.ui.container.Composite(new qx.ui.layout.VBox());
+      header.add(rightButtonContainer);
 
       passwordChange = new qx.ui.basic.Label("");
       passwordChange.set(
@@ -236,7 +245,7 @@ qx.Class.define("bcp.client.Client",
           textAlign  : "center",
           allowGrowX : true
         });
-      vBox.add(passwordChange);
+      rightButtonContainer.add(passwordChange);
       passwordChange.addListener(
         "tap",
         () =>
@@ -248,10 +257,11 @@ qx.Class.define("bcp.client.Client",
       butLogout = new qx.ui.form.Button("Logout");
       butLogout.set(
         {
-          maxHeight : 28,
-          marginTop : 0
+          maxHeight  : 28,
+          marginTop  : 0,
+          visibility : "excluded"
         });
-      vBox.add(butLogout);
+      rightButtonContainer.add(butLogout);
 
       butLogout.addListener(
         "execute",
@@ -278,7 +288,7 @@ qx.Class.define("bcp.client.Client",
           marginTop  : 2,
           visibility : "excluded"
         });
-      vBox.add(butMotd);
+      rightButtonContainer.add(butMotd);
       butMotd.addListener("execute", this._buildMotdForm, this);
 
       //
@@ -336,8 +346,6 @@ qx.Class.define("bcp.client.Client",
               let             listItem;
               let             wsMessage = JSON.parse(e.data);
 
-              console.log(JSON.stringify(wsMessage));
-
               if (! ("messageType" in wsMessage))
               {
                 return;
@@ -379,10 +387,12 @@ qx.Class.define("bcp.client.Client",
                   });
                 break;
 
-              case "motd" :
-                // Save this most recent message of the day, and set color
-                this._mostRecentMotd = wsMessage.data;
+              case "config" :
+                // Save this most recent message of the day and greeter PIN
+                this._mostRecentMotd = wsMessage.data.motd;
+                this._greeterPin = wsMessage.data.greeterPin;
 
+                // Set color of message of the day
                 color = "red";
                 text =
                   [
@@ -457,9 +467,26 @@ qx.Class.define("bcp.client.Client",
             // Save information about ourself
             this._me = me;
 
-            // Make the chat area and user list visible now
-            messageContainer.show();
-            userListContainer.show();
+            // Make the chat area and user list visible now if
+            // permission level is greater than 40; they, and logout
+            // button and password change hidden if permission level is
+            // not greater than 40.
+            if (me.permissionLevel > 40)
+            {
+              messageContainer.show();
+              userListContainer.show();
+            }
+            else
+            {
+              passwordChange.exclude();
+              butMotd.exclude();
+
+              // Reduce the application identity padding to save space
+              idLabel.setPaddingTop(0);
+            }
+
+            // Regardless, the logout button needs to be shown
+            butLogout.show();
 
             // Create the websocket now
             createWebSocket();
@@ -481,8 +508,12 @@ qx.Class.define("bcp.client.Client",
                 implementation     : this._createAppointmentTab
               },
               {
-                requiredPermission : 30,
+                requiredPermission : 50,
                 implementation     : this._createDeliveryDayTab
+              },
+              {
+                requiredPermission : 40,
+                implementation     : this._createUsdaSignatureTab
               },
               {
                 requiredPermission : 50,
@@ -491,13 +522,13 @@ qx.Class.define("bcp.client.Client",
               {
                 requiredPermission : 50,
                 implementation     : this._createReportsTab
-              },
+              }
             ].forEach(
               (pageInfo) =>
               {
                 if (me.permissionLevel >= pageInfo.requiredPermission)
                 {
-                  pageInfo.implementation.bind(this)(this._tabView);
+                  pageInfo.implementation.bind(this)(this._tabView, me);
                 }
               });
 

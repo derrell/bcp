@@ -11,28 +11,29 @@ CREATE TABLE User
 
 CREATE TABLE Client
 (
-  family_name         VARCHAR PRIMARY KEY NOT NULL,
-  phone               VARCHAR,
-  email               VARCHAR,
-  ethnicity           VARCHAR,
-  count_senior        INTEGER DEFAULT 0,  -- number of family members 65+
-  count_adult         INTEGER DEFAULT 0,  -- number of family members 18-64
-  count_child         INTEGER DEFAULT 0,  -- number of family members 0-17
-  count_sex_male      INTEGER DEFAULT 0,
-  count_sex_female    INTEGER DEFAULT 0,
-  count_sex_other     INTEGER DEFAULT 0,
-  count_veteran       INTEGER DEFAULT 0,
-  income_source       VARCHAR,
-  income_amount       REAL,
-  usda_eligible       VARCHAR NOT NULL DEFAULT '',
-  pet_types           VARCHAR,
-  address_default     VARCHAR, -- default address for delivery
-  appt_day_default    INTEGER, -- default appt day, 1-relative to Distr start
-  appt_time_default   VARCHAR, -- default appt time HH:MM,
-  verified            BOOLEAN DEFAULT FALSE,
-  archived            BOOLEAN DEFAULT FALSE,
-  notes_default       VARCHAR NOT NULL DEFAULT '',
-  perishables_default VARCHAR NOT NULL DEFAULT '',
+  family_name               VARCHAR PRIMARY KEY NOT NULL,
+  phone                     VARCHAR,
+  email                     VARCHAR,
+  ethnicity                 VARCHAR,
+  count_senior              INTEGER DEFAULT 0,  -- number of family members 65+
+  count_adult               INTEGER DEFAULT 0,  -- number of family members 18-64
+  count_child               INTEGER DEFAULT 0,  -- number of family members 0-17
+  count_sex_male            INTEGER DEFAULT 0,
+  count_sex_female          INTEGER DEFAULT 0,
+  count_sex_other           INTEGER DEFAULT 0,
+  count_veteran             INTEGER DEFAULT 0,
+  income_source             VARCHAR,
+  income_amount             REAL,
+  usda_eligible             VARCHAR NOT NULL DEFAULT '',
+  usda_eligible_next_distro VARCHAR DEFAULT NULL,
+  pet_types                 VARCHAR,
+  address_default           VARCHAR, -- default address for delivery
+  appt_day_default          INTEGER, -- 1-relative to distro start
+  appt_time_default         VARCHAR, -- default appt time HH:MM,
+  verified                  BOOLEAN DEFAULT FALSE,
+  archived                  BOOLEAN DEFAULT FALSE,
+  notes_default             VARCHAR NOT NULL DEFAULT '',
+  perishables_default       VARCHAR NOT NULL DEFAULT '',
   UNIQUE (family_name COLLATE NOCASE)
 );
 
@@ -40,8 +41,54 @@ CREATE TABLE Client
 --
 -- ALTER TABLE Client ADD COLUMN notes_default VARCHAR NOT NULL DEFAULT '';
 -- ALTER TABLE Client ADD COLUMN perishables_default VARCHAR NOT NULL DEFAULT '-- ALTER TABLE Client ADD COLUMN usda_eligible VARCHAR NOT NULL DEFAULT '';
+-- ALTER TABLE Client ADD COLUMN usda_eligible_next_distro VARCHAR DEFAULT NULL;
 
+--
+-- Maintain a permanent copy of the next-distribution eligibility, per
+-- distribution, so that the USDA report can be generated for any
+-- distribution
+--
+-- First, for a new client...
+CREATE TRIGGER tr_ai_Client
+AFTER INSERT ON Client
+BEGIN
+  REPLACE INTO UsdaEligibleNextDistro (
+      distribution,
+      family_name,
+      usda_eligible_next_distro
+    ) VALUES (
+      (SELECT MAX(start_date) FROM DistributionPeriod),
+      new.family_name,
+      new.usda_eligible_next_distro
+    );
 
+  DELETE FROM UsdaEligibleNextDistro
+    WHERE
+      family_name = new.family_name
+      AND distribution = (SELECT MAX(start_date) FROM DistributionPeriod)
+      AND usda_eligible_next_distro IS NULL;
+END;
+
+-- ... and then for an update of an existing client
+CREATE TRIGGER tr_au_Client
+AFTER UPDATE ON Client
+BEGIN
+  REPLACE INTO UsdaEligibleNextDistro (
+      distribution,
+      family_name,
+      usda_eligible_next_distro
+    ) VALUES (
+      (SELECT MAX(start_date) FROM DistributionPeriod),
+      new.family_name,
+      new.usda_eligible_next_distro
+    );
+
+  DELETE FROM UsdaEligibleNextDistro
+    WHERE
+      family_name = new.family_name
+      AND distribution = (SELECT MAX(start_date) FROM DistributionPeriod)
+      AND usda_eligible_next_distro IS NULL;
+END;
 
 CREATE TABLE ClientId
 (
@@ -93,12 +140,17 @@ CREATE TABLE Fulfillment
   fulfillment_time  VARCHAR,                -- %Y-%m-%d %H:%M:%S
   notes             VARCHAR,
   perishables       VARCHAR,
-  is_usda_current   BOOLEAN DEFAULT FALSE,
+  usda_eligible_signature VARCHAR DEFAULT NULL,
+  usda_signature_statement VARCHAR DEFAULT NULL,
+  usda_signature_hash      VARCHAR DEFAULT NULL,
   PRIMARY KEY (distribution, family_name)
 );
 
 -- ALTER TABLE Fulfillment ADD COLUMN perishables VARCHAR;
--- ALTER TABLE Fulfillment ADD COLUMN is_usda_current BOOLEAN DEFAULT FALSE;
+-- ALTER TABLE Fulfillment ADD COLUMN usda_eligible_signature VARCHAR DEFAULT NULL;
+-- ALTER TABLE Fulfillment ADD COLUMN usda_signature_statement VARCHAR DEFAULT NULL;
+-- ALTER TABLE Fulfillment ADD COLUMN usda_signature_hash VARCHAR DEFAULT NULL;
+-- ALTER TABLE Fulfillment DROP COLUMN is_usda_current;
 
 
 CREATE INDEX Fulfillment_appt_idx
@@ -133,23 +185,37 @@ CREATE TABLE DistributionPeriod
   start_date        VARCHAR PRIMARY KEY,    -- %Y-%m-%d
 
   -- This might later change to a separate table of appointment
-  -- start/end per day, if we need more than one week.
-  day_1_first_appt  VARCHAR,    -- %H:%M
+  -- start/end per day, if we need more seven days per distribution
+  day_1_date        VARCHAR DEFAULT '', --%&-%m-%d
+  day_1_first_appt  VARCHAR,            -- %H:%M
   day_1_last_appt   VARCHAR,
+  day_2_date        VARCHAR DEFAULT '',
   day_2_first_appt  VARCHAR,
   day_2_last_appt   VARCHAR,
+  day_3_date        VARCHAR DEFAULT '',
   day_3_first_appt  VARCHAR,
   day_3_last_appt   VARCHAR,
+  day_4_date        VARCHAR DEFAULT '',
   day_4_first_appt  VARCHAR,
   day_4_last_appt   VARCHAR,
+  day_5_date        VARCHAR DEFAULT '',
   day_5_first_appt  VARCHAR,
   day_5_last_appt   VARCHAR,
+  day_6_date        VARCHAR DEFAULT '',
   day_6_first_appt  VARCHAR,
   day_6_last_appt   VARCHAR,
+  day_7_date        VARCHAR DEFAULT '',
   day_7_first_appt  VARCHAR,
   day_7_last_appt   VARCHAR
 );
 
+-- ALTER TABLE DistributionPeriod ADD COLUMN day_1_date VARCHAR DEFAULT '';
+-- ALTER TABLE DistributionPeriod ADD COLUMN day_2_date VARCHAR DEFAULT '';
+-- ALTER TABLE DistributionPeriod ADD COLUMN day_3_date VARCHAR DEFAULT '';
+-- ALTER TABLE DistributionPeriod ADD COLUMN day_4_date VARCHAR DEFAULT '';
+-- ALTER TABLE DistributionPeriod ADD COLUMN day_5_date VARCHAR DEFAULT '';
+-- ALTER TABLE DistributionPeriod ADD COLUMN day_6_date VARCHAR DEFAULT '';
+-- ALTER TABLE DistributionPeriod ADD COLUMN day_7_date VARCHAR DEFAULT '';
 
 CREATE TABLE Report
 (
@@ -168,12 +234,49 @@ CREATE TABLE Report
 
 -- ALTER TABLE Report ADD COLUMN pre_query VARCHAR;
 
+CREATE TABLE UsdaMaxIncome
+(
+  family_size       INTEGER PRIMARY KEY,
+  max_income_num    INTEGER NOT NULL,
+  max_income_text   VARCHAR NOT NULL
+);
+
+INSERT INTO UsdaMaxIncome VALUES (1, 2683, '$2,683');
+INSERT INTO UsdaMaxIncome VALUES (2, 3629, '$3,629');
+INSERT INTO UsdaMaxIncome VALUES (3, 4575, '$4,575');
+INSERT INTO UsdaMaxIncome VALUES (4, 5521, '$5,521');
+INSERT INTO UsdaMaxIncome VALUES (5, 6467, '$6,467');
+INSERT INTO UsdaMaxIncome VALUES (6, 7413, '$7,413');
+INSERT INTO UsdaMaxIncome VALUES (7, 8358, '$8,358');
+INSERT INTO UsdaMaxIncome VALUES (8, 9304, '$9,304');
+INSERT INTO UsdaMaxIncome VALUES (9, 10250, '$10,250');
+INSERT INTO UsdaMaxIncome VALUES (10, 11196, '$11,196');
+INSERT INTO UsdaMaxIncome VALUES (11, 12142, '$12,142');
+INSERT INTO UsdaMaxIncome VALUES (12, 13088, '$13,088');
+INSERT INTO UsdaMaxIncome VALUES (13, 14034, '$14,034');
+INSERT INTO UsdaMaxIncome VALUES (14, 14980, '$14,980');
+
+
+CREATE TABLE UsdaEligibleNextDistro
+(
+  distribution              VARCHAR REFERENCES DistributionPeriod
+                                ON DELETE CASCADE
+                                ON UPDATE CASCADE,
+  family_name               VARCHAR REFERENCES Client
+                                ON DELETE CASCADE
+                                ON UPDATE CASCADE,
+  usda_eligible_next_distro BOOLEAN DEFAULT NULL,
+  PRIMARY KEY (distribution, family_name)
+);
+
+
 CREATE TABLE KeyValueStore
 (
   key               VARCHAR PRIMARY KEY NOT NULL,
   value             VARCHAR
 );
 
+-- REPLACE INTO KeyValueStore (key, value) VALUES ('greeterPin', "111222");
 
 --
 -- "Stored Procedures"

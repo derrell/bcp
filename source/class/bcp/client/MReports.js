@@ -143,19 +143,27 @@ qx.Mixin.define("bcp.client.MReports",
             // Save the distributions list for when the form appears
             this._reportDistributions = distributions;
 
-            reports.forEach(
-              (report) =>
-              {
-                let             listItem;
+            reports
+              .sort(
+                (a, b) =>
+                {
+                  a = a.name.toLowerCase();
+                  b = b.name.toLowerCase();
+                  return a < b ? -1 : a > b ? 1 : 0;
+                })
+              .forEach(
+                (report) =>
+                {
+                  let             listItem;
 
-                listItem = new qx.ui.form.ListItem(report.name);
-                this._reportLabelToListMap[report.name] = listItem;
-                this._reports.add(listItem);
+                  listItem = new qx.ui.form.ListItem(report.name);
+                  this._reportLabelToListMap[report.name] = listItem;
+                  this._reports.add(listItem);
 
-                // Save the remainder of the report info as
-                // userdata of the list item
-                listItem.setUserData("reportInfo", report);
-              });
+                  // Save the remainder of the report info as
+                  // userdata of the list item
+                  listItem.setUserData("reportInfo", report);
+                });
           });
     },
 
@@ -339,7 +347,7 @@ qx.Mixin.define("bcp.client.MReports",
                   this._reportWin = window.open(
                     "",
                     "Report",
-                    "resizable=yes,scrollbars=yes,width=1000,height=600");
+                    "resizable=yes,scrollbars=yes,width=1400,height=600");
 
                   // If we're showing number remaining per some field
                   // (identified by some value other than "$all"...
@@ -373,7 +381,8 @@ qx.Mixin.define("bcp.client.MReports",
                   this._insertPrefix(
                     this._reportWin,
                     result.name,
-                    result[reportInfo.subtitle_field],
+                    result[reportInfo.subtitle_field] ||
+                      report[0][reportInfo.subtitle_field],
                     reportInfo.landscape);
 
                   // Write the heading
@@ -523,8 +532,35 @@ qx.Mixin.define("bcp.client.MReports",
                             row[heading] = this.convert24to12(row[heading]);
                           }
 
-                          this._reportWin.document.write(
-                            `<td>${row[heading]}</td>`);
+                          // Convert signature URLs into images
+                          if (heading == "Signature" &&
+                              row[heading].length > 0)
+                          {
+                            row[heading] =
+                              [
+                                `<img src='${row[heading]}'`,
+                                "  style='",
+                                "    max-height: 50px;",
+                                "    height: 50px;",
+                                "    width: auto;",
+                                "  '",
+                                "/>"
+                              ].join(" ");
+
+                            // Write this column's data ensuring adequate width
+                            this._reportWin.document.write(
+                              [
+                                "<td style='width: 300px;'>",
+                                `${row[heading]}`,
+                                "</td>"
+                              ].join(" "));
+                          }
+                          else
+                          {
+                            // Non-signature column. Automatic width.
+                            this._reportWin.document.write(
+                              `<td>${row[heading]}</td>`);
+                          }
                         });
 
                       // That's the end of this row
@@ -544,7 +580,7 @@ qx.Mixin.define("bcp.client.MReports",
     _insertPrefix(win, title, subtitle, bLandscape)
     {
       let             separatorHeight = 48 / 2; // separators always in pairs
-      let             media =
+      let             landscape =
           bLandscape ? "@media print{@page {size: landscape}}" : "";
 
       // Write the boilerplate prefix stuff
@@ -554,7 +590,15 @@ qx.Mixin.define("bcp.client.MReports",
           "  <head>",
           `    <title>${title}</title>`,
           "    <style>",
-          `      ${media}`,
+          `      ${landscape}`,
+          "      @media print {",
+          "        tbody {",
+          "          page-break-inside: avoid;",
+          "        }",
+          "        thead {",
+          "          display: table-header-group;",
+          "        }",
+          "      }",
           "      table {",
           "        border-collapse: collapse;",
           "      }",

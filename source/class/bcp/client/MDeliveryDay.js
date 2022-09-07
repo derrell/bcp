@@ -66,7 +66,7 @@ qx.Mixin.define("bcp.client.MDeliveryDay",
 console.log("getDeliveryDay data:", result);
                 if (! result || result.appointments.length === 0)
                 {
-                  qxl.dialog.Dialog.alert("No appoitments scheduled");
+                  qxl.dialog.Dialog.alert("No appointments scheduled");
                   return;
                 }
 
@@ -101,7 +101,7 @@ console.log("getDeliveryDay data:", result);
 
       tree = new qx.ui.tree.Tree().set(
         {
-          width: 1000
+          width: 1100
         });
       tree.addListener(
         "changeSelection",
@@ -111,7 +111,9 @@ console.log("getDeliveryDay data:", result);
         });
       container.add(tree, { flex : 1 });
 
-      root = this.configureTreeItem(new qx.ui.tree.TreeFolder(), distribution);
+      root = this.configureTreeItem(
+        new qx.ui.tree.TreeFolder(),
+        "Distribution start date: " + distribution);
       root.setOpen(true);
       tree.setRoot(root);
 
@@ -131,7 +133,9 @@ console.log("getDeliveryDay data:", result);
           {
             // We haven't. Create it.
             label =
-              appointment.method == "Delivery" ? "Delivery" : `Day ${day}`;
+              appointment.method == "Delivery"
+              ? "Delivery"
+              : `Day ${day} (${appointment.appt_date})`;
             nodes[day] = this.configureTreeItem(new Branch(), label);
             root.add(nodes[day]);
 
@@ -207,6 +211,17 @@ console.log("getDeliveryDay data:", result);
 
       // Right-justify the rest
       treeItem.addWidget(new qx.ui.core.Spacer(), { flex: 1 });
+
+      data.id = ("00" + data.id).substr(-3);
+      o = new qx.ui.basic.Label(`#${data.id}`);
+      o.set(
+        {
+          width  : 70,
+          alignX : "right",
+          alignY : "middle",
+          font   : qx.bom.Font.fromString("bold 16px Arial")
+        });
+      treeItem.addWidget(o);
 
       // On leaves, add a checkbox for indicating it's been Fulfilled
       checkbox = new qx.ui.form.ToggleButton(

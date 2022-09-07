@@ -32,6 +32,22 @@ qx.Class.define("bcp.client.RegisterFormElements",
         }
       },
 
+      signature :
+      {
+        initElement : function(fieldType, fieldData, key)
+        {
+          let formElement = bcp.client.Signature.getInstance();
+          formElement.clear();
+          return formElement;
+        },
+
+        addToFormController : function(fieldType, fieldData, key, formElement)
+        {
+          this._formController.addTarget(
+            formElement, "value", key, true, null);
+        }
+      },
+
       calendar :
       {
         initElement : function(fieldType, fieldData, key)

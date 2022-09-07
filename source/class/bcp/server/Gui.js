@@ -65,7 +65,7 @@ qx.Class.define("bcp.server.Gui",
         { route : "resource",    path : `${path}resource` },
         { route : "help",        path : `${path}help` },
         { route : "transpiled",  path : `${path}transpiled` },
-        { route : "favicon.ico", path : `${path}favicon.ico` }
+        { route : "favicon.ico", path : `${path}resource/bcp/client/favicon.ico` }
       ].forEach(
         (item) =>
         {

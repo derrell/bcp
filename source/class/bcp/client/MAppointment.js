@@ -193,6 +193,12 @@ qx.Mixin.define("bcp.client.MAppointment",
                   {
                     const           dist = formElements.distribution;
 
+                    // If they're not sure, don't do it
+                    if (! result)
+                    {
+                      return;
+                    }
+
                     form._cancelButton.execute();
                     _this.rpc(
                       "deleteFulfillment",
@@ -533,39 +539,6 @@ qx.Mixin.define("bcp.client.MAppointment",
                   }
                 },
 
-                usda_label :
-                {
-                  type       : "Label",
-                  label      : this.bold("USDA")
-                },
-
-                usda_amount :
-                {
-                  type       : "TextField",
-                  label      : "Amount",
-                  value      : fulfillment.usda_amount,
-                  enabled    : false
-                },
-
-                usda_eligible :
-                {
-                  type       : "TextField",
-                  label      : "Eligible",
-                  value      : client.usda_eligible,
-                  enabled    : false
-                },
-
-                is_usda_current :
-                {
-                  type       : "CheckBox",
-                  label      : "Current",
-                  value      : !! fulfillment.is_usda_current,
-                  properties :
-                  {
-                    marginLeft : 156
-                  }
-                },
-
                 appointments :
                 {
                   type       : "appointments",
@@ -631,7 +604,7 @@ qx.Mixin.define("bcp.client.MAppointment",
             this._appointmentForm.set(
               {
                 message          : this.bold(familyName || ""),
-                labelColumnWidth : 150,
+                labelColumnWidth : 180,
                 formData         : formData
               });
 
