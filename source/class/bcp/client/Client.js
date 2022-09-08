@@ -388,16 +388,21 @@ qx.Class.define("bcp.client.Client",
                 break;
 
               case "config" :
+                // Save this most recent greeter PIN
+                this._greeterPin = wsMessage.data.greeterPin;
+
+                // fall through
+
+              case "motd" :
                 // Save this most recent message of the day and greeter PIN
                 this._mostRecentMotd = wsMessage.data.motd;
-                this._greeterPin = wsMessage.data.greeterPin;
 
                 // Set color of message of the day
                 color = "red";
                 text =
                   [
                     `<span style='color: ${color}; font-weight: bold;'>`,
-                    qx.bom.String.escape(wsMessage.data),
+                    qx.bom.String.escape(wsMessage.data.motd),
                     "</span>"
                   ].join("");
                 listItem = new qx.ui.form.ListItem(text);

@@ -2307,7 +2307,7 @@ qx.Class.define("bcp.server.Rpc",
               bcp.server.WebSocket.getInstance().sendToAll(
                 {
                   messageType : "motd",
-                  data        : args[0].motd
+                  data        : { motd : args[0].motd }
                 });
             }
           })
