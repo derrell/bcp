@@ -131,8 +131,8 @@ REPLACE INTO Report
    }',
   '$distribution',
   '_separatorWithTime',
+  true,
   '',
-  'Day',
   '
    INSERT INTO StoredProc_UpdateAge
        (birthday, asOf, family_name, member_name)
