@@ -410,6 +410,10 @@ qx.Mixin.define("bcp.client.MUsdaSignature",
                 // Add the Not Eligible button
                 butNotEligible = new qx.ui.form.Button(
                   "Not Eligible", "qxl.dialog.icon.warning");
+                butNotEligible.set(
+                  {
+                    minWidth : 140
+                  });
                 buttonBar.add(butNotEligible);
 
                 butNotEligible.addListener(
@@ -432,6 +436,10 @@ qx.Mixin.define("bcp.client.MUsdaSignature",
 
                 butPaperSignature =
                   new qx.ui.form.Button(_this.tr("Paper Signature"));
+                butPaperSignature.set(
+                  {
+                    minWidth : 140
+                  });
                 buttonBar.add(butPaperSignature);
 
                 butPaperSignature.addListener(
@@ -642,20 +650,43 @@ qx.Mixin.define("bcp.client.MUsdaSignature",
 
           // Generate the statement they'll be signing
           sigStatement =
+            this.tr("Family Name") + ": " + data.family_name +
+            " " +
+            "(#" + data.id + ")" +
+            "<br>" +
+            this.tr("Total Family Size") + ": " + data.family_size_count +
+            "<br>&nbsp;&nbsp;" +
+            "<span style='display: inline-block; width: 2in;'>" +
+            this.tr("Seniors") + ": " +
+            "</span>" +
+            data.family_count_senior +
+            "<br>&nbsp;&nbsp;" +
+            "<span style='display: inline-block; width: 2in;'>" +
+            this.tr("Adults") + ": " +
+            "</span>" +
+            data.family_count_adult +
+            "<br>&nbsp;&nbsp;" +
+            "<span style='display: inline-block; width: 2in;'>" +
+            this.tr("Children") + ": " +
+            "</span>" +
+            data.family_count_child +
+            "<p>" +
             this.tr(
-              "I am eligible to receive USDA food because my family's " +
-              "combined monthly income as of today, %1, " +
-              "is no greater than %2. " +
-              "I am an adult member of the \"%3\" family.",
+              "I declare that as of today, %1, this information is " +
+                "correct, and that my family's combined monthly income is " +
+                "at or below %2.",
               dateString(),
-              data.usda_amount,
-              data.family_name).toString();
+              data.usda_amount) +
+            "</p>";
 
           root = this.getRoot();
           rootSize = root.getInnerSize();
           this._usdaForm.set(
             {
-              message          : this.bold(sigStatement),
+              message          : (
+                this.bold(sigStatement) +
+                  "<p>" +
+                  this.tr("Please sign in the gray box below") + ":"),
               labelColumnWidth : 150,
               formData         : formData,
               width            : rootSize.width,
@@ -695,12 +726,15 @@ qx.Mixin.define("bcp.client.MUsdaSignature",
 
           this._usdaForm._okButton.set(
             {
-              label   : this.tr("Save")
+              label    : this.tr("Save"),
+              font     : qx.bom.Font.fromString("bold 24px Arial"),
+              minWidth : 140
             });
 
           this._usdaForm._cancelButton.set(
             {
-              label   : this.tr("Cancel")
+              label    : this.tr("Cancel"),
+              minWidth : 140
             });
 
           this._usdaForm.center();

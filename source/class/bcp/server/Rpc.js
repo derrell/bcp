@@ -2046,65 +2046,88 @@ qx.Class.define("bcp.server.Rpc",
             // Get all of the appointments for this most recent distribution
             return this._db.prepare(
               [
-                "SELECT ",
-                "    f.family_name AS family_name,",
-                "    cid.id AS id,",
-                "    f.appt_day AS appt_day,",
-                "    f.appt_time AS appt_time,",
-                "    CASE f.appt_day",
-                "      WHEN 1 THEN dp.day_1_date",
-                "      WHEN 2 THEN dp.day_2_date",
-                "      WHEN 3 THEN dp.day_3_date",
-                "      WHEN 4 THEN dp.day_4_date",
-                "      WHEN 5 THEN dp.day_5_date",
-                "      WHEN 6 THEN dp.day_6_date",
-                "      WHEN 7 THEN dp.day_7_date",
-                "    END AS appt_date,",
-                "    f.notes AS notes,",
-                "    f.perishables AS perishables,",
-                "    f.fulfilled AS fulfilled,",
-                "    (SELECT",
-                "       COALESCE(max_income_text, 'See Taryn')",
-                "       FROM UsdaMaxIncome",
-                "       WHERE family_size = ",
-                "          (SELECT COUNT(*) ",
-                "            FROM FamilyMember fam ",
-                "            WHERE fam.family_name = f.family_name)",
-                "       ) AS usda_amount,",
-                "    f.usda_eligible_signature AS usda_eligible_signature,",
-                "    (SELECT COUNT(*) ",
-                "       FROM FamilyMember fam ",
-                "       WHERE fam.family_name = f.family_name)",
-                "      AS family_size_count,",
-                "    CASE",
-                "      WHEN (SELECT COUNT(*) ",
-                "              FROM FamilyMember fam ",
-                "              WHERE fam.family_name = f.family_name) >= 4",
-                "        THEN 'Large'",
-                "      WHEN (SELECT COUNT(*) ",
-                "              FROM FamilyMember fam ",
-                "              WHERE fam.family_name = f.family_name) = 1",
-                "        THEN 'Single'",
-                "      ELSE 'Small'",
-                "    END AS 'family_size_text',",
-                "    c.verified AS verified,",
-                "    c.usda_eligible_next_distro AS usda_eligible_next_distro",
-                "  FROM",
-                "    Fulfillment f,",
-                "    Client c,",
-                "    DistributionPeriod dp,",
-                "    ClientId cid",
-                "  WHERE f.distribution = $distribution",
-                "    AND dp.start_date = $distribution",
-                "    AND c.family_name = f.family_name",
-                "    AND cid.family_name = f.family_name",
-                "  ORDER BY appt_day, appt_time, family_name"
+                "INSERT INTO StoredProc_UpdateAge",
+                "    (birthday, asOf, family_name, member_name)",
+                "  SELECT",
+                "    date_of_birth, $distribution, family_name, member_name",
+                "  FROM FamilyMember;"
               ].join(" "));
           })
+
         .then(
           (stmt) =>
           {
-            // If no distributions, there's nothing more to do
+            if (stmt === null)
+            {
+              return null;
+            }
+
+            return stmt.all( { $distribution : results.distribution } );
+          })
+
+        .then(() =>this._db.prepare(
+          [
+            "SELECT ",
+            "    f.family_name AS family_name,",
+            "    cid.id AS id,",
+            "    f.appt_day AS appt_day,",
+            "    f.appt_time AS appt_time,",
+            "    CASE f.appt_day",
+            "      WHEN 1 THEN dp.day_1_date",
+            "      WHEN 2 THEN dp.day_2_date",
+            "      WHEN 3 THEN dp.day_3_date",
+            "      WHEN 4 THEN dp.day_4_date",
+            "      WHEN 5 THEN dp.day_5_date",
+            "      WHEN 6 THEN dp.day_6_date",
+            "      WHEN 7 THEN dp.day_7_date",
+            "    END AS appt_date,",
+            "    f.notes AS notes,",
+            "    f.perishables AS perishables,",
+            "    f.fulfilled AS fulfilled,",
+            "    (SELECT",
+            "       COALESCE(max_income_text, 'See Taryn')",
+            "       FROM UsdaMaxIncome",
+            "       WHERE family_size = ",
+            "          (SELECT COUNT(*) ",
+            "            FROM FamilyMember fam ",
+            "            WHERE fam.family_name = f.family_name)",
+            "       ) AS usda_amount,",
+            "    f.usda_eligible_signature AS usda_eligible_signature,",
+            "    c.count_child AS family_count_child,",
+            "    c.count_adult AS family_count_adult,",
+            "    c.count_senior AS family_count_senior,",
+            "    (SELECT COUNT(*) ",
+            "       FROM FamilyMember fam ",
+            "       WHERE fam.family_name = f.family_name)",
+            "      AS family_size_count,",
+            "    CASE",
+            "      WHEN (SELECT COUNT(*) ",
+            "              FROM FamilyMember fam ",
+            "              WHERE fam.family_name = f.family_name) >= 4",
+            "        THEN 'Large'",
+            "      WHEN (SELECT COUNT(*) ",
+            "              FROM FamilyMember fam ",
+            "              WHERE fam.family_name = f.family_name) = 1",
+            "        THEN 'Single'",
+            "      ELSE 'Small'",
+            "    END AS 'family_size_text',",
+            "    c.verified AS verified,",
+            "    c.usda_eligible_next_distro AS usda_eligible_next_distro",
+            "  FROM",
+            "    Fulfillment f,",
+            "    Client c,",
+            "    DistributionPeriod dp,",
+            "    ClientId cid",
+            "  WHERE f.distribution = $distribution",
+            "    AND dp.start_date = $distribution",
+            "    AND c.family_name = f.family_name",
+            "    AND cid.family_name = f.family_name",
+            "  ORDER BY appt_day, appt_time, family_name"
+          ].join(" ")))
+
+        .then(
+          (stmt) =>
+          {
             if (stmt === null)
             {
               return null;
