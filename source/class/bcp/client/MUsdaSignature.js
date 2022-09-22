@@ -149,7 +149,7 @@ qx.Mixin.define("bcp.client.MUsdaSignature",
 
       tree = new qx.ui.tree.Tree().set(
         {
-          width: 950
+          width      : 950
         });
       tree.addListener(
         "changeSelection",
@@ -160,7 +160,7 @@ qx.Mixin.define("bcp.client.MUsdaSignature",
       container.add(tree, { flex : 1 });
 
       root = this.configureSigTreeItem(
-        new qx.ui.tree.TreeFolder(),
+        new bcp.client.widget.TreeFolder(),
         "Distribution start date: " + distribution);
       root.setOpen(true);
       tree.setRoot(root);
@@ -173,7 +173,7 @@ qx.Mixin.define("bcp.client.MUsdaSignature",
           let             label;
           const           day = appointment.appt_day;
           const           time = appointment.appt_time;
-          const           Branch = qx.ui.tree.TreeFolder;
+          const           Branch = bcp.client.widget.TreeFolder;
           const           Leaf = qx.ui.tree.TreeFile;
 
           // Have we not yet created a node for this day?
@@ -250,7 +250,7 @@ qx.Mixin.define("bcp.client.MUsdaSignature",
         });
 
       // Add an open/close button to any branch
-      if (treeItem instanceof qx.ui.tree.TreeFolder)
+      if (treeItem instanceof bcp.client.widget.TreeFolder)
       {
         treeItem.addOpenButton();
       }
@@ -273,7 +273,7 @@ qx.Mixin.define("bcp.client.MUsdaSignature",
       }
 
       // There's no additional information on branches
-      if (treeItem instanceof qx.ui.tree.TreeFolder)
+      if (treeItem instanceof bcp.client.widget.TreeFolder)
       {
         // Reset the first color for this new time so all first colors
         // are consistent.
