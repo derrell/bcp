@@ -510,105 +510,105 @@ REPLACE INTO Report
   '
 );
 
--- REPLACE INTO Report
--- (
---   name,
---   description,
---   landscape,
---   input_fields,
---   subtitle_field,
---   separate_by,
---   number_style,
---   number_remaining,
---   pre_query,
---   query
--- )
---  VALUES
--- (
---   'Distribution appointments for USDA',
---   'Schedule of appointments for a specified distribution, for USDA',
---   1,
---   '{
---      "$distribution" :
---      {
---        "type"  : "SelectBox",
---        "label" : "Distribution Date"
---      }
---    }',
---   '$distribution',
---   '_separatorWithTime',
---   '',
---   'Day',
---   '
---    INSERT INTO StoredProc_UpdateAge
---        (birthday, asOf, family_name, member_name)
---      SELECT
---          date_of_birth, $distribution, family_name, member_name
---        FROM FamilyMember;
---   ',
---   '
---    SELECT
---        f.appt_day as Day,
---        f.appt_time AS Time,
---        "Day " || f.appt_day || " (" ||
---          CASE f.appt_day
---            WHEN 1 THEN
---              (SELECT day_1_date
---                 FROM DistributionPeriod
---                 WHERE start_date = $distribution)
---            WHEN 2 THEN
---              (SELECT day_2_date
---                 FROM DistributionPeriod
---                 WHERE start_date = $distribution)
---            WHEN 3 THEN
---              (SELECT day_3_date
---                 FROM DistributionPeriod
---                 WHERE start_date = $distribution)
---            WHEN 4 THEN
---              (SELECT day_4_date
---                 FROM DistributionPeriod
---                 WHERE start_date = $distribution)
---            WHEN 5 THEN
---              (SELECT day_5_date
---                 FROM DistributionPeriod
---                 WHERE start_date = $distribution)
---            WHEN 6 THEN
---              (SELECT day_6_date
---                 FROM DistributionPeriod
---                 WHERE start_date = $distribution)
---            WHEN 7 THEN
---              (SELECT day_7_date
---                 FROM DistributionPeriod
---                 WHERE start_date = $distribution)
---          END ||
---          ") at " || f.appt_time AS _separatorWithTime,
---        c.family_name || CASE c.verified WHEN 1 THEN "&check;" ELSE "" END
---           AS "Family name",
---        c.count_senior AS "65+",
---        c.count_adult AS "18-64",
---        c.count_child AS "0-17",
---        (c.count_senior + c.count_adult + c.count_child) AS "Total",
---        (SELECT
---           COALESCE(max_income_text, "See Taryn")
---           FROM UsdaMaxIncome
---           WHERE family_size = c.count_senior + c.count_adult + c.count_child
---           ) AS "USDA$",
---        CASE c.usda_eligible
---          WHEN "yes" THEN "Yes"
---          WHEN "no" THEN "No"
---          ELSE ""
---        END AS "USDA",
---        "" AS "Board&nbsp;Member&nbsp;Signature"
---      FROM Fulfillment f
---      LEFT JOIN Client c
---        ON c.family_name = f.family_name
---      LEFT JOIN ClientId ci
---        ON ci.family_name = c.family_name
---      WHERE f.distribution = $distribution
---        AND length(COALESCE(f.appt_time, "")) > 0
---      ORDER BY Day, Time, "Family name";
---   '
--- );
+REPLACE INTO Report
+(
+  name,
+  description,
+  landscape,
+  input_fields,
+  subtitle_field,
+  separate_by,
+  number_style,
+  number_remaining,
+  pre_query,
+  query
+)
+ VALUES
+(
+  'Distribution appointments for USDA',
+  'Schedule of appointments for a specified distribution, for USDA',
+  1,
+  '{
+     "$distribution" :
+     {
+       "type"  : "SelectBox",
+       "label" : "Distribution Date"
+     }
+   }',
+  '$distribution',
+  '_separatorWithTime',
+  '',
+  'Day',
+  '
+   INSERT INTO StoredProc_UpdateAge
+       (birthday, asOf, family_name, member_name)
+     SELECT
+         date_of_birth, $distribution, family_name, member_name
+       FROM FamilyMember;
+  ',
+  '
+   SELECT
+       f.appt_day as Day,
+       f.appt_time AS Time,
+       "Day " || f.appt_day || " (" ||
+         CASE f.appt_day
+           WHEN 1 THEN
+             (SELECT day_1_date
+                FROM DistributionPeriod
+                WHERE start_date = $distribution)
+           WHEN 2 THEN
+             (SELECT day_2_date
+                FROM DistributionPeriod
+                WHERE start_date = $distribution)
+           WHEN 3 THEN
+             (SELECT day_3_date
+                FROM DistributionPeriod
+                WHERE start_date = $distribution)
+           WHEN 4 THEN
+             (SELECT day_4_date
+                FROM DistributionPeriod
+                WHERE start_date = $distribution)
+           WHEN 5 THEN
+             (SELECT day_5_date
+                FROM DistributionPeriod
+                WHERE start_date = $distribution)
+           WHEN 6 THEN
+             (SELECT day_6_date
+                FROM DistributionPeriod
+                WHERE start_date = $distribution)
+           WHEN 7 THEN
+             (SELECT day_7_date
+                FROM DistributionPeriod
+                WHERE start_date = $distribution)
+         END ||
+         ") at " || f.appt_time AS _separatorWithTime,
+       c.family_name || CASE c.verified WHEN 1 THEN "&check;" ELSE "" END
+          AS "Family name",
+       c.count_senior AS "65+",
+       c.count_adult AS "18-64",
+       c.count_child AS "0-17",
+       (c.count_senior + c.count_adult + c.count_child) AS "Total",
+       (SELECT
+          COALESCE(max_income_text, "See Taryn")
+          FROM UsdaMaxIncome
+          WHERE family_size = c.count_senior + c.count_adult + c.count_child
+          ) AS "USDA$",
+       CASE c.usda_eligible
+         WHEN "yes" THEN "Yes"
+         WHEN "no" THEN "No"
+         ELSE ""
+       END AS "USDA",
+       "" AS "Board&nbsp;Member&nbsp;Signature"
+     FROM Fulfillment f
+     LEFT JOIN Client c
+       ON c.family_name = f.family_name
+     LEFT JOIN ClientId ci
+       ON ci.family_name = c.family_name
+     WHERE f.distribution = $distribution
+       AND length(COALESCE(f.appt_time, "")) > 0
+     ORDER BY Day, Time, "Family name";
+  '
+);
 
 
 REPLACE INTO Report
