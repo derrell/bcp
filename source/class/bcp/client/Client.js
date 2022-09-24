@@ -402,7 +402,7 @@ qx.Class.define("bcp.client.Client",
                 text =
                   [
                     `<span style='color: ${color}; font-weight: bold;'>`,
-                    qx.bom.String.escape(wsMessage.data.motd),
+                    qx.bom.String.escape(wsMessage?.data?.motd || ""),
                     "</span>"
                   ].join("");
                 listItem = new qx.ui.form.ListItem(text);
@@ -451,8 +451,16 @@ qx.Class.define("bcp.client.Client",
                   let { distribution, familyName } = wsMessage.data;
                   let topic = `clientArrived/${distribution}/${familyName}`;
                   qx.event.message.Bus.dispatchByName(topic, wsMessage.data);
-                  break;
                 }
+                break;
+
+              case "clientMemo" :
+                {
+                  let { distribution, familyName } = wsMessage.data;
+                  let topic = `clientMemo/${distribution}/${familyName}`;
+                  qx.event.message.Bus.dispatchByName(topic, wsMessage.data);
+                }
+                break;
               }
             });
 

@@ -298,8 +298,8 @@ qx.Mixin.define("bcp.client.MUsdaSignature",
       arrived.set(
         {
           height      : 18,
-          width       : 100,
-          minWidth    : 100
+          width       : 60,
+          minWidth    : 60
         });
       arrived.addListener(
         "execute",
@@ -338,7 +338,7 @@ qx.Mixin.define("bcp.client.MUsdaSignature",
       o = new qx.ui.basic.Label(`#${data.id}`);
       o.set(
         {
-          width  : 70,
+          width  : 50,
           alignX : "right",
           alignY : "middle",
           font   : qx.bom.Font.fromString("bold 16px Arial")
@@ -926,6 +926,106 @@ qx.Mixin.define("bcp.client.MUsdaSignature",
       ! data.arrival_time && ! data.fulfilled && o.hide();
       hidden.push(o);
       treeItem.addWidget(signature);
+
+      o = new qx.ui.form.Button("More");
+      o.set(
+        {
+          width    : 50,
+          maxWidth : 50
+        });
+      ! data.arrival_time && ! data.fulfilled && o.hide();
+      hidden.push(o);
+      treeItem.addWidget(o);
+
+      // When tapped, create the form for "more options"
+      o.addListener(
+        "execute",
+        () =>
+        {
+          let             p;
+
+          let moreForm = new qxl.dialog.Form(
+            {
+              caption   : `${data.family_name}`,
+              context   : this,
+            });
+          let formData =
+            {
+              memo :
+              {
+                type       : "TextArea",
+                label      : "Memo",
+                lines      : 3,
+                value      : data.memo || ""
+              },
+
+              cancelArrived :
+              {
+                type       : "Checkbox",
+                label      : "Cancel Arrived",
+                properties :
+                {
+                  appearance : "toggle-button"
+                }
+              }
+            };
+
+          moreForm.set(
+            {
+              width    : 500,
+              height   : 300,
+              formData : formData
+            });
+
+          moreForm._okButton.set(
+            {
+              label   : "Save"
+            });
+
+          moreForm.show();
+
+          p = moreForm.promise();
+
+          p.then(
+            (formValues) =>
+            {
+              // If cancelled, there's nothing to do
+              if (! formValues)
+              {
+                return;
+              }
+
+              this.rpc("updateFulfillmentAncillary",
+                       [
+                         distribution,
+                         data.family_name,
+                         formValues.memo,
+                         formValues.cancelArrived
+                       ])
+                .then(
+                  () =>
+                  {
+                    // Save the new memo in case the form is created again
+                    data.memo = formValues.memo;
+
+                    // If arrival was cancelled and not fulfulled,
+                    // reset hidden fields
+                    if (formValues.cancelArrived && ! data.fulfilled)
+                    {
+                      arrived.show();
+                      hidden.forEach((widget) => widget.hide());
+                    }
+                  })
+                .catch(
+                  (e) =>
+                  {
+                    console.warn("updateFulfillmentMore:", e);
+                    qxl.dialog.Dialog.alert(
+                      "Could not update fulfullment ancillary data: " +
+                      e.message);
+                  });
+            });
+        });
 
       // Set the row's background color
       treeItem.setBackgroundColor(

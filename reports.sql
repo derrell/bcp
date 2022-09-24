@@ -817,6 +817,50 @@ REPLACE INTO Report
 )
  VALUES
 (
+  'Distribution memos',
+  'Client memos provided by a greeter',
+  0,
+  '{
+     "$distribution" :
+     {
+       "type"  : "SelectBox",
+       "label" : "Distribution Date"
+     }
+   }',
+  '$distribution',
+  '',
+  '
+   INSERT INTO StoredProc_UpdateAge
+       (birthday, asOf, family_name, member_name)
+     SELECT
+         date_of_birth, $distribution, family_name, member_name
+       FROM FamilyMember;
+  ',
+  '
+   SELECT
+       c.family_name as "Family name",
+       f.memo AS Memo
+      FROM Fulfillment f, Client c
+      WHERE f.distribution = $distribution
+        AND length(f.memo) > 0
+        AND c.family_name = f.family_name
+      ORDER BY "Family name";
+   '
+);
+
+REPLACE INTO Report
+(
+  name,
+  description,
+  landscape,
+  input_fields,
+  subtitle_field,
+  separate_by,
+  pre_query,
+  query
+)
+ VALUES
+(
   'Yearly unique families attended',
   'Total unique families attended during year (with breakdown)',
   0,

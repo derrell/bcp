@@ -179,7 +179,9 @@ console.log("getDeliveryDay data:", result);
     configureTreeItem : function(treeItem, data, distribution)
     {
       let             o;
+      let             topic;
       let             arrived;
+      let             memo;
       let             checkbox;
       const           MDeliveryDay = bcp.client.MDeliveryDay;
 
@@ -217,7 +219,7 @@ console.log("getDeliveryDay data:", result);
       o = new qx.ui.basic.Label(`#${data.id}`);
       o.set(
         {
-          width  : 70,
+          width  : 50,
           alignX : "right",
           alignY : "middle",
           font   : qx.bom.Font.fromString("bold 16px Arial")
@@ -231,7 +233,7 @@ console.log("getDeliveryDay data:", result);
       {
         arrived.hide();
       }
-      let topic = `clientArrived/${distribution}/${data.family_name}`;
+      topic = `clientArrived/${distribution}/${data.family_name}`;
       qx.event.message.Bus.subscribe(
         topic,
         (message) =>
@@ -339,7 +341,7 @@ console.log("getDeliveryDay data:", result);
       o.set(
         {
           singleStep        : 5,
-          width             : 300,
+          width             : 180,
           alignY            : "middle",
           readOnly          : true,
           appearance        : "label"
@@ -351,6 +353,33 @@ console.log("getDeliveryDay data:", result);
           o.getContentElement().setStyles( { "line-height": 1 } );
         });
       treeItem.addWidget(o);
+
+      memo = new qx.ui.form.TextArea(data.memo ? `Memo: ${data.memo}` : "");
+      memo.set(
+        {
+          singleStep        : 5,
+          width             : 180,
+          alignY            : "middle",
+          readOnly          : true,
+          appearance        : "label"
+        });
+      memo.addListener(
+        "appear",
+        () =>
+        {
+          memo.getContentElement().setStyles( { "line-height": 1 } );
+        });
+      treeItem.addWidget(memo);
+      topic = `clientMemo/${distribution}/${data.family_name}`;
+      qx.event.message.Bus.subscribe(
+        topic,
+        (message) =>
+        {
+          let             messageData = message.getData();
+
+          memo.setValue(messageData.memo ? `Memo: ${messageData.memo}` : "");
+        },
+        this);
 
       // Set the row's background color
       treeItem.setBackgroundColor(

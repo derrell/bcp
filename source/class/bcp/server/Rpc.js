@@ -185,6 +185,12 @@ qx.Class.define("bcp.server.Rpc",
             permission_level    : 40
           },
 
+          updateFulfillmentAncillary   :
+          {
+            handler             : this._updateFulfillmentAncillary.bind(this),
+            permission_level    : 40
+          },
+
           sendChat           :
           {
             handler             : this._sendChat.bind(this),
@@ -1891,6 +1897,7 @@ qx.Class.define("bcp.server.Rpc",
                 "    f.perishables AS perishables,",
                 "    f.arrival_time AS arrival_time,",
                 "    f.fulfilled AS fulfilled,",
+                "    f.memo AS memo,",
                 "    c.count_senior + c.count_adult + c.count_child ",
                 "      AS family_size,",
                 "    c.pet_types AS pet_types",
@@ -2009,6 +2016,7 @@ qx.Class.define("bcp.server.Rpc",
     _getUsdaSignature(args, callback)
     {
       let             results = {};
+      let             startTime = new Date();
 
       // TODO: move prepared statements to constructor
       return Promise.resolve()
@@ -2091,6 +2099,7 @@ qx.Class.define("bcp.server.Rpc",
             "    f.notes AS notes,",
             "    f.perishables AS perishables,",
             "    f.arrival_time AS arrival_time,",
+            "    f.memo AS memo,",
             "    f.fulfilled AS fulfilled,",
             "    (SELECT",
             "       COALESCE(max_income_text, 'See Taryn')",
@@ -2159,7 +2168,15 @@ qx.Class.define("bcp.server.Rpc",
             callback( { message : e.toString() } );
           })
 
-        .finally(() => this._endTransaction());
+        .finally(
+          () =>
+          {
+            let             endTime = new Date;
+
+            this._endTransaction();
+            console.log(`${endTime.getTime() - startTime.getTime()}` +
+                        "ms elapsed time in _getUsdaSignature");
+          });
     },
 
     /**
@@ -2185,6 +2202,7 @@ qx.Class.define("bcp.server.Rpc",
      */
     _updateUsdaSignature(args, callback)
     {
+      let             startTime = new Date();
       let             signatureHash = "";
       let
       [
@@ -2258,7 +2276,15 @@ qx.Class.define("bcp.server.Rpc",
             callback( { message : e.toString() } );
           })
 
-        .finally(() => this._endTransaction());
+        .finally(
+          () =>
+          {
+            let             endTime = new Date;
+
+            this._endTransaction();
+            console.log(`${endTime.getTime() - startTime.getTime()}` +
+                        "ms elapsed time in _updateUsdaSignature");
+          });
     },
 
     /**
@@ -2279,6 +2305,7 @@ qx.Class.define("bcp.server.Rpc",
      */
     _updateClientArrival(args, callback)
     {
+      let             startTime = new Date();
       let             arrivalTime = null;
       let
       [
@@ -2359,7 +2386,164 @@ qx.Class.define("bcp.server.Rpc",
             callback( { message : e.toString() } );
           })
 
-        .finally(() => this._endTransaction());
+        .finally(
+          () =>
+          {
+            let             endTime = new Date;
+
+            this._endTransaction();
+            console.log(`${endTime.getTime() - startTime.getTime()}` +
+                        "ms elapsed time in _updateClientArrival");
+          });
+    },
+
+    /**
+     * Update fullfillment ancillary data, e.g., memo
+     *
+     * @param args {Array}
+     *   args[0] {distribution}
+     *     The start date of the distribution period
+     *
+     *   args[1] {familyName}
+     *     The client whose ancillary data is being saved
+     *
+     *   args[2] {memo}
+     *     Updated memo
+     *
+     *   args[3] {cancelArrived}
+     *     Whether to cancel (set to false) this client's arrival
+     *
+     * @param callback {Function}
+     *   @signature(err, result)
+     */
+    _updateFulfillmentAncillary(args, callback)
+    {
+      let             startTime = new Date();
+      let
+      [
+        distribution,
+        familyName,
+        memo,
+        cancelArrived
+      ] = args;
+
+      // TODO: move prepared statements to constructor
+      return Promise.resolve()
+        .then(() => this._beginTransaction())
+
+        // Update arrival flag, if requested
+        .then(
+          () =>
+          {
+            // If not cancelling arrival, make no change to arrival time
+            if (! cancelArrived)
+            {
+              return null;
+            }
+
+            return this._db.prepare(
+              [
+                "UPDATE Fulfillment",
+                "  SET ",
+                "    arrival_time = null",
+                "  WHERE distribution = $distribution",
+                "    AND family_name = $family_name"
+              ].join(" "));
+          })
+        .then(
+          (stmt) =>
+          {
+            if (! stmt)
+            {
+              // arrival not being cancelled. Move on.
+              return null;
+            }
+
+            return stmt.all(
+              {
+                $distribution  : distribution,
+                $family_name   : familyName
+              });
+          })
+
+        // Update memo
+        .then(
+          () =>
+          {
+            return this._db.prepare(
+              [
+                "UPDATE Fulfillment",
+                "  SET ",
+                "    memo = $memo",
+                "  WHERE distribution = $distribution",
+                "    AND family_name = $family_name"
+              ].join(" "));
+          })
+        .then(
+          (stmt) =>
+          {
+            return stmt.all(
+              {
+                $distribution  : distribution,
+                $family_name   : familyName,
+                $memo          : memo
+              });
+          })
+
+        .then(
+          (result) =>
+          {
+            // Give 'em what they came for. Do this before sending
+            // notifications, so the greeter doesn't need to
+            // needlessly wait.
+            callback(null, null);
+          })
+
+        .then(
+          () =>
+          {
+            // Notify other users of arrival cancellation, if relevant
+            if (cancelArrived)
+            {
+              bcp.server.WebSocket.getInstance().sendToAll(
+                {
+                  messageType : "clientArrived",
+                  data        :
+                  {
+                    distribution : distribution,
+                    familyName   : familyName,
+                    arrivalTime  : null
+                  }
+                });
+            }
+
+            bcp.server.WebSocket.getInstance().sendToAll(
+              {
+                messageType : "clientMemo",
+                data        :
+                {
+                  distribution : distribution,
+                  familyName   : familyName,
+                  memo         : memo
+                }
+              });
+          })
+
+        .catch((e) =>
+          {
+            console.warn("Error in updateFulfillmentAncillary", e);
+            callback( { message : e.toString() } );
+          })
+
+        .finally(
+          () =>
+          {
+            let             endTime = new Date;
+
+            this._endTransaction();
+            console.log(`${endTime.getTime() - startTime.getTime()}` +
+                        "ms elapsed time in _updateFulfillmentAncillary");
+          });
     },
 
     /**
