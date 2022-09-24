@@ -230,6 +230,7 @@ qx.Mixin.define("bcp.client.MUsdaSignature",
       let             o;
       let             text;
       let             label;
+      let             arrived;
       let             checkbox;
       let             signature;
       let             sigStatement;
@@ -238,6 +239,7 @@ qx.Mixin.define("bcp.client.MUsdaSignature",
       let             rootSize;
       let             fUsdaSigResizeForm;
       let             fUsdaFormHandler;
+      let             hidden = [];
       const           MUsdaSignature = bcp.client.MUsdaSignature;
       const           _this = this;
 
@@ -291,6 +293,43 @@ qx.Mixin.define("bcp.client.MUsdaSignature",
           width    : 156
         });
 
+      // Add the button for indicating the client has arrived
+      arrived = new qx.ui.form.Button("Arrived", null);
+      arrived.set(
+        {
+          height      : 18,
+          width       : 100,
+          minWidth    : 100
+        });
+      arrived.addListener(
+        "execute",
+        () =>
+        {
+          this.rpc(
+            "updateClientArrival",
+            [
+              distribution,
+              data.family_name,
+              true
+            ])
+          .then(
+            () =>
+            {
+              arrived.exclude();
+              hidden.forEach((widget) => widget.show());
+            })
+          .catch(
+            (e) =>
+            {
+              console.warn("updateClientArrival:", e);
+              qxl.dialog.Dialog.alert(
+                "Could not update client arrival status for " +
+                  `${data.family_name}: ${e.message}`);
+            });
+        });
+      (data.arrival_time || data.fulfilled) && arrived.hide();
+      treeItem.addWidget(arrived);
+
       // Right-justify the rest
       treeItem.addWidget(new qx.ui.core.Spacer(), { flex: 1 });
 
@@ -304,6 +343,8 @@ qx.Mixin.define("bcp.client.MUsdaSignature",
           alignY : "middle",
           font   : qx.bom.Font.fromString("bold 16px Arial")
         });
+      ! data.arrival_time && ! data.fulfilled && o.hide();
+      hidden.push(o);
       treeItem.addWidget(o);
 
       o = new qx.ui.basic.Label(`USDA:<br>${data.usda_amount}`);
@@ -313,6 +354,8 @@ qx.Mixin.define("bcp.client.MUsdaSignature",
           width  : 50,
           alignY : "middle"
         });
+      ! data.arrival_time && ! data.fulfilled && o.hide();
+      hidden.push(o);
       treeItem.addWidget(o);
 
       // On leaves, add a checkbox for indicating whether they're USDA eligible
@@ -836,6 +879,8 @@ qx.Mixin.define("bcp.client.MUsdaSignature",
             });
         });
 
+      ! data.arrival_time && ! data.fulfilled && checkbox.hide();
+      hidden.push(checkbox);
       treeItem.addWidget(checkbox);
 
       o = new qx.ui.basic.Label(
@@ -847,6 +892,8 @@ qx.Mixin.define("bcp.client.MUsdaSignature",
           width  : 70,
           alignY : "middle"
         });
+      ! data.arrival_time && ! data.fulfilled && o.hide();
+      hidden.push(o);
       treeItem.addWidget(o);
 
       o = new qx.ui.form.TextArea(data.notes ? `Notes: ${data.notes}` : "");
@@ -864,6 +911,8 @@ qx.Mixin.define("bcp.client.MUsdaSignature",
         {
           o.getContentElement().setStyles( { "line-height": 1 } );
         });
+      ! data.arrival_time && ! data.fulfilled && o.hide();
+      hidden.push(o);
       treeItem.addWidget(o);
 
       signature = new qx.ui.basic.Image();
@@ -874,6 +923,8 @@ qx.Mixin.define("bcp.client.MUsdaSignature",
           height : 38,
           source : data.usda_eligible_signature
         });
+      ! data.arrival_time && ! data.fulfilled && o.hide();
+      hidden.push(o);
       treeItem.addWidget(signature);
 
       // Set the row's background color

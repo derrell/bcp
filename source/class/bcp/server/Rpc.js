@@ -179,6 +179,12 @@ qx.Class.define("bcp.server.Rpc",
             permission_level    : 40
           },
 
+          updateClientArrival   :
+          {
+            handler             : this._updateClientArrival.bind(this),
+            permission_level    : 40
+          },
+
           sendChat           :
           {
             handler             : this._sendChat.bind(this),
@@ -1883,6 +1889,7 @@ qx.Class.define("bcp.server.Rpc",
                 "    END AS appt_date,",
                 "    f.notes AS notes,",
                 "    f.perishables AS perishables,",
+                "    f.arrival_time AS arrival_time,",
                 "    f.fulfilled AS fulfilled,",
                 "    c.count_senior + c.count_adult + c.count_child ",
                 "      AS family_size,",
@@ -2083,6 +2090,7 @@ qx.Class.define("bcp.server.Rpc",
             "    END AS appt_date,",
             "    f.notes AS notes,",
             "    f.perishables AS perishables,",
+            "    f.arrival_time AS arrival_time,",
             "    f.fulfilled AS fulfilled,",
             "    (SELECT",
             "       COALESCE(max_income_text, 'See Taryn')",
@@ -2247,6 +2255,107 @@ qx.Class.define("bcp.server.Rpc",
         .catch((e) =>
           {
             console.warn("Error in updateUsdaSignature", e);
+            callback( { message : e.toString() } );
+          })
+
+        .finally(() => this._endTransaction());
+    },
+
+    /**
+     * Update (or remove) a client "Arrived" indicator
+     *
+     * @param args {Array}
+     *   args[0] {distribution}
+     *     The start date of the distribution period
+     *
+     *   args[1] {family_name}
+     *     The name of the family whose fulfillment status is to be updated
+     *
+     *   args[2] {bArrived}
+     *     Whether the client has arrived, or arrival is being cancelled
+     *
+     * @param callback {Function}
+     *   @signature(err, result)
+     */
+    _updateClientArrival(args, callback)
+    {
+      let             arrivalTime = null;
+      let
+      [
+        distribution,
+        familyName,
+        bArrived
+      ] = args;
+
+      // TODO: move prepared statements to constructor
+      return Promise.resolve()
+        .then(() => this._beginTransaction())
+
+        .then(
+          () =>
+          {
+            return this._db.prepare(
+              [
+                "UPDATE Fulfillment",
+                "  SET ",
+                "    arrival_time = $arrival_time",
+                "  WHERE distribution = $distribution",
+                "    AND family_name = $family_name;"
+              ].join(" "));
+          })
+        .then(
+          (stmt) =>
+          {
+            let             now = new Date();
+
+            if (bArrived)
+            {
+              // If they're marked as arrived, set arrival time to now.
+              arrivalTime =
+                now.getFullYear() + "-" +
+                ("0" + (now.getMonth() + 1)).substr(-2) + "-" +
+                ("0" + now.getDate()).substr(-2) +
+                " " +
+                ("0" + now.getHours()).substr(-2) + ":" +
+                ("0" + now.getMinutes()).substr(-2) + ":" +
+                ("0" + now.getSeconds()).substr(-2);
+            }
+
+            return stmt.all(
+              {
+                $distribution  : distribution,
+                $family_name   : familyName,
+                $arrival_time  : arrivalTime
+              });
+          })
+        .then(
+          (result) =>
+          {
+            // Give 'em what they came for. Do this before sending
+            // client-arrived notifications, so the greeter doesn't
+            // need to needlessly wait.
+            callback(null, null);
+          })
+
+        .then(
+          () =>
+          {
+            // Notify other users of the arrival
+            bcp.server.WebSocket.getInstance().sendToAll(
+              {
+                messageType : "clientArrived",
+                data        :
+                {
+                  distribution : distribution,
+                  familyName   : familyName,
+                  arrivalTime  : arrivalTime
+                }
+              });
+          })
+
+        .catch((e) =>
+          {
+            console.warn("Error in updateClientArrived", e);
             callback( { message : e.toString() } );
           })
 

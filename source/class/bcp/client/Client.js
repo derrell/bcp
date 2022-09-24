@@ -436,15 +436,23 @@ qx.Class.define("bcp.client.Client",
                   });
                 messages.add(listItem);
                 messages.scrollChildIntoView(listItem, null, null, true);
-                break;
-              }
 
-              // Prune the message list to keep it from ever-expanding
-              for (children = messages.getChildrenContainer()._getChildren();
-                   children.length > 100;
-                   children = messages.getChildrenContainer()._getChildren())
-              {
-                messages.remove(children[0]);
+                // Prune the message list to keep it from ever-expanding
+                for (children = messages.getChildrenContainer()._getChildren();
+                     children.length > 100;
+                     children = messages.getChildrenContainer()._getChildren())
+                {
+                  messages.remove(children[0]);
+                }
+                break;
+
+              case "clientArrived" :
+                {
+                  let { distribution, familyName } = wsMessage.data;
+                  let topic = `clientArrived/${distribution}/${familyName}`;
+                  qx.event.message.Bus.dispatchByName(topic, wsMessage.data);
+                  break;
+                }
               }
             });
 

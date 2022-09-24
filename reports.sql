@@ -548,6 +548,7 @@ REPLACE INTO Report
   ',
   '
    SELECT
+       ci.id AS _id,
        f.appt_day as Day,
        f.appt_time AS Time,
        "Day " || f.appt_day || " (" ||

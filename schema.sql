@@ -143,6 +143,8 @@ CREATE TABLE Fulfillment
   usda_eligible_signature VARCHAR DEFAULT NULL,
   usda_signature_statement VARCHAR DEFAULT NULL,
   usda_signature_hash      VARCHAR DEFAULT NULL,
+  arrival_time      VARCHAR DEFAULT NULL,   -- %Y-%m-%d %H:%M:%S
+  memo              VARCHAR DEFAULT '',
   PRIMARY KEY (distribution, family_name)
 );
 
@@ -151,6 +153,8 @@ CREATE TABLE Fulfillment
 -- ALTER TABLE Fulfillment ADD COLUMN usda_signature_statement VARCHAR DEFAULT NULL;
 -- ALTER TABLE Fulfillment ADD COLUMN usda_signature_hash VARCHAR DEFAULT NULL;
 -- ALTER TABLE Fulfillment DROP COLUMN is_usda_current;
+-- ALTER TABLE Fulfillment ADD COLUMN arrival_time VARCHAR DEFAULT NULL;
+-- ALTER TABLE Fulfillment ADD COLUMN memo VARCHAR DEFAULT '';
 
 
 CREATE INDEX Fulfillment_appt_idx

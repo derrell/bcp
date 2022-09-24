@@ -6,116 +6,13 @@
 *** #2: perform following ops on production
 ** Merge to master
 ** COMMENT Database changes
-ALTER TABLE Client ADD COLUMN usda_eligible_next_distro VARCHAR DEFAULT NULL;
-ALTER TABLE Fulfillment ADD COLUMN usda_eligible_signature VARCHAR DEFAULT NULL;
-ALTER TABLE DistributionPeriod ADD COLUMN day_1_date VARCHAR DEFAULT '';
-ALTER TABLE DistributionPeriod ADD COLUMN day_2_date VARCHAR DEFAULT '';
-ALTER TABLE DistributionPeriod ADD COLUMN day_3_date VARCHAR DEFAULT '';
-ALTER TABLE DistributionPeriod ADD COLUMN day_4_date VARCHAR DEFAULT '';
-ALTER TABLE DistributionPeriod ADD COLUMN day_5_date VARCHAR DEFAULT '';
-ALTER TABLE DistributionPeriod ADD COLUMN day_6_date VARCHAR DEFAULT '';
-ALTER TABLE DistributionPeriod ADD COLUMN day_7_date VARCHAR DEFAULT '';
-
--- UPDATE Client
---   SET usda_eligible_next_distro = usda_eligible
---   WHERE usda_eligible IS NOT NULL AND length(usda_eligible) > 0;
-
-ALTER TABLE Fulfillment DROP COLUMN is_usda_current;
-ALTER TABLE Fulfillment ADD COLUMN usda_eligible_signature VARCHAR DEFAULT NULL;
-ALTER TABLE Fulfillment ADD COLUMN usda_signature_statement VARCHAR DEFAULT NULL;
-ALTER TABLE Fulfillment ADD COLUMN usda_signature_hash VARCHAR DEFAULT NULL;
-
-CREATE TABLE UsdaMaxIncome
-(
-  family_size       INTEGER PRIMARY KEY,
-  max_income_num    INTEGER NOT NULL,
-  max_income_text   VARCHAR NOT NULL
-);
-
-REPLACE INTO UsdaMaxIncome VALUES (1, 2831, '$2,831');
-REPLACE INTO UsdaMaxIncome VALUES (2, 3815, '$3,815');
-REPLACE INTO UsdaMaxIncome VALUES (3, 4798, '$4,798');
-REPLACE INTO UsdaMaxIncome VALUES (4, 5781, '$5,781');
-REPLACE INTO UsdaMaxIncome VALUES (5, 6795, '$6,795');
-REPLACE INTO UsdaMaxIncome VALUES (6, 7748, '$7,748');
-REPLACE INTO UsdaMaxIncome VALUES (7, 8731, '$8,731');
-REPLACE INTO UsdaMaxIncome VALUES (8, 9715, '$9,715');
-REPLACE INTO UsdaMaxIncome VALUES (9, 10698, '$10,698');
-REPLACE INTO UsdaMaxIncome VALUES (10, 11681, '$11,681');
-REPLACE INTO UsdaMaxIncome VALUES (11, 12664, '$12,664');
-REPLACE INTO UsdaMaxIncome VALUES (12, 13647, '$13,647');
-REPLACE INTO UsdaMaxIncome VALUES (13, 14630, '$14,630');
-REPLACE INTO UsdaMaxIncome VALUES (14, 15613, '$15,613');
-
-
-CREATE TABLE UsdaEligibleNextDistro
-(
-  distribution              VARCHAR REFERENCES DistributionPeriod
-                                ON DELETE CASCADE
-                                ON UPDATE CASCADE,
-  family_name               VARCHAR REFERENCES Client
-                                ON DELETE CASCADE
-                                ON UPDATE CASCADE,
-  usda_eligible_next_distro BOOLEAN DEFAULT NULL,
-  PRIMARY KEY (distribution, family_name)
-);
-
---
--- Maintain a permanent copy of the next-distribution eligibility, per
--- distribution, so that the USDA report can be generated for any
--- distribution
---
--- First, for a new client...
-CREATE TRIGGER tr_ai_Client
-AFTER INSERT ON Client
-BEGIN
-  REPLACE INTO UsdaEligibleNextDistro (
-      distribution,
-      family_name,
-      usda_eligible_next_distro
-    ) VALUES (
-      (SELECT MAX(start_date) FROM DistributionPeriod),
-      new.family_name,
-      new.usda_eligible_next_distro
-    );
-END;
-
--- ... and then for an update of an existing client
-CREATE TRIGGER tr_au_Client
-AFTER UPDATE ON Client
-BEGIN
-  REPLACE INTO UsdaEligibleNextDistro (
-      distribution,
-      family_name,
-      usda_eligible_next_distro
-    ) VALUES (
-      (SELECT MAX(start_date) FROM DistributionPeriod),
-      new.family_name,
-      new.usda_eligible_next_distro
-    );
-
-  DELETE FROM UsdaEligibleNextDistro
-    WHERE
-      family_name = new.family_name
-      AND distribution = (SELECT MAX(start_date) FROM DistributionPeriod)
-      AND usda_eligible_next_distro IS NULL;
-END;
-
-
-REPLACE INTO KeyValueStore (key, value) VALUES ('greeterPin', "111222");
-
-REPLACE INTO User
-    (username, password, permission_level)
-  VALUES
-    ('greeter', '<sha256sum>', 40);
-
-** Fix 'greeterPin' in KeyValueStore
-** Fix 'greeter' password in User
+ALTER TABLE Fulfillment ADD COLUMN arrival_time VARCHAR DEFAULT NULL;
+ALTER TABLE Fulfillment ADD COLUMN memo VARCHAR DEFAULT '';
 
 ** Reports changes
 *** DELETE FROM Report;
 *** Add the entirety of reports.sql
-** mkdir <toplevel>/reports
+** mkdir -p <toplevel>/reports
 ** Install new software
 ** Run new software
 ** In "Distributions" tab, assign a date to eacy day of distribution

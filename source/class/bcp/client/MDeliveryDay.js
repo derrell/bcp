@@ -179,6 +179,7 @@ console.log("getDeliveryDay data:", result);
     configureTreeItem : function(treeItem, data, distribution)
     {
       let             o;
+      let             arrived;
       let             checkbox;
       const           MDeliveryDay = bcp.client.MDeliveryDay;
 
@@ -223,6 +224,37 @@ console.log("getDeliveryDay data:", result);
         });
       treeItem.addWidget(o);
 
+      arrived =
+        new qx.ui.basic.Image("bcp/client/decoration/icons8-car-32.png");
+      arrived.setToolTipText(data.arrival_time);
+      if (! data.arrival_time || data.fulfilled)
+      {
+        arrived.hide();
+      }
+      let topic = `clientArrived/${distribution}/${data.family_name}`;
+      qx.event.message.Bus.subscribe(
+        topic,
+        (message) =>
+        {
+          let             messageData = message.getData();
+
+          // A greeter indicates that a client has arrived. Show it here.
+          if (messageData.arrivalTime && ! data.fulfilled)
+          {
+            arrived.setToolTipText(messageData.arrivalTime);
+            arrived.show();
+          }
+          else
+          {
+            arrived.hide();
+          }
+        },
+        this);
+      treeItem.addWidget(arrived);
+
+      // add some space between 'arrived' icon and 'Fulfilled'
+      treeItem.addWidget(new qx.ui.core.Spacer(4, 4));
+
       // On leaves, add a checkbox for indicating it's been Fulfilled
       checkbox = new qx.ui.form.ToggleButton(
         "Unfulfilled", "qxl.dialog.icon.warning");
@@ -249,15 +281,15 @@ console.log("getDeliveryDay data:", result);
         {
           if (! checkbox.getValue())
           {
-//            checkbox.getChildControl("icon").show();
             checkbox.setIcon("qxl.dialog.icon.warning");
             checkbox.setLabel("Unfulfilled");
+            data.arrival_time && arrived.show();
           }
           else
           {
-//            checkbox.getChildControl("icon").exclude();
             checkbox.setIcon("qxl.dialog.icon.ok");
             checkbox.setLabel("Fulfilled");
+            arrived.hide();
           }
         });
 
