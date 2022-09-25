@@ -959,13 +959,60 @@ qx.Mixin.define("bcp.client.MUsdaSignature",
                 value      : data.memo || ""
               },
 
+              verified :
+              {
+                type       : "Checkbox",
+                label      : (data.verified
+                              ? "Residency Verified"
+                              : "Residency Unverified"),
+                value      : !! data.verified,
+                width      : 200,
+                properties :
+                {
+                  height     : 50,
+                  appearance : "toggle-button"
+                },
+                events    :
+                {
+                 changeValue :
+                  function(e)
+                  {
+                    if (e.getData())
+                    {
+                      this.setLabel("Residency Verified");
+                    }
+                    else
+                    {
+                      this.setLabel("Residency Unverified");
+                    }
+                  }
+                }
+              },
+
               cancelArrived :
               {
                 type       : "Checkbox",
                 label      : "Cancel Arrived",
+                width      : 200,
                 properties :
                 {
+                  height     : 50,
                   appearance : "toggle-button"
+                },
+                events    :
+                {
+                 changeValue :
+                  function(e)
+                  {
+                    if (e.getData())
+                    {
+                      this.setLabel("Cancelling Arrival...");
+                    }
+                    else
+                    {
+                      this.setLabel("Cancel Arrived");
+                    }
+                  }
                 }
               }
             };
@@ -1000,13 +1047,15 @@ qx.Mixin.define("bcp.client.MUsdaSignature",
                          distribution,
                          data.family_name,
                          formValues.memo,
+                         formValues.verified,
                          formValues.cancelArrived
                        ])
                 .then(
                   () =>
                   {
-                    // Save the new memo in case the form is created again
+                    // Save the new values in case the form is created again
                     data.memo = formValues.memo;
+                    data.verified = formValues.verified;
 
                     // If arrival was cancelled and not fulfulled,
                     // reset hidden fields
@@ -1015,6 +1064,17 @@ qx.Mixin.define("bcp.client.MUsdaSignature",
                       arrived.show();
                       hidden.forEach((widget) => widget.hide());
                     }
+
+                    // Reset the label and color based on new verified status
+                    text =
+                      qx.bom.String.escape(data.family_name) +
+                      (data.verified ? "" : "<br>RESIDENCY UNVERIFIED");
+
+                    label.set(
+                      {
+                        value     : text,
+                        textColor : data.verified ? null : "red"
+                      });
                   })
                 .catch(
                   (e) =>

@@ -454,10 +454,10 @@ qx.Class.define("bcp.client.Client",
                 }
                 break;
 
-              case "clientMemo" :
+              case "clientAncillary" :
                 {
                   let { distribution, familyName } = wsMessage.data;
-                  let topic = `clientMemo/${distribution}/${familyName}`;
+                  let topic = `clientAncillary/${distribution}/${familyName}`;
                   qx.event.message.Bus.dispatchByName(topic, wsMessage.data);
                 }
                 break;

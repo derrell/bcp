@@ -70,6 +70,7 @@ qx.Mixin.define("bcp.client.MClientMgmt",
       let             custom;
       let             behavior;
       let             cellRenderer;
+      let             topic;
 
       // Generate the label for this tab
       this._tabLabelClient = this.underlineChar("Clients");
@@ -423,6 +424,42 @@ qx.Mixin.define("bcp.client.MClientMgmt",
           txtSearch.setValue("");
           search.removeAll();
         });
+
+      topic = "clientAncillary/*";
+      qx.event.message.Bus.subscribe(
+        topic,
+        (message) =>
+        {
+          let             messageData = message.getData();
+
+          if (typeof messageData.verified == "boolean")
+          {
+            let tableData = this._tm.getData();
+            let colName = this._tm.getColumnIndexById("family_name");
+            let colVerified = this._tm.getColumnIndexById("verified");
+
+            for (let i = 0; i < tableData.length; i++)
+            {
+              let row = tableData[i];
+              if (row[colName] == messageData.familyName)
+              {
+                row[colVerified] = messageData.verified || null;
+
+                this._tm.fireDataEvent(
+                  "dataChanged",
+                  {
+                    firstRow    : i,
+                    lastRow     : i,
+                    firstColumn : colVerified,
+                    lastColumn  : colVerified
+                  });
+
+                break;
+              }
+            }
+          }
+        },
+        this);
     },
 
     /**

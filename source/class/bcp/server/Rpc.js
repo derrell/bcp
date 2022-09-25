@@ -2424,6 +2424,7 @@ qx.Class.define("bcp.server.Rpc",
         distribution,
         familyName,
         memo,
+        verified,
         cancelArrived
       ] = args;
 
@@ -2490,6 +2491,28 @@ qx.Class.define("bcp.server.Rpc",
               });
           })
 
+        // Update verified
+        .then(
+          () =>
+          {
+            return this._db.prepare(
+              [
+                "UPDATE Client",
+                "  SET ",
+                "    verified = $verified",
+                "  WHERE family_name = $family_name"
+              ].join(" "));
+          })
+        .then(
+          (stmt) =>
+          {
+            return stmt.all(
+              {
+                $family_name   : familyName,
+                $verified      : verified
+              });
+          })
+
         .then(
           (result) =>
           {
@@ -2519,12 +2542,13 @@ qx.Class.define("bcp.server.Rpc",
 
             bcp.server.WebSocket.getInstance().sendToAll(
               {
-                messageType : "clientMemo",
+                messageType : "clientAncillary",
                 data        :
                 {
                   distribution : distribution,
                   familyName   : familyName,
-                  memo         : memo
+                  memo         : memo,
+                  verified     : verified
                 }
               });
           })

@@ -63,7 +63,6 @@ qx.Mixin.define("bcp.client.MDeliveryDay",
             .then(
               (result) =>
               {
-console.log("getDeliveryDay data:", result);
                 if (! result || result.appointments.length === 0)
                 {
                   qxl.dialog.Dialog.alert("No appointments scheduled");
@@ -370,7 +369,8 @@ console.log("getDeliveryDay data:", result);
           memo.getContentElement().setStyles( { "line-height": 1 } );
         });
       treeItem.addWidget(memo);
-      topic = `clientMemo/${distribution}/${data.family_name}`;
+
+      topic = `clientAncillary/${distribution}/${data.family_name}`;
       qx.event.message.Bus.subscribe(
         topic,
         (message) =>
