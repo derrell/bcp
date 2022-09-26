@@ -149,7 +149,7 @@ qx.Mixin.define("bcp.client.MUsdaSignature",
 
       tree = new qx.ui.tree.Tree().set(
         {
-          width      : 950
+          width      : 1000
         });
       tree.addListener(
         "changeSelection",
@@ -230,8 +230,10 @@ qx.Mixin.define("bcp.client.MUsdaSignature",
       let             o;
       let             text;
       let             label;
+      let             topic;
       let             arrived;
       let             checkbox;
+      let             fulfilled;
       let             signature;
       let             sigStatement;
       let             formData;
@@ -327,11 +329,11 @@ qx.Mixin.define("bcp.client.MUsdaSignature",
                   `${data.family_name}: ${e.message}`);
             });
         });
-      (data.arrival_time || data.fulfilled) && arrived.hide();
+      (data.arrival_time || data.fulfilled) && arrived.exclude();
       treeItem.addWidget(arrived);
 
       // Right-justify the rest
-      treeItem.addWidget(new qx.ui.core.Spacer(), { flex: 1 });
+//      treeItem.addWidget(new qx.ui.core.Spacer(), { flex: 1 });
 
       // Add the remaining fields
       data.id = ("00" + data.id).substr(-3);
@@ -927,6 +929,93 @@ qx.Mixin.define("bcp.client.MUsdaSignature",
       hidden.push(o);
       treeItem.addWidget(signature);
 
+      fulfilled = new qx.ui.form.ToggleButton("Fulfilled");
+      fulfilled.set(
+        {
+          width    : 100,
+          maxWidth : 100,
+        });
+      ! data.arrival_time && ! data.fulfilled && fulfilled.hide();
+      hidden.push(fulfilled);
+      if (data.fulfilled)
+      {
+        fulfilled.set(
+          {
+            value : true,
+            label : "Fulfilled",
+            icon  : "qxl.dialog.icon.ok"
+          });
+      }
+      else
+      {
+        fulfilled.set(
+          {
+            value : false,
+            label : "Unfulfilled",
+            icon  : "qxl.dialog.icon.warning"
+          });
+      }
+      treeItem.addWidget(fulfilled);
+
+      // Keep the button label synchronized with the button's state
+      fulfilled.addListener(
+        "changeValue",
+        (e) =>
+        {
+          let newValue = e.getData();
+
+          if (newValue)
+          {
+            fulfilled.setIcon("qxl.dialog.icon.ok");
+            fulfilled.setLabel("Fulfilled");
+          }
+          else
+          {
+            fulfilled.setIcon("qxl.dialog.icon.warning");
+            fulfilled.setLabel("Unfulfilled");
+          }
+        });
+
+      // When tapped, issue the RPC to set the `fulfilled` value
+      fulfilled.addListener(
+        "tap",
+        (e) =>
+        {
+          let newValue = fulfilled.getValue();
+
+          this.rpc(
+            "updateFulfilled",
+            [
+              distribution,
+              data.family_name,
+              newValue
+            ])
+          .catch(
+            (e) =>
+            {
+              console.warn("updateFulfilled:", e);
+              qxl.dialog.Dialog.alert(
+                "Could not update fulfillment status for " +
+                  `${data.family_name}: ${e.message}`);
+            });
+        });
+
+      fulfilled.set(
+        {
+          marginRight : 8
+        });
+
+      topic = `appointmentFulfilled/${distribution}/${data.family_name}`;
+      qx.event.message.Bus.subscribe(
+        topic,
+        (message) =>
+        {
+          let             messageData = message.getData();
+
+          fulfilled.setValue(messageData.fulfilled);
+        },
+        this);
+
       o = new qx.ui.form.Button("More");
       o.set(
         {
@@ -970,7 +1059,8 @@ qx.Mixin.define("bcp.client.MUsdaSignature",
                 properties :
                 {
                   height     : 50,
-                  appearance : "toggle-button"
+                  appearance : "toggle-button",
+                  marginLeft : 106
                 },
                 events    :
                 {
@@ -992,12 +1082,13 @@ qx.Mixin.define("bcp.client.MUsdaSignature",
               cancelArrived :
               {
                 type       : "Checkbox",
-                label      : "Cancel Arrived",
+                label      : "Cancel Arrival",
                 width      : 200,
                 properties :
                 {
                   height     : 50,
-                  appearance : "toggle-button"
+                  appearance : "toggle-button",
+                  marginLeft : 106
                 },
                 events    :
                 {
@@ -1006,11 +1097,11 @@ qx.Mixin.define("bcp.client.MUsdaSignature",
                   {
                     if (e.getData())
                     {
-                      this.setLabel("Cancelling Arrival...");
+                      this.setLabel("Will Cancel Arrival...");
                     }
                     else
                     {
-                      this.setLabel("Cancel Arrived");
+                      this.setLabel("Cancel Arrival");
                     }
                   }
                 }

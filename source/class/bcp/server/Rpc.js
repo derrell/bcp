@@ -164,7 +164,7 @@ qx.Class.define("bcp.server.Rpc",
           updateFulfilled    :
           {
             handler             : this._updateFulfilled.bind(this),
-            permission_level    : 50
+            permission_level    : 40
           },
 
           getUsdaSignature   :
@@ -1945,7 +1945,7 @@ qx.Class.define("bcp.server.Rpc",
     },
 
     /**
-     * Update fulfillment status
+     * Update (or remove) an appointment's "Fulfilled" indicator
      *
      * @param args {Array}
      *   args[0] {distribution}
@@ -1955,13 +1955,21 @@ qx.Class.define("bcp.server.Rpc",
      *     The name of the family whose fulfillment status is to be updated
      *
      *   args[2] {bFulfilled}
-     *     The new fulfillment status
+     *     Whether the appointment has been fulfilled
      *
      * @param callback {Function}
      *   @signature(err, result)
      */
     _updateFulfilled(args, callback)
     {
+      let             startTime = new Date();
+      let
+      [
+        distribution,
+        familyName,
+        bFulfilled
+      ] = args;
+
       // TODO: move prepared statements to constructor
       return Promise.resolve()
         .then(() => this._beginTransaction())
@@ -1969,11 +1977,11 @@ qx.Class.define("bcp.server.Rpc",
         .then(
           () =>
           {
-            // First, retrieve the most recent distribution start date
             return this._db.prepare(
               [
                 "UPDATE Fulfillment",
-                "  SET fulfilled = $fulfilled",
+                "  SET ",
+                "    fulfilled = $fulfilled",
                 "  WHERE distribution = $distribution",
                 "    AND family_name = $family_name;"
               ].join(" "));
@@ -1983,16 +1991,34 @@ qx.Class.define("bcp.server.Rpc",
           {
             return stmt.all(
               {
-                $distribution : args[0],
-                $family_name  : args[1],
-                $fulfilled    : args[2] ? 1 : 0
+                $distribution  : distribution,
+                $family_name   : familyName,
+                $fulfilled     : bFulfilled ? 1 : 0
               });
           })
         .then(
           (result) =>
           {
-            // Give 'em what they came for
+            // Give 'em what they came for. Do this before sending
+            // appointment-fulfilled notifications, so the greeter doesn't
+            // need to needlessly wait.
             callback(null, null);
+          })
+
+        .then(
+          () =>
+          {
+            // Notify other users of the arrival
+            bcp.server.WebSocket.getInstance().sendToAll(
+              {
+                messageType : "appointmentFulfilled",
+                data        :
+                {
+                  distribution : distribution,
+                  familyName   : familyName,
+                  fulfilled    : bFulfilled
+                }
+              });
           })
 
         .catch((e) =>
@@ -2001,7 +2027,15 @@ qx.Class.define("bcp.server.Rpc",
             callback( { message : e.toString() } );
           })
 
-        .finally(() => this._endTransaction());
+        .finally(
+          () =>
+          {
+            let             endTime = new Date;
+
+            this._endTransaction();
+            console.log(`${endTime.getTime() - startTime.getTime()}` +
+                        "ms elapsed time in _updateFulfilled");
+          });
     },
 
     /**

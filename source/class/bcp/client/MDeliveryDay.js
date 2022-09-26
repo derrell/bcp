@@ -317,6 +317,17 @@ qx.Mixin.define("bcp.client.MDeliveryDay",
               });
         });
 
+      topic = `appointmentFulfilled/${distribution}/${data.family_name}`;
+      qx.event.message.Bus.subscribe(
+        topic,
+        (message) =>
+        {
+          let             messageData = message.getData();
+
+          checkbox.setValue(messageData.fulfilled);
+        },
+        this);
+
       treeItem.addWidget(checkbox);
 
       o = new qx.ui.basic.Label(`Family size: ${data.family_size}`);

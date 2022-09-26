@@ -461,6 +461,15 @@ qx.Class.define("bcp.client.Client",
                   qx.event.message.Bus.dispatchByName(topic, wsMessage.data);
                 }
                 break;
+
+              case "appointmentFulfilled" :
+                {
+                  let { distribution, familyName } = wsMessage.data;
+                  let topic =
+                      `appointmentFulfilled/${distribution}/${familyName}`;
+                  qx.event.message.Bus.dispatchByName(topic, wsMessage.data);
+                }
+                break;
               }
             });
 
