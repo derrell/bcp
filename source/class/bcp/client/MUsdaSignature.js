@@ -41,7 +41,7 @@ qx.Mixin.define("bcp.client.MUsdaSignature",
       let             command;
 
       // Create this tab
-      this._tabLabelUsdaSignature = this.underlineChar("USDA Signature", 5);
+      this._tabLabelUsdaSignature = this.underlineChar("Greeter", 0);
 
       page = new qx.ui.tabview.Page(this._tabLabelUsdaSignature);
       page.setLayout(new qx.ui.layout.VBox());
@@ -61,7 +61,7 @@ qx.Mixin.define("bcp.client.MUsdaSignature",
         button.setRich(true);
       }
 
-      command = new qx.ui.command.Command("Alt+S");
+      command = new qx.ui.command.Command("Alt+G");
       command.addListener("execute", () => tabView.setSelection( [ page ] ));
 
 
@@ -249,7 +249,7 @@ qx.Mixin.define("bcp.client.MUsdaSignature",
       treeItem.set(
         {
           icon    : null,
-          height  : 40,
+          height  : treeItem instanceof bcp.client.widget.TreeFolder ? 40 : 70,
           alignY  : "middle"
         });
 
@@ -890,22 +890,25 @@ qx.Mixin.define("bcp.client.MUsdaSignature",
           `${data.family_size_count} (${data.family_size_text})`);
       o.set(
         {
-          rich   : true,
-          width  : 70,
-          alignY : "middle"
+          rich        : true,
+          width       : 70,
+          alignY      : "middle"
         });
       ! data.arrival_time && ! data.fulfilled && o.hide();
       hidden.push(o);
       treeItem.addWidget(o);
 
-      o = new qx.ui.form.TextArea(data.notes ? `Notes: ${data.notes}` : "");
+      o = new qx.ui.form.TextArea(data.notes || "");
       o.set(
         {
-          singleStep        : 5,
-          width             : 160,
-          alignY            : "middle",
-          readOnly          : true,
-          appearance        : "label"
+          singleStep   : 5,
+          width        : 160,
+          alignY       : "middle",
+          readOnly     : true,
+          appearance   : "label",
+          decorator    : "greeter-notes",
+          paddingLeft  : 2,
+          paddingRight : 2
         });
       o.addListener(
         "appear",
@@ -920,13 +923,13 @@ qx.Mixin.define("bcp.client.MUsdaSignature",
       signature = new qx.ui.basic.Image();
       signature.set(
         {
-          scale  : true,
-          width  : 150,
-          height : 38,
-          source : data.usda_eligible_signature
+          scale       : true,
+          width       : 150,
+          height      : 38,
+          source      : data.usda_eligible_signature
         });
-      ! data.arrival_time && ! data.fulfilled && o.hide();
-      hidden.push(o);
+      ! data.arrival_time && ! data.fulfilled && signature.hide();
+      hidden.push(signature);
       treeItem.addWidget(signature);
 
       fulfilled = new qx.ui.form.ToggleButton("Fulfilled");

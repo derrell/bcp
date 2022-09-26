@@ -22,9 +22,21 @@ qx.Theme.define("bcp.client.theme.Decoration",
     {
       style :
       {
-        widthBottom: 1,
+        widthBottom : 1,
         colorBottom : "gray",
-        style : "dotted"
+        style       : "dotted"
+      }
+    },
+
+    "greeter-notes":
+    {
+      style :
+      {
+        widthLeft    : 1,
+        widthRight   : 1,
+        colorLeft    : "gray",
+        colorRight   : "gray",
+        style        : "solid"
       }
     }
   }
