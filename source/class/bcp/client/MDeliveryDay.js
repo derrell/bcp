@@ -88,8 +88,16 @@ qx.Mixin.define("bcp.client.MDeliveryDay",
       let             scroller;
       let             container;
       let             root;
+      let             today;
       let             nodes = {};
       const           { distribution, appointments } = deliveryInfo;
+
+      // Get today's date in the same format as a distribution appointment date
+      today = new Date();
+      today =
+        today.getFullYear() + "-" +
+        ("0" + (today.getMonth() + 1)).substr(-2) + "-" +
+        ("0" + today.getDate()).substr(-2);
 
       scroller = new qx.ui.container.Scroll();
       container = new qx.ui.container.Composite(new qx.ui.layout.VBox());
@@ -144,8 +152,8 @@ qx.Mixin.define("bcp.client.MDeliveryDay",
               parent = nodes[day];
             }
 
-            // Open day and delivery nodes
-            nodes[day].setOpen(true);
+            // Open only today's appointments
+            nodes[day].setOpen(appointment.appt_date == today);
           }
 
           // If we don't yet have a parent...
