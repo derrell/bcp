@@ -15,6 +15,8 @@ qx.Mixin.define("bcp.client.MUsdaSignature",
 {
   statics :
   {
+    __USE_PIN_SECURITY      : true,
+
     _appointmentRowColor    :
     [
       "table-row-background-odd", // first appointment of a new time
@@ -97,7 +99,8 @@ qx.Mixin.define("bcp.client.MUsdaSignature",
 
           page.removeAll();
 
-          if (me.permissionLevel <= 40)
+          if (bcp.client.MUsdaSignature.__USE_PIN_SECURITY &&
+              me.permissionLevel <= 40)
           {
             // Prompt for the PIN before showing the client list
             this.createLogin(
@@ -793,23 +796,10 @@ qx.Mixin.define("bcp.client.MUsdaSignature",
           fUsdaFormHandler =
             (result) =>
             {
-              // Reshow the signature until PIN is accepted
-              this._usdaForm.show();
-
-              // Prompt for the password that allows returning to
-              // the secure environment
-              this.createLogin(
-                "Accept",
-                (err, username) =>
+              let             saveSignature =
+                () =>
                 {
-                  // Was the password accepted?
-                  if (err)
-                  {
-                    // Nope. Let them re-enter it
-                    return;
-                  }
-
-                  // PIN was accepted. We can now hide the form.
+                  // We can now hide the form.
                   this._usdaForm.hide();
 
                   // If the form was cancelled...
@@ -853,7 +843,36 @@ qx.Mixin.define("bcp.client.MUsdaSignature",
                         qxl.dialog.Dialog.error(
                           `Error saving changes: ${e}`);
                       });
-                });
+                };
+
+              // Reshow the signature until PIN is accepted
+              this._usdaForm.show();
+
+              if (bcp.client.MUsdaSignature.__USE_PIN_SECURITY)
+              {
+                // Prompt for the password that allows returning to
+                // the secure environment
+                this.createLogin(
+                  "Accept",
+                  (err, username) =>
+                  {
+                    // Accepted?
+                    if (err)
+                    {
+                      // Nope. Let them re-enter it
+                      return;
+                    }
+
+                    saveSignature();
+                  });
+              }
+              else
+              {
+                // Save the signature and ask the client to return the
+                // tablet to the greeter
+                saveSignature();
+                this.awaitReturnToGreeter();
+              }
             };
 
           // Handle "Ok", retrieving signature form results
@@ -1193,7 +1212,7 @@ qx.Mixin.define("bcp.client.MUsdaSignature",
     /**
      * Creates a login widget for continuing after client signature
      * @param caption
-     * @param button
+     * @param callback
      */
     createLogin : function(caption, callback)
     {
@@ -1222,6 +1241,47 @@ qx.Mixin.define("bcp.client.MUsdaSignature",
         });
 
       this._loginWidget.show();
+    },
+
+    /**
+     * Inform the client to return the tablet to the greeter
+     * @return {Promise}
+     */
+    awaitReturnToGreeter : function()
+    {
+      let             root = this.getRoot();
+      let             rootSize = root.getInnerSize();
+
+      let alert = new qxl.dialog.Alert(
+        {
+          message  : "Thank you. Please hand the tablet back to your greeter.",
+          context  : this,
+          caption  : "Signature complete",
+          image    : "qxl.dialog.icon.info"
+        });
+
+      // Make the confirm box easily usable on a phone/tablet
+      alert._message.setFont(qx.bom.Font.fromString("bold 35px Arial"));
+      alert.set(
+        {
+          width  : rootSize.width,
+          height : rootSize.height
+        });
+      alert._okButton.set(
+        {
+          width  : 100,
+          height : 50
+        });
+
+      alert.show();
+
+      // Show Ok button at bottom instead of right after message
+      alert.getDialogContainer().addAt(
+        new qx.ui.core.Spacer(),
+        1,
+        { flex : 1 });
+
+      return alert.promise();
     },
 
     /**
