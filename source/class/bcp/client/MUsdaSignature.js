@@ -364,13 +364,33 @@ qx.Mixin.define("bcp.client.MUsdaSignature",
       treeItem.addWidget(o);
 
       // On leaves, add a checkbox for indicating whether they're USDA eligible
-      checkbox = new qx.ui.form.ToggleButton("Sign", null);
+      text =
+        [
+          "<div style='text-align: center'>",
+        ];
+      if (data.usda_eligible == "no")
+      {
+        text.push(
+          "<span style='font-weight: bold;'>Sign</span>",
+          "<div style='color: darkorange; font-weight: bold;'>",
+          "  currently ineligible",
+          "</div>");
+      }
+      else
+      {
+        text.push("Sign");
+      }
+      text.push(
+        "</div>");
+      text = text.join("");
 
+      checkbox = new qx.ui.form.ToggleButton(text);
       checkbox.set(
         {
+          rich        : true,
           focusable   : false,
           height      : 18,
-          width       : 100,
+          width       : 128,
           marginRight : 12,
           paddingTop  : 2,
           triState    : true,
@@ -921,7 +941,7 @@ qx.Mixin.define("bcp.client.MUsdaSignature",
       o.set(
         {
           singleStep   : 5,
-          width        : 160,
+          width        : 240,
           alignY       : "middle",
           readOnly     : true,
           appearance   : "label",
@@ -951,92 +971,95 @@ qx.Mixin.define("bcp.client.MUsdaSignature",
       hidden.push(signature);
       treeItem.addWidget(signature);
 
-      fulfilled = new qx.ui.form.ToggleButton("Fulfilled");
-      fulfilled.set(
-        {
-          width    : 100,
-          maxWidth : 100,
-        });
-      ! data.arrival_time && ! data.fulfilled && fulfilled.hide();
-      hidden.push(fulfilled);
-      if (data.fulfilled)
+      if (false)
       {
+        fulfilled = new qx.ui.form.ToggleButton("Fulfilled");
         fulfilled.set(
           {
-            value : true,
-            label : "Fulfilled",
-            icon  : "qxl.dialog.icon.ok"
+            width    : 100,
+            maxWidth : 100,
           });
-      }
-      else
-      {
-        fulfilled.set(
-          {
-            value : false,
-            label : "Unfulfilled",
-            icon  : "qxl.dialog.icon.warning"
-          });
-      }
-      treeItem.addWidget(fulfilled);
-
-      // Keep the button label synchronized with the button's state
-      fulfilled.addListener(
-        "changeValue",
-        (e) =>
+        ! data.arrival_time && ! data.fulfilled && fulfilled.hide();
+        hidden.push(fulfilled);
+        if (data.fulfilled)
         {
-          let newValue = e.getData();
-
-          if (newValue)
-          {
-            fulfilled.setIcon("qxl.dialog.icon.ok");
-            fulfilled.setLabel("Fulfilled");
-          }
-          else
-          {
-            fulfilled.setIcon("qxl.dialog.icon.warning");
-            fulfilled.setLabel("Unfulfilled");
-          }
-        });
-
-      // When tapped, issue the RPC to set the `fulfilled` value
-      fulfilled.addListener(
-        "tap",
-        (e) =>
-        {
-          let newValue = fulfilled.getValue();
-
-          this.rpc(
-            "updateFulfilled",
-            [
-              distribution,
-              data.family_name,
-              newValue
-            ])
-          .catch(
-            (e) =>
+          fulfilled.set(
             {
-              console.warn("updateFulfilled:", e);
-              qxl.dialog.Dialog.alert(
-                "Could not update fulfillment status for " +
-                  `${data.family_name}: ${e.message}`);
+              value : true,
+              label : "Fulfilled",
+              icon  : "qxl.dialog.icon.ok"
             });
-        });
-
-      fulfilled.set(
+        }
+        else
         {
-          marginRight : 8
-        });
+          fulfilled.set(
+            {
+              value : false,
+              label : "Unfulfilled",
+              icon  : "qxl.dialog.icon.warning"
+            });
+        }
+        treeItem.addWidget(fulfilled);
 
-      topic = `appointmentFulfilled/${distribution}/${data.family_name}`;
-      qx.event.message.Bus.subscribe(
-        topic,
-        (message) =>
-        {
-          let             messageData = message.getData();
+        // Keep the button label synchronized with the button's state
+        fulfilled.addListener(
+          "changeValue",
+          (e) =>
+          {
+            let newValue = e.getData();
 
-          fulfilled.setValue(messageData.fulfilled);
-        },
-        this);
+            if (newValue)
+            {
+              fulfilled.setIcon("qxl.dialog.icon.ok");
+              fulfilled.setLabel("Fulfilled");
+            }
+            else
+            {
+              fulfilled.setIcon("qxl.dialog.icon.warning");
+              fulfilled.setLabel("Unfulfilled");
+            }
+          });
+
+        // When tapped, issue the RPC to set the `fulfilled` value
+        fulfilled.addListener(
+          "tap",
+          (e) =>
+          {
+            let newValue = fulfilled.getValue();
+
+            this.rpc(
+              "updateFulfilled",
+              [
+                distribution,
+                data.family_name,
+                newValue
+              ])
+            .catch(
+              (e) =>
+              {
+                console.warn("updateFulfilled:", e);
+                qxl.dialog.Dialog.alert(
+                  "Could not update fulfillment status for " +
+                    `${data.family_name}: ${e.message}`);
+              });
+          });
+
+        fulfilled.set(
+          {
+            marginRight : 8
+          });
+
+        topic = `appointmentFulfilled/${distribution}/${data.family_name}`;
+        qx.event.message.Bus.subscribe(
+          topic,
+          (message) =>
+          {
+            let             messageData = message.getData();
+
+            fulfilled.setValue(messageData.fulfilled);
+          },
+          this);
+      }
 
       o = new qx.ui.form.Button("More");
       o.set(
