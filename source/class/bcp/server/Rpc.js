@@ -906,7 +906,7 @@ qx.Class.define("bcp.server.Rpc",
               ].join(" "));
           })
         .then(stmt => stmt.all({}))
-        .then(result => (results.appointmentDefaults = result))
+        .then(result => (results.clientInfo = result))
 
         .then(
           () =>
@@ -1106,23 +1106,23 @@ qx.Class.define("bcp.server.Rpc",
             $fulfillment_time  : fulfillmentInfo.fulfillment_time
           }))
 
-        // .then(
-        //   () =>
-        //   {
-        //     return this._db.prepare(
-        //       [
-        //         "UPDATE Client",
-        //         "  SET usda_eligible = $usda_eligible,",
-        //         "      usda_eligible_next_distro = $usda_eligible_next_distro",
-        //         "  WHERE family_name = $family_name;"
-        //       ].join(" "));
-        //   })
-        // .then(stmt => stmt.run(
-        //   {
-        //     $family_name               : fulfillmentInfo.family_name,
-        //     $usda_eligible             : fulfillmentInfo.usda_eligible,
-        //     $usda_eligible_next_distro : fulfillmentInfo.usda_eligible_next_distro
-        //   }))
+        .then(
+          () =>
+          {
+            return this._db.prepare(
+              [
+                "UPDATE Client",
+                "  SET usda_eligible = $usda_eligible,",
+                "      usda_eligible_next_distro = $usda_eligible_next_distro",
+                "  WHERE family_name = $family_name;"
+              ].join(" "));
+          })
+        .then(stmt => stmt.run(
+          {
+            $family_name               : fulfillmentInfo.family_name,
+            $usda_eligible             : fulfillmentInfo.usda_eligible,
+            $usda_eligible_next_distro : fulfillmentInfo.usda_eligible_next_distro
+          }))
 
         // Give 'em what they came for!
         .then(() => callback(null, null))

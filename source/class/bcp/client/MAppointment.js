@@ -411,7 +411,7 @@ qx.Mixin.define("bcp.client.MAppointment",
           {
             let             distribution;
             let             distributions = data.distributions;
-            let             appointmentsScheduled = data.appoitnmentsScheduled;
+            let             clientInfo = data.clientInfo;
             let             bNew = data.fulfillment.length === 0;
             let             fulfillment = data.fulfillment[0] || {};
 
@@ -440,7 +440,7 @@ qx.Mixin.define("bcp.client.MAppointment",
             }
 
             // Get the client record for the selected list item
-            client = this._tm.getDataAsMapArray().filter(
+            client = clientInfo.filter(
               (entry) =>
               {
                 return entry.family_name == familyName;
@@ -537,6 +537,32 @@ qx.Mixin.define("bcp.client.MAppointment",
                   {
                     time24     : client.appt_time_default
                   }
+                },
+
+                usda_eligible :
+                {
+                  type       : "SelectBox",
+                  label      : "Eligible for USDA<br>(current distribution)",
+                  value      : client.usda_eligible || "",
+                  options :
+                  [
+                    { label : "",    value : "" },
+                    { label : "Yes", value : "yes" },
+                    { label : "No",  value : "no" }
+                  ]
+                },
+
+                usda_eligible_next_distro :
+                {
+                  type       : "SelectBox",
+                  label      : "Eligible for USDA<br>(next distribution)",
+                  value      : client.usda_eligible_next_distro || "",
+                  options :
+                  [
+                    { label : "Automatic",     value : null },
+                    { label : "Override: Yes", value : "yes" },
+                    { label : "Override: No",  value : "no" }
+                  ]
                 },
 
                 appointments :

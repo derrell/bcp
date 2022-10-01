@@ -97,8 +97,6 @@ qx.Mixin.define("bcp.client.MClientMgmt",
           "Perishables",
           "Income source",
 //          "Income amount",
-          "USDA eligible (current)",
-          "USDA override (next)",
           "Pet types",
           "Address",
           "Appt day",
@@ -114,8 +112,6 @@ qx.Mixin.define("bcp.client.MClientMgmt",
           "perishables_default",
           "income_source",
 //          "income_amount",
-          "usda_eligible",
-          "usda_eligible_next_distro",
           "pet_types",
           "address_default",
           "appt_day_default",
@@ -158,8 +154,6 @@ qx.Mixin.define("bcp.client.MClientMgmt",
       behavior.setWidth(tm.getColumnIndexById("perishables_default"), 200);
       behavior.setWidth(tm.getColumnIndexById("income_source"), 100);
 //      behavior.setWidth(tm.getColumnIndexById("income_amount"), 100);
-      behavior.setWidth(tm.getColumnIndexById("usda_eligible"), 150);
-      behavior.setWidth(tm.getColumnIndexById("usda_eligible_next_distro"), 150);
       behavior.setWidth(tm.getColumnIndexById("pet_types"), 100);
       behavior.setWidth(tm.getColumnIndexById("address_default"), 100);
       behavior.setWidth(tm.getColumnIndexById("appt_day_default"), 60);
@@ -719,38 +713,6 @@ qx.Mixin.define("bcp.client.MClientMgmt",
             }
           },
 */
-          usda_eligible :
-          {
-            type       : "SelectBox",
-            label      : "Eligible for USDA<br>(current distribution)",
-            value      : clientInfo.usda_eligible || "",
-            options :
-            [
-              { label : "",    value : "" },
-              { label : "Yes", value : "yes" },
-              { label : "No",  value : "no" }
-            ],
-            properties :
-            {
-              tabIndex   : 7
-            }
-          },
-          usda_eligible_next_distro :
-          {
-            type       : "SelectBox",
-            label      : "Eligible for USDA<br>(next distribution)",
-            value      : clientInfo.usda_eligible_next_distro || "",
-            options :
-            [
-              { label : "Automatic",     value : null },
-              { label : "Override: Yes", value : "yes" },
-              { label : "Override: No",  value : "no" }
-            ],
-            properties :
-            {
-              tabIndex   : 8
-            }
-          },
           pet_types :
           {
             type       : "TextField",
