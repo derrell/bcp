@@ -305,7 +305,7 @@ qx.Class.define("bcp.client.Appointment",
             let         endTime;
             let         value = this.getValue();
             const       fifteenMin = (1000 * 60 * 15);
-            const       appointmentDefaults = result.appointmentDefaults;
+            const       appointmentDefaults = result.clientInfo;
             const       distributionStarts = result.distributionStarts;
             const       appointmentsScheduled = result.appointmentsScheduled;
 
