@@ -15,4 +15,3 @@ ALTER TABLE Fulfillment ADD COLUMN memo VARCHAR DEFAULT '';
 ** mkdir -p <toplevel>/reports
 ** Install new software
 ** Run new software
-** In "Distributions" tab, assign a date to eacy day of distribution
