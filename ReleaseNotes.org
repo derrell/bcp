@@ -6,8 +6,23 @@
 *** #2: perform following ops on production
 ** Merge to master
 ** COMMENT Database changes
-ALTER TABLE Fulfillment ADD COLUMN arrival_time VARCHAR DEFAULT NULL;
-ALTER TABLE Fulfillment ADD COLUMN memo VARCHAR DEFAULT '';
+CREATE TABLE Shopper
+(
+    id                 INTEGER PRIMARY KEY NOT NULL,
+    name               VARCHAR DEFAULT '',
+    assigned_to_family VARCHAR REFERENCES Client
+                           ON DELETE CASCADE
+                           ON UPDATE CASCADE
+);
+
+INSERT INTO Shopper (id) VALUES (1);
+INSERT INTO Shopper (id) VALUES (2);
+INSERT INTO Shopper (id) VALUES (3);
+INSERT INTO Shopper (id) VALUES (4);
+INSERT INTO Shopper (id) VALUES (5);
+INSERT INTO Shopper (id) VALUES (6);
+INSERT INTO Shopper (id) VALUES (7);
+INSERT INTO Shopper (id) VALUES (8);
 
 ** Reports changes
 *** DELETE FROM Report;

@@ -26,6 +26,8 @@ qx.Mixin.define("bcp.client.MDeliveryDay",
   {
     _nextAppointmentRowColor : 0,
     _tabLabelDeliveryDay     : null,
+    _shoppersForm            : null,
+    _shoppers                : null,
 
     /**
      * Create the delivery day page
@@ -89,8 +91,10 @@ qx.Mixin.define("bcp.client.MDeliveryDay",
       let             container;
       let             root;
       let             today;
+      let             buttonBar;
+      let             button;
       let             nodes = {};
-      const           { distribution, appointments } = deliveryInfo;
+      const           { distribution, appointments, shoppers } = deliveryInfo;
 
       // Get today's date in the same format as a distribution appointment date
       today = new Date();
@@ -100,7 +104,7 @@ qx.Mixin.define("bcp.client.MDeliveryDay",
         ("0" + today.getDate()).substr(-2);
 
       scroller = new qx.ui.container.Scroll();
-      container = new qx.ui.container.Composite(new qx.ui.layout.VBox());
+      container = new qx.ui.container.Composite(new qx.ui.layout.VBox(10));
       container.setAllowGrowX(false);
       container.setAllowStretchX(false);
       scroller.add(container);
@@ -123,6 +127,15 @@ qx.Mixin.define("bcp.client.MDeliveryDay",
         "Distribution start date: " + distribution);
       root.setOpen(true);
       tree.setRoot(root);
+
+      // Built the shoppers list
+      this._shoppers = {};
+      shoppers.forEach(
+        (shopper) =>
+        {
+          this._shoppers[shopper.id] = shopper.name;
+        });
+console.log("Initial shopper list:", this._shoppers);
 
       appointments.forEach(
         (appointment) =>
@@ -181,6 +194,28 @@ qx.Mixin.define("bcp.client.MDeliveryDay",
           node = this.configureTreeItem(new Leaf(), appointment, distribution);
           parent.add(node);
         });
+
+      // Add the button bar
+      buttonBar = new qx.ui.container.Composite(new qx.ui.layout.HBox(10));
+      container.add(buttonBar);
+
+      // Add the button to bring up the shopper assignment form, centered
+      button = new qx.ui.form.Button("Shoppers");
+      button.set(
+        {
+          width : 100
+        });
+
+      buttonBar.add(new qx.ui.core.Spacer(), { flex : 1 });
+      buttonBar.add(button);
+      buttonBar.add(new qx.ui.core.Spacer(), { flex : 1 });
+
+      button.addListener(
+        "execute",
+        () =>
+        {
+          this._createShoppersAssignmentForm();
+        });
     },
 
     configureTreeItem : function(treeItem, data, distribution)
@@ -190,6 +225,7 @@ qx.Mixin.define("bcp.client.MDeliveryDay",
       let             arrived;
       let             memo;
       let             checkbox;
+      let             assignToShopper;
       const           MDeliveryDay = bcp.client.MDeliveryDay;
 
       // We don't want any icons on branches or leaves
@@ -264,7 +300,40 @@ qx.Mixin.define("bcp.client.MDeliveryDay",
       // add some space between 'arrived' icon and 'Fulfilled'
       treeItem.addWidget(new qx.ui.core.Spacer(4, 4));
 
-      // On leaves, add a checkbox for indicating it's been Fulfilled
+      // Add a pulldown to assign to an available shopper
+      assignToShopper = new qx.ui.form.SelectBox();
+      assignToShopper.set(
+        {
+          focusable   : false,
+          height      : 18,
+          width       : 100,
+          marginRight : 12,
+          paddingTop  : 2,
+          enabled     : ! data.fulfilled
+        });
+      
+      // Add the shoppers to the list
+      let item = new qx.ui.form.ListItem("");
+      item.setUserData("id", 0);
+      assignToShopper.add(item);
+
+      for (let shopperId in this._shoppers)
+      {
+        let item = new qx.ui.form.ListItem(this._shoppers[shopperId]);
+        item.setUserData("id", shopperId);
+        assignToShopper.add(item);
+      }
+      treeItem.addWidget(assignToShopper);
+
+      // Save assignment changes
+      assignToShopper.addListener(
+        "changeSelection",
+        (e) =>
+        {
+console.log("changeSelection distribution=", distribution, ", family=", data.family_name, ", label=", e.getData()[0].getLabel() + ", id=", e.getData()[0].getUserData("id"));
+        });
+
+      // Add a checkbox for indicating it's been Fulfilled
       checkbox = new qx.ui.form.ToggleButton(
         "Unfulfilled", "qxl.dialog.icon.warning");
       checkbox.set(
@@ -278,7 +347,6 @@ qx.Mixin.define("bcp.client.MDeliveryDay",
         });
       if (data.fulfilled)
       {
-//        checkbox.getChildControl("icon").exclude();
         checkbox.setIcon("qxl.dialog.icon.ok");
         checkbox.setLabel("Fulfilled");
       }
@@ -293,12 +361,18 @@ qx.Mixin.define("bcp.client.MDeliveryDay",
             checkbox.setIcon("qxl.dialog.icon.warning");
             checkbox.setLabel("Unfulfilled");
             data.arrival_time && arrived.show();
+
+            // Also set enabled state of the shopper assignment
+            assignToShopper.setEnabled(false);
           }
           else
           {
             checkbox.setIcon("qxl.dialog.icon.ok");
             checkbox.setLabel("Fulfilled");
             arrived.hide();
+
+            // Also set enabled state of the shopper assignment
+            assignToShopper.setEnabled(true);
           }
         });
 
@@ -406,6 +480,164 @@ qx.Mixin.define("bcp.client.MDeliveryDay",
       this._nextAppointmentRowColor = (this._nextAppointmentRowColor + 1) % 2;
 
       return treeItem;
+    },
+
+    _createShoppersAssignmentForm()
+    {
+      this._shoppersForm = new qxl.dialog.Form();
+
+      this.rpc("getShoppers", [])
+        .then(
+          (shoppers) =>
+          {
+            let             root;
+            let             rootSize;
+            let             fShoppersResizeForm;
+            let             formData = {};
+
+            shoppers.forEach(
+              (shopper) =>
+              {
+                formData[shopper.id + "_name"] =
+                  {
+                    type       : "TextField",
+                    label      : `Shopper ${shopper.id}'s name`,
+                    value      : shopper.name
+                  };
+
+                formData[shopper.id + "_assignment"] =
+                  {
+                    type       : "TextField",
+                    label      : "Assignment",
+                    value      : shopper.assigned_to_family
+                  };
+              });
+
+            root = this.getRoot();
+            rootSize = root.getInnerSize();
+            this._shoppersForm.set(
+              {
+                message          : "Shopper Assignment",
+                labelColumnWidth : 150,
+                formData         : formData,
+                width            : rootSize.width,
+                height           : rootSize.height,
+              });
+
+            fShoppersResizeForm =
+              (e) =>
+              {
+                let             data = e.getData();
+
+                this._shoppersForm.set(
+                  {
+                    width           : data.width,
+                    height          : data.height
+                  });
+              };
+
+            // If the window resizes, resize the form to fill the
+            // available space.
+            root.addListener("resize", fShoppersResizeForm);
+
+            // Stop trying to resize the form when the form closes
+            [ "ok", "cancel" ].forEach(
+              (event) =>
+              {
+                this._shoppersForm.addListenerOnce(
+                  event,
+                  () =>
+                  {
+                    root.removeListener("resize", fShoppersResizeForm);
+                  });
+              });
+
+            this._shoppersForm._okButton.set(
+              {
+                label  : "Save",
+                width  : 100
+              });
+
+            this._shoppersForm._cancelButton.set(
+              {
+                label    : "Cancel",
+                minWidth : 100
+              });
+
+            this._shoppersForm.center();
+            this._shoppersForm.show();
+
+            this._shoppersForm.promise()
+              .then(
+                (result) =>
+                {
+                  let             id;
+                  let             shopper;
+                  let             shoppers = [];
+
+                  // If the form was cancelled...
+                  if (! result)
+                  {
+                    return null;
+                  }
+
+                  // Rename key from, e.g., "1_name" to "1"
+                  for (let key in result)
+                  {
+                    let             newKey = key.replace(/_.*/, "");
+                    let             field = key.replace(/^.*_/, "");
+
+                    if (newKey !== id)
+                    {
+                      id = newKey;
+                      shopper = {};
+                      shoppers[id] = shopper;
+                    }
+
+                    shoppers[id][field] = result[key];
+                  }
+
+                  return shoppers;
+                })
+
+              .then(
+                (shoppers) =>
+                {
+                  if (! shoppers)
+                  {
+                    return;
+                  }
+
+                  this.rpc(
+                    "updateShoppers",
+                    shoppers)
+                    .then(
+                      () =>
+                      {
+                        // Create the new shoppers' names list
+                        this._shoppers = {};
+                        shoppers.forEach(
+                          (shopper) =>
+                          {
+                            this._shoppers[shopper.id] = shopper.name;
+                          });
+                      })
+                    .catch(
+                      (e) =>
+                      {
+                        console.warn("updateShoppers:", e);
+                        qxl.dialog.Dialog.alert(
+                          `Could not update shoppers: ${e.message}`);
+                      });
+                });
+          })
+
+        .catch(
+          (e) =>
+          {
+            console.warn("getShoppers:", e);
+            qxl.dialog.Dialog.alert(`Could not get shoppers: ${e.message}`);
+          });
     }
   }
 });

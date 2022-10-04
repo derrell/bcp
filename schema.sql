@@ -274,6 +274,25 @@ CREATE TABLE UsdaEligibleNextDistro
 );
 
 
+CREATE TABLE Shopper
+(
+    id                 INTEGER PRIMARY KEY NOT NULL,
+    name               VARCHAR DEFAULT '',
+    assigned_to_family VARCHAR REFERENCES Client
+                           ON DELETE CASCADE
+                           ON UPDATE CASCADE
+);
+
+INSERT INTO Shopper (id) VALUES (1);
+INSERT INTO Shopper (id) VALUES (2);
+INSERT INTO Shopper (id) VALUES (3);
+INSERT INTO Shopper (id) VALUES (4);
+INSERT INTO Shopper (id) VALUES (5);
+INSERT INTO Shopper (id) VALUES (6);
+INSERT INTO Shopper (id) VALUES (7);
+INSERT INTO Shopper (id) VALUES (8);
+
+
 CREATE TABLE KeyValueStore
 (
   key               VARCHAR PRIMARY KEY NOT NULL,

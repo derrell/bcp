@@ -161,6 +161,18 @@ qx.Class.define("bcp.server.Rpc",
             permission_level    : 50
           },
 
+          getShoppers   :
+          {
+            handler             : this._getShoppers.bind(this),
+            permission_level    : 50
+          },
+
+          updateShoppers   :
+          {
+            handler             : this._updateShoppers.bind(this),
+            permission_level    : 50
+          },
+
           updateFulfilled    :
           {
             handler             : this._updateFulfilled.bind(this),
@@ -1843,7 +1855,33 @@ qx.Class.define("bcp.server.Rpc",
         .then(
           () =>
           {
-            // First, retrieve the most recent distribution start date
+            // Retrieve the list of shoppers
+            return this._db.prepare(
+              [
+                "SELECT",
+                "    id,",
+                "    name",
+                "  FROM Shopper",
+                "  WHERE name IS NOT NULL",
+                "    AND length(name) > 0",
+                "  ORDER BY id;"
+              ].join(" "));
+          })
+        .then(
+          (stmt) =>
+          {
+            return stmt.all({});
+          })
+        .then(
+          (result) =>
+          {
+            results.shoppers = result;
+          })
+
+        .then(
+          () =>
+          {
+            // Retrieve the most recent distribution start date
             return this._db.prepare(
               [
                 "SELECT MAX(start_date) AS distribution",
@@ -2602,6 +2640,135 @@ qx.Class.define("bcp.server.Rpc",
             this._endTransaction();
             console.log(`${endTime.getTime() - startTime.getTime()}` +
                         "ms elapsed time in _updateFulfillmentAncillary");
+          });
+    },
+
+    /**
+     * Retrieve the shopper list
+     *
+     * @param args {Array}
+     *   This RPC has no arguments
+     *
+     * @param callback {Function}
+     *   @signature(err, result)
+     */
+    _getShoppers(args, callback)
+    {
+      // TODO: move prepared statements to constructor
+      return Promise.resolve()
+        .then(() => this._beginTransaction())
+
+        .then(
+          () =>
+          {
+            return this._db.prepare(
+            [
+              "SELECT",
+              [
+                "id",
+                "name",
+                "assigned_to_family"
+              ].join(", "),
+              "FROM Shopper",
+              "ORDER BY id"
+            ].join(" "));
+          })
+        .then(
+          (stmt) =>
+          {
+            return stmt.all({});
+          })
+        .then(
+          (result) =>
+          {
+            callback(null, result);
+          })
+
+        .catch((e) =>
+          {
+            console.warn("Error in getShoppers", e);
+            callback( { message : e.toString() } );
+          })
+
+        .finally(
+          () =>
+          {
+            this._endTransaction();
+          });
+    },
+
+
+    /**
+     * Update shopper names
+     *
+     * @param args {Array}
+     *   args[0] {shoppers}
+     *     Array of maps of shoppers.
+     *
+     * @param callback {Function}
+     *   @signature(err, result)
+     */
+    _updateShoppers(args, callback)
+    {
+      let             shoppers = args;
+
+      // Ignore the initial null argument;
+      shoppers.shift();
+
+      // TODO: move prepared statements to constructor
+      return Promise.resolve()
+        .then(() => this._beginTransaction())
+
+        .then(
+          () =>
+          {
+            return this._db.prepare(
+              [
+                "UPDATE Shopper",
+                "  SET ",
+                "    name = $name",
+                "  WHERE id = $id;"
+              ].join(" "));
+          })
+        .then(
+          (stmt) =>
+          {
+            let             statements = [];
+
+console.log("shoppers=", shoppers);
+            shoppers.forEach(
+              (shopper) =>
+              {
+                statements.push(
+                  stmt.run(
+                    {
+                      $id       : parseInt(shopper.id, 10),
+                      $name     : shopper.name
+                    }));
+                
+              });
+
+            return Promise.all(statements);
+          })
+        .then(
+          (result) =>
+          {
+            // Give 'em what they came for. Do this before sending
+            // appointment-fulfilled notifications, so the greeter doesn't
+            // need to needlessly wait.
+            callback(null, null);
+          })
+
+        .catch((e) =>
+          {
+            console.warn("Error in updateShoppers", e);
+            callback( { message : e.toString() } );
+          })
+
+        .finally(
+          () =>
+          {
+            this._endTransaction();
           });
     },
 

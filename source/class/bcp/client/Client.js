@@ -23,9 +23,9 @@ qx.Class.define("bcp.client.Client",
     bcp.client.MClientMgmt,
     bcp.client.MAppointment,
     bcp.client.MDeliveryDay,
-    bcp.client.MUsdaSignature,
     bcp.client.MDistribution,
-    bcp.client.MReports
+    bcp.client.MReports,
+    bcp.client.MUsdaSignature
   ],
 
   statics :
@@ -542,16 +542,16 @@ qx.Class.define("bcp.client.Client",
                 implementation     : this._createDeliveryDayTab
               },
               {
-                requiredPermission : 40,
-                implementation     : this._createUsdaSignatureTab
-              },
-              {
                 requiredPermission : 50,
                 implementation     : this._createDistributionTab
               },
               {
                 requiredPermission : 50,
                 implementation     : this._createReportsTab
+              },
+              {
+                requiredPermission : 40,
+                implementation     : this._createUsdaSignatureTab
               }
             ].forEach(
               (pageInfo) =>
