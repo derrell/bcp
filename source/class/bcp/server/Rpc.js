@@ -2661,7 +2661,7 @@ qx.Class.define("bcp.server.Rpc",
               [
                 "id",
                 "name",
-                "assigned_to_family"
+                "family_name"
               ].join(", "),
               "FROM Shopper",
               "ORDER BY id"
@@ -2731,17 +2731,17 @@ qx.Class.define("bcp.server.Rpc",
 
 console.log("shoppers=", shoppers);
             shoppers.forEach(
-              (shopper) =>
+              (shopper, i) =>
               {
                 statements.push(
                   stmt.run(
                     {
-                      $id       : parseInt(shopper.id, 10),
+                      $id       : i + 1,
                       $name     : shopper.name
                     }));
-                
               });
 
+console.log("statements=", statements);
             return Promise.all(statements);
           })
         .then(

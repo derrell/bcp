@@ -306,23 +306,36 @@ console.log("Initial shopper list:", this._shoppers);
         {
           focusable   : false,
           height      : 18,
-          width       : 100,
+          width       : 120,
           marginRight : 12,
           paddingTop  : 2,
           enabled     : ! data.fulfilled
         });
-      
-      // Add the shoppers to the list
-      let item = new qx.ui.form.ListItem("");
-      item.setUserData("id", 0);
-      assignToShopper.add(item);
 
-      for (let shopperId in this._shoppers)
-      {
-        let item = new qx.ui.form.ListItem(this._shoppers[shopperId]);
-        item.setUserData("id", shopperId);
-        assignToShopper.add(item);
-      }
+      // Add the shoppers to the list
+      let ignoreChangeSelection = false;
+      let unassigned = new qx.ui.form.ListItem(
+        "<span style='font-style: italic;'>unassigned</span>");
+      unassigned.setRich(true);
+      unassigned.setUserData("id", 0);
+      assignToShopper.add(unassigned);
+
+      assignToShopper.getChildControl("list").addListener(
+        "appear",
+        (e) =>
+        {
+          ignoreChangeSelection = true;
+          assignToShopper.removeAll();
+          assignToShopper.add(unassigned);
+          for (let shopperId in this._shoppers)
+          {
+            let item = new qx.ui.form.ListItem(this._shoppers[shopperId]);
+            item.setUserData("id", shopperId);
+            assignToShopper.add(item);
+          }
+          ignoreChangeSelection = false;
+        });
+
       treeItem.addWidget(assignToShopper);
 
       // Save assignment changes
@@ -330,6 +343,11 @@ console.log("Initial shopper list:", this._shoppers);
         "changeSelection",
         (e) =>
         {
+          if (ignoreChangeSelection)
+          {
+            return;
+          }
+
 console.log("changeSelection distribution=", distribution, ", family=", data.family_name, ", label=", e.getData()[0].getLabel() + ", id=", e.getData()[0].getUserData("id"));
         });
 
@@ -363,7 +381,7 @@ console.log("changeSelection distribution=", distribution, ", family=", data.fam
             data.arrival_time && arrived.show();
 
             // Also set enabled state of the shopper assignment
-            assignToShopper.setEnabled(false);
+            assignToShopper.setEnabled(true);
           }
           else
           {
@@ -371,8 +389,11 @@ console.log("changeSelection distribution=", distribution, ", family=", data.fam
             checkbox.setLabel("Fulfilled");
             arrived.hide();
 
-            // Also set enabled state of the shopper assignment
-            assignToShopper.setEnabled(true);
+            // Also set enabled state of the shopper assignment, ...
+            assignToShopper.setEnabled(false);
+
+            // ... and reset it to unassigned
+            assignToShopper.getChildControl("list").setSelection(unassigned);
           }
         });
 
@@ -484,7 +505,33 @@ console.log("changeSelection distribution=", distribution, ", family=", data.fam
 
     _createShoppersAssignmentForm()
     {
-      this._shoppersForm = new qxl.dialog.Form();
+      this._shoppersForm = new qxl.dialog.Form(
+        {
+          setupFormRendererFunction : function(form)
+          {
+            var renderer = new qxl.dialog.MultiColumnFormRenderer(form);
+            var layout = new qx.ui.layout.Grid();
+            const col = renderer.column;
+
+            layout.setSpacing(6);
+
+            layout.setColumnMaxWidth(col(0), this.getLabelColumnWidth());
+            layout.setColumnWidth(col(0), this.getLabelColumnWidth());
+            layout.setColumnAlign(col(0), "right", "top");
+
+            layout.setColumnMaxWidth(col(2), this.getLabelColumnWidth());
+            layout.setColumnWidth(col(2), this.getLabelColumnWidth());
+            layout.setColumnAlign(col(2), "right", "top");
+
+            layout.setColumnMaxWidth(col(4), this.getLabelColumnWidth());
+            layout.setColumnWidth(col(4), this.getLabelColumnWidth());
+            layout.setColumnAlign(col(4), "right", "top");
+
+            renderer._setLayout(layout);
+            return renderer;
+          }
+        }
+      );
 
       this.rpc("getShoppers", [])
         .then(
@@ -493,23 +540,62 @@ console.log("changeSelection distribution=", distribution, ", family=", data.fam
             let             root;
             let             rootSize;
             let             fShoppersResizeForm;
+            let             col = 0;
             let             formData = {};
 
             shoppers.forEach(
-              (shopper) =>
+              (shopper, i) =>
               {
+                let             userdata = {};
+
+                if (i % 4 == 0)
+                {
+                  userdata =
+                    {
+                      row    : 0,
+                      column : col += 2
+                    };
+                }
+
+                formData[shopper.id + "_label"] =
+                  {
+                    type       : "Label",
+                    label      : this.bold(`Shopper ${shopper.id}`),
+                    userdata   : userdata,
+                  },
+
                 formData[shopper.id + "_name"] =
                   {
                     type       : "TextField",
-                    label      : `Shopper ${shopper.id}'s name`,
-                    value      : shopper.name
+                    label      : "Name",
+                    value      : shopper.name,
+                    properties :
+                    {
+                      width      : 200
+                    }
                   };
 
                 formData[shopper.id + "_assignment"] =
                   {
                     type       : "TextField",
                     label      : "Assignment",
-                    value      : shopper.assigned_to_family
+                    value      : shopper.family_name,
+                    properties :
+                    {
+                      enabled    : false,
+                      width      : 200
+                    }
+                  };
+
+                formData[shopper.id + "_online"] =
+                  {
+                    type       : "TextField",
+                    label      : "Online",
+                    value      : shopper.online ? "Yes" : "No",
+                    properties :
+                    {
+                      enabled    : false
+                    }
                   };
               });
 
@@ -517,7 +603,7 @@ console.log("changeSelection distribution=", distribution, ", family=", data.fam
             rootSize = root.getInnerSize();
             this._shoppersForm.set(
               {
-                message          : "Shopper Assignment",
+                message          : this.bold("Shoppers"),
                 labelColumnWidth : 150,
                 formData         : formData,
                 width            : rootSize.width,
@@ -614,12 +700,14 @@ console.log("changeSelection distribution=", distribution, ", family=", data.fam
                     .then(
                       () =>
                       {
-                        // Create the new shoppers' names list
                         this._shoppers = {};
                         shoppers.forEach(
-                          (shopper) =>
+                          (shopper, i) =>
                           {
-                            this._shoppers[shopper.id] = shopper.name;
+                            if (shopper?.name?.length > 0)
+                            {
+                              this._shoppers[i] = shopper.name;
+                            }
                           });
                       })
                     .catch(

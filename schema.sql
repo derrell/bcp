@@ -278,9 +278,10 @@ CREATE TABLE Shopper
 (
     id                 INTEGER PRIMARY KEY NOT NULL,
     name               VARCHAR DEFAULT '',
-    assigned_to_family VARCHAR REFERENCES Client
+    family_name        VARCHAR REFERENCES Client
                            ON DELETE CASCADE
-                           ON UPDATE CASCADE
+                           ON UPDATE CASCADE,
+    online             BOOLEAN DEFAULT FALSE
 );
 
 INSERT INTO Shopper (id) VALUES (1);
