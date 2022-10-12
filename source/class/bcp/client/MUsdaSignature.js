@@ -297,13 +297,25 @@ qx.Mixin.define("bcp.client.MUsdaSignature",
           width    : 156
         });
 
+      // Add the remaining fields
+      data.id = ("00" + data.id).substr(-3);
+      o = new qx.ui.basic.Label(`#${data.id}`);
+      o.set(
+        {
+          width       : 50,
+          alignX      : "right",
+          alignY      : "middle",
+          font        : qx.bom.Font.fromString("bold 16px Arial")
+        });
+      treeItem.addWidget(o);
+
       // Add the button for indicating the client has arrived
       arrived = new qx.ui.form.Button("Arrived", null);
       arrived.set(
         {
           height      : 18,
-          width       : 60,
-          minWidth    : 60
+          width       : 100,
+          minWidth    : 100
         });
       arrived.addListener(
         "execute",
@@ -333,20 +345,6 @@ qx.Mixin.define("bcp.client.MUsdaSignature",
         });
       (data.arrival_time || data.fulfilled) && arrived.exclude();
       treeItem.addWidget(arrived);
-
-      // Add the remaining fields
-      data.id = ("00" + data.id).substr(-3);
-      o = new qx.ui.basic.Label(`#${data.id}`);
-      o.set(
-        {
-          width  : 50,
-          alignX : "right",
-          alignY : "middle",
-          font   : qx.bom.Font.fromString("bold 16px Arial")
-        });
-      ! data.arrival_time && ! data.fulfilled && o.hide();
-      hidden.push(o);
-      treeItem.addWidget(o);
 
       o = new qx.ui.basic.Label(`USDA:<br>${data.usda_amount}`);
       o.set(
