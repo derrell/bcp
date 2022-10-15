@@ -48,8 +48,8 @@ qx.Class.define("bcp.client.Signature",
     canvas.set(
       {
         backgroundColor: "#cccccc",
-        height        : 200,
-        canvasHeight  : 200,
+        height        : 180,
+        canvasHeight  : 180,
 //        canvasWidth   : 200,
         syncDimension : true,
         decorator     : border

@@ -62,6 +62,23 @@ qx.Theme.define("bcp.client.theme.Font",
       lineHeight: 1.8
     },
 
+    "big" :
+    {
+      size : 15,
+      family : ["Lucida Grande", "DejaVu Sans", "Verdana", "sans-serif"],
+      color: "font",
+      lineHeight: 1.4
+    },
+
+    "big-bold" :
+    {
+      size : 15,
+      family : ["Lucida Grande", "DejaVu Sans", "Verdana", "sans-serif"],
+      color : "font",
+      bold : true,
+      lineHeight : 1.4
+    },
+
     "monospace" :
     {
       size : 11,

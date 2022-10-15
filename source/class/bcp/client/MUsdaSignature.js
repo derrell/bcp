@@ -16,6 +16,8 @@ qx.Mixin.define("bcp.client.MUsdaSignature",
   statics :
   {
     __USE_PIN_SECURITY      : true,
+    __TREE_WIDTH            : 0, // set in initiall "appear" handler
+    __TREE_ITEM_WIDTH       : 0, // ditto
 
     _appointmentRowColor    :
     [
@@ -72,6 +74,13 @@ qx.Mixin.define("bcp.client.MUsdaSignature",
         "appear",
         () =>
         {
+          let             root = this.getRoot();
+          let             rootSize = root.getInnerSize();
+
+          bcp.client.MUsdaSignature.__TREE_WIDTH = rootSize.width - 30;
+          bcp.client.MUsdaSignature.__TREE_ITEM_WIDTH =
+            bcp.client.MUsdaSignature.__TREE_WIDTH - 30;
+
           const buildUsdaSignatureTree =
                 () =>
                 {
@@ -152,7 +161,7 @@ qx.Mixin.define("bcp.client.MUsdaSignature",
 
       tree = new qx.ui.tree.Tree().set(
         {
-          width      : 1000
+          width      : bcp.client.MUsdaSignature.__TREE_WIDTH
         });
       tree.addListener(
         "changeSelection",
@@ -174,6 +183,7 @@ qx.Mixin.define("bcp.client.MUsdaSignature",
           let             node;
           let             parent;
           let             label;
+          let             treeItem;
           const           day = appointment.appt_day;
           const           time = appointment.appt_time;
           const           Branch = bcp.client.widget.TreeFolder;
@@ -187,7 +197,12 @@ qx.Mixin.define("bcp.client.MUsdaSignature",
               appointment.method == "Delivery"
               ? "Delivery"
               : `Day ${day} (${appointment.appt_date})`;
-            nodes[day] = this.configureSigTreeItem(new Branch(), label);
+            treeItem = new Branch();
+            treeItem.set(
+              {
+                maxWidth : bcp.client.MUsdaSignature.__TREE_ITEM_WIDTH
+              });
+            nodes[day] = this.configureSigTreeItem(treeItem, label);
             root.add(nodes[day]);
 
             // If this is a delivery, we'll attach the leaf node here.
@@ -222,8 +237,13 @@ qx.Mixin.define("bcp.client.MUsdaSignature",
           }
 
           // Create this apppointment
+          treeItem = new Leaf();
+          treeItem.set(
+            {
+              maxWidth : bcp.client.MUsdaSignature.__TREE_ITEM_WIDTH
+            });
           node = this.configureSigTreeItem(
-            new Leaf(), appointment, distribution);
+            treeItem, appointment, distribution);
           parent.add(node);
         });
     },
@@ -234,6 +254,7 @@ qx.Mixin.define("bcp.client.MUsdaSignature",
       let             text;
       let             label;
       let             topic;
+      let             notes;
       let             arrived;
       let             checkbox;
       let             signature;
@@ -294,7 +315,8 @@ qx.Mixin.define("bcp.client.MUsdaSignature",
         {
           maxWidth : 156,
           minWidth : 156,
-          width    : 156
+          width    : 156,
+          font     : "big-bold"
         });
 
       // Add the remaining fields
@@ -302,10 +324,12 @@ qx.Mixin.define("bcp.client.MUsdaSignature",
       o = new qx.ui.basic.Label(`#${data.id}`);
       o.set(
         {
-          width       : 50,
+          width       : 60,
           alignX      : "right",
           alignY      : "middle",
-          font        : qx.bom.Font.fromString("bold 16px Arial")
+          font        : "big-bold",
+          marginLeft  : 2,
+          marginRight : 2
         });
       treeItem.addWidget(o);
 
@@ -315,7 +339,8 @@ qx.Mixin.define("bcp.client.MUsdaSignature",
         {
           height      : 18,
           width       : 100,
-          minWidth    : 100
+          minWidth    : 100,
+          font        : "big-bold"
         });
       arrived.addListener(
         "execute",
@@ -332,7 +357,16 @@ qx.Mixin.define("bcp.client.MUsdaSignature",
             () =>
             {
               arrived.exclude();
-              hidden.forEach((widget) => widget.show());
+              hidden.forEach(
+                (widget) =>
+                {
+                  widget.object.show();
+
+                  if (widget.onShow)
+                  {
+                    widget.onShow();
+                  }
+                });
             })
           .catch(
             (e) =>
@@ -350,11 +384,12 @@ qx.Mixin.define("bcp.client.MUsdaSignature",
       o.set(
         {
           rich   : true,
-          width  : 50,
-          alignY : "middle"
+          width  : 76,
+          alignY : "middle",
+          font   : "big-bold"
         });
       ! data.arrival_time && ! data.fulfilled && o.hide();
-      hidden.push(o);
+      hidden.push({ object : o });
       treeItem.addWidget(o);
 
       // On leaves, add a checkbox for indicating whether they're USDA eligible
@@ -384,12 +419,14 @@ qx.Mixin.define("bcp.client.MUsdaSignature",
           rich        : true,
           focusable   : false,
           height      : 18,
-          width       : 128,
-          marginRight : 12,
+          width       : 118,
+          marginRight : 10,
           paddingTop  : 2,
           triState    : true,
           value       : null
         });
+
+      checkbox.getChildControl("label").setFont("big-bold");
 
       // Keep the button label synchronized with the button's state
       checkbox.addListener(
@@ -717,23 +754,16 @@ qx.Mixin.define("bcp.client.MUsdaSignature",
             "(#" + data.id + ")" +
             "<br>" +
             this.tr("Total Family Size") + ": " + data.family_size_count +
-            "<br>&nbsp;&nbsp;" +
-            "<span style='display: inline-block; width: 2in;'>" +
-            this.tr("Seniors") + ": " +
-            "</span>" +
-            data.family_count_senior +
-            "<br>&nbsp;&nbsp;" +
-            "<span style='display: inline-block; width: 2in;'>" +
-            this.tr("Adults") + ": " +
-            "</span>" +
-            data.family_count_adult +
-            "<br>&nbsp;&nbsp;" +
-            "<span style='display: inline-block; width: 2in;'>" +
-            this.tr("Children") + ": " +
-            "</span>" +
-            data.family_count_child +
+            "<br>" +
+            "&nbsp;&nbsp;" +
+            this.tr("Seniors") + ": " + data.family_count_senior +
+            "&nbsp;&nbsp;" +
+            this.tr("Adults") + ": " + data.family_count_adult +
+            "&nbsp;&nbsp;" +
+            this.tr("Children") + ": " + data.family_count_child +
             "<p>" +
             this.tr(
+              "By signing in the gray box, below, " +
               "I declare that as of today, %1, this information is " +
                 "correct, and that my family's combined monthly income is " +
                 "at or below %2.",
@@ -745,10 +775,7 @@ qx.Mixin.define("bcp.client.MUsdaSignature",
           rootSize = root.getInnerSize();
           this._usdaForm.set(
             {
-              message          : (
-                this.bold(sigStatement) +
-                  "<p>" +
-                  this.tr("Please sign in the gray box below") + ":"),
+              message          : this.bold(sigStatement),
               labelColumnWidth : 150,
               formData         : formData,
               width            : rootSize.width,
@@ -784,7 +811,7 @@ qx.Mixin.define("bcp.client.MUsdaSignature",
             });
 
           this._usdaForm._message.setFont(
-            qx.bom.Font.fromString("35px Arial"));
+            qx.bom.Font.fromString("30px Arial"));
 
           this._usdaForm._okButton.set(
             {
@@ -915,43 +942,54 @@ qx.Mixin.define("bcp.client.MUsdaSignature",
         });
 
       ! data.arrival_time && ! data.fulfilled && checkbox.hide();
-      hidden.push(checkbox);
+      hidden.push({ object : checkbox });
       treeItem.addWidget(checkbox);
 
-      o = new qx.ui.basic.Label(
-        "Family size:<br>" +
-          `${data.family_size_count} (${data.family_size_text})`);
+      // Display only count of family members for now. We also have
+      // available data.family_size_text ("Single", "Small", "Large")
+      // if needed.
+      o = new qx.ui.basic.Label(`${data.family_size_count}`);
       o.set(
         {
           rich        : true,
-          width       : 70,
-          alignY      : "middle"
+          width       : 30,
+          maxWidth    : 30,
+          alignY      : "middle",
+          font        : "big-bold"
         });
       ! data.arrival_time && ! data.fulfilled && o.hide();
-      hidden.push(o);
+      hidden.push({ object : o });
       treeItem.addWidget(o);
 
-      o = new qx.ui.form.TextArea(data.notes || "");
-      o.set(
+      notes = new qx.ui.form.TextArea(data.notes || "");
+      notes.set(
         {
           singleStep   : 5,
-          width        : 240,
+          width        : 170,   // added as flex:1 below, so likely irrelevant
+          minWidth     : 170,
           alignY       : "middle",
           readOnly     : true,
           appearance   : "label",
           decorator    : "greeter-notes",
           paddingLeft  : 2,
-          paddingRight : 2
+          paddingRight : 2,
+          font         : "big-bold"
         });
-      o.addListener(
+      notes.addListener(
         "appear",
         () =>
         {
-          o.getContentElement().setStyles( { "line-height": 1 } );
+          notes.getContentElement().setStyles( { "line-height": 1 } );
         });
-      ! data.arrival_time && ! data.fulfilled && o.hide();
-      hidden.push(o);
-      treeItem.addWidget(o);
+      ! data.arrival_time && ! data.fulfilled && notes.setDecorator(null);
+      hidden.push(
+        {
+          object  : notes,
+          bNoHide : true,
+          onShow  : () => notes.setDecorator("greeter-notes"),
+          onHide  : () => notes.setDecorator(null)
+        });
+      treeItem.addWidget(notes, { flex : 1 });
 
       signature = new qx.ui.basic.Image();
       signature.set(
@@ -962,17 +1000,18 @@ qx.Mixin.define("bcp.client.MUsdaSignature",
           source      : data.usda_eligible_signature
         });
       ! data.arrival_time && ! data.fulfilled && signature.hide();
-      hidden.push(signature);
+      hidden.push({ object : signature });
       treeItem.addWidget(signature);
 
       o = new qx.ui.form.Button("More");
       o.set(
         {
-          width    : 50,
-          maxWidth : 50
+          width    : 70,
+          maxWidth : 70,
+          font     : "big-bold"
         });
       ! data.arrival_time && ! data.fulfilled && o.hide();
-      hidden.push(o);
+      hidden.push({ object : o });
       treeItem.addWidget(o);
 
       // When tapped, create the form for "more options"
@@ -985,7 +1024,7 @@ qx.Mixin.define("bcp.client.MUsdaSignature",
           let moreForm = new qxl.dialog.Form(
             {
               caption   : `${data.family_name}`,
-              context   : this,
+              context   : this
             });
           let formData =
             {
@@ -994,7 +1033,11 @@ qx.Mixin.define("bcp.client.MUsdaSignature",
                 type       : "TextArea",
                 label      : "Memo",
                 lines      : 3,
-                value      : data.memo || ""
+                value      : data.memo || "",
+                properties :
+                {
+                  font       : "big-bold"
+                }
               },
 
               verified :
@@ -1004,27 +1047,28 @@ qx.Mixin.define("bcp.client.MUsdaSignature",
                               ? "Residency Verified"
                               : "Residency Unverified"),
                 value      : !! data.verified,
-                width      : 200,
+                width      : 260,
                 properties :
                 {
                   height     : 50,
                   appearance : "toggle-button",
-                  marginLeft : 106
+                  marginLeft : 106,
+                  font       : "big-bold"
                 },
                 events    :
                 {
-                 changeValue :
-                  function(e)
-                  {
-                    if (e.getData())
+                  changeValue :
+                    function(e)
                     {
-                      this.setLabel("Residency Verified");
+                      if (e.getData())
+                      {
+                        this.setLabel("Residency Verified");
+                      }
+                      else
+                      {
+                        this.setLabel("Residency Unverified");
+                      }
                     }
-                    else
-                    {
-                      this.setLabel("Residency Unverified");
-                    }
-                  }
                 }
               },
 
@@ -1032,12 +1076,13 @@ qx.Mixin.define("bcp.client.MUsdaSignature",
               {
                 type       : "Checkbox",
                 label      : "Cancel Arrival",
-                width      : 200,
+                width      : 260,
                 properties :
                 {
                   height     : 50,
                   appearance : "toggle-button",
-                  marginLeft : 106
+                  marginLeft : 106,
+                  font       : "big-bold"
                 },
                 events    :
                 {
@@ -1066,7 +1111,15 @@ qx.Mixin.define("bcp.client.MUsdaSignature",
 
           moreForm._okButton.set(
             {
-              label   : "Save"
+              label    : "Save",
+              minWidth : 140,
+              font     : "big-bold"
+            });
+
+          moreForm._cancelButton.set(
+            {
+              minWidth : 140,
+              font     : "big-bold"
             });
 
           moreForm.show();
@@ -1102,7 +1155,19 @@ qx.Mixin.define("bcp.client.MUsdaSignature",
                     if (formValues.cancelArrived && ! data.fulfilled)
                     {
                       arrived.show();
-                      hidden.forEach((widget) => widget.hide());
+                      hidden.forEach(
+                        (widget) =>
+                        {
+                          if (! widget.bNoHide)
+                          {
+                            widget.object.hide();
+                          }
+
+                          if (widget.onHide)
+                          {
+                            widget.onHide();
+                          }
+                        });
                     }
 
                     // Reset the label and color based on new verified status
