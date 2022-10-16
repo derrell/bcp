@@ -446,6 +446,10 @@ qx.Mixin.define("bcp.client.MAppointment",
                 return entry.family_name == familyName;
               })[0];
 
+            // In case there was no default appointment time so the
+            // record wasn't returned, create a default client entry
+            client = client || {};
+
             formData =
               {
                 distribution :
@@ -531,11 +535,14 @@ qx.Mixin.define("bcp.client.MAppointment",
                 {
                   type       : "TextField",
                   label      : "Time",
-                  value      : this.convert24to12(client.appt_time_default),
+                  value      : (
+                    client.appt_time_default
+                      ? this.convert24to12(client.appt_time_default)
+                      : null),
                   enabled    : false,
                   userdata   :
                   {
-                    time24     : client.appt_time_default
+                    time24     : client.appt_time_default || null
                   }
                 },
 

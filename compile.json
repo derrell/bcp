@@ -73,7 +73,9 @@
   ],
   "defaultTarget": "source",
   "locales": [
-    "en"
+    "en",
+    "es",
+    "pt"
   ],
   "applications": [
     {

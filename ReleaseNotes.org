@@ -6,8 +6,7 @@
 *** #2: perform following ops on production
 ** Merge to master
 ** COMMENT Database changes
-ALTER TABLE Fulfillment ADD COLUMN arrival_time VARCHAR DEFAULT NULL;
-ALTER TABLE Fulfillment ADD COLUMN memo VARCHAR DEFAULT '';
+ALTER TABLE Client ADD COLUMN language_abbreviation VARCHAR DEFAULT 'en';
 
 ** Reports changes
 *** DELETE FROM Report;

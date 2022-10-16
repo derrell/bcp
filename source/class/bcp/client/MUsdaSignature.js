@@ -497,6 +497,10 @@ qx.Mixin.define("bcp.client.MUsdaSignature",
           // Update the prior value with the current value
           checkbox.setUserData("priorValue", value);
 
+          // Set the signature page language to the client's spoken language
+          qx.locale.Manager.getInstance().setLocale(
+            data.language_abbreviation);
+
           // Create the form for obtaining a signature
           this._usdaForm = new qxl.dialog.Form(
             {
@@ -508,7 +512,7 @@ qx.Mixin.define("bcp.client.MUsdaSignature",
 
                 // Add the Not Eligible button
                 butNotEligible = new qx.ui.form.Button(
-                  "Not Eligible", "qxl.dialog.icon.warning");
+                  _this.tr("Not Eligible"), "qxl.dialog.icon.warning");
                 butNotEligible.set(
                   {
                     minWidth : 140
@@ -574,7 +578,7 @@ qx.Mixin.define("bcp.client.MUsdaSignature",
                 buttonBar.addAt(new qx.ui.core.Spacer(), 1, { flex: 1 });
 
                 // Create the Clear button
-                butClear = new qx.ui.form.Button("Clear");
+                butClear = new qx.ui.form.Button(_this.tr("Clear"));
                 butClear.setWidth(100);
 
                 butClear.addListener(
@@ -842,6 +846,9 @@ qx.Mixin.define("bcp.client.MUsdaSignature",
                 {
                   // We can now hide the form.
                   this._usdaForm.hide();
+
+                  // Reset the locale back to English
+                  qx.locale.Manager.getInstance().setLocale("en");
 
                   // If the form was cancelled...
                   if (! result)

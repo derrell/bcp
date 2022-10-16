@@ -92,6 +92,7 @@ qx.Mixin.define("bcp.client.MClientMgmt",
           "Phone",
           "Email",
           "Ethnicity",
+          "Language",
           "Verified",
           "Notes",
           "Perishables",
@@ -107,6 +108,7 @@ qx.Mixin.define("bcp.client.MClientMgmt",
           "phone",
           "email",
           "ethnicity",
+          "language_abbreviation",
           "verified",
           "notes_default",
           "perishables_default",
@@ -149,6 +151,7 @@ qx.Mixin.define("bcp.client.MClientMgmt",
       behavior.setWidth(tm.getColumnIndexById("phone"), 100);
       behavior.setWidth(tm.getColumnIndexById("email"), 100);
       behavior.setWidth(tm.getColumnIndexById("ethnicity"), 80);
+      behavior.setWidth(tm.getColumnIndexById("language_abbreviation"), 60);
       behavior.setWidth(tm.getColumnIndexById("verified"), 60);
       behavior.setWidth(tm.getColumnIndexById("notes_default"), 200);
       behavior.setWidth(tm.getColumnIndexById("perishables_default"), 200);
@@ -691,6 +694,22 @@ qx.Mixin.define("bcp.client.MClientMgmt",
               tabIndex   : 5
             }
           },
+          language_abbreviation :
+          {
+            type       : "SelectBox",
+            label      : "Language",
+            value      : clientInfo.language_abbreviation || "en",
+            options :
+            [
+              { label : "English",     value : "en" },
+              { label : "Portuguese",  value : "pt" },
+              { label : "Spanish",     value : "es" }
+            ],
+            properties :
+            {
+              tabIndex   : 6
+            }
+          },
           income_source :
           {
             type       : "TextField",
@@ -698,7 +717,7 @@ qx.Mixin.define("bcp.client.MClientMgmt",
             value      : clientInfo.income_source || "",
             properties :
             {
-              tabIndex   : 6
+              tabIndex   : 7
             }
           },
 /*
@@ -709,7 +728,7 @@ qx.Mixin.define("bcp.client.MClientMgmt",
             value      : (clientInfo.income_amount || "").toString(),
             properties :
             {
-              tabIndex   : 7
+              tabIndex   : 8
             }
           },
 */

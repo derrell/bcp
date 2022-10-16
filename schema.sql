@@ -15,6 +15,7 @@ CREATE TABLE Client
   phone                     VARCHAR,
   email                     VARCHAR,
   ethnicity                 VARCHAR,
+  language_abbreviation     VARCHAR DEFAULT 'en',
   count_senior              INTEGER DEFAULT 0,  -- number of family members 65+
   count_adult               INTEGER DEFAULT 0,  -- number of family members 18-64
   count_child               INTEGER DEFAULT 0,  -- number of family members 0-17
@@ -42,6 +43,7 @@ CREATE TABLE Client
 -- ALTER TABLE Client ADD COLUMN notes_default VARCHAR NOT NULL DEFAULT '';
 -- ALTER TABLE Client ADD COLUMN perishables_default VARCHAR NOT NULL DEFAULT '-- ALTER TABLE Client ADD COLUMN usda_eligible VARCHAR NOT NULL DEFAULT '';
 -- ALTER TABLE Client ADD COLUMN usda_eligible_next_distro VARCHAR DEFAULT NULL;
+-- ALTER TABLE Client ADD COLUMN language_abbreviation VARCHAR DEFAULT 'en';
 
 --
 -- Maintain a permanent copy of the next-distribution eligibility, per
