@@ -32,7 +32,13 @@ qx.Mixin.define("bcp.client.MAppointment",
     {
       let             page;
       let             vBox;
+      let             hBox;
       let             button;
+      let             label;
+      let             search;
+      let             txtSearch;
+      let             listSearch;
+      let             cbPhone;
       let             command;
       let             formData;
       const           _this = this;
@@ -70,13 +76,17 @@ qx.Mixin.define("bcp.client.MAppointment",
       this._appointmentClients.addListener(
         "changeSelection", this._onAppointmentListChangeSelection, this);
 
+      // Create an hbox for the New Client and Search facilities
+      hBox = new qx.ui.container.Composite(new qx.ui.layout.HBox(10));
+      vBox.add(hBox);
+
       // Allow creating a new client right from here
       this._butNewClient = new qx.ui.form.Button("New Client");
       this._butNewClient.set(
         {
           maxWidth : 80
         });
-      vBox.add(this._butNewClient);
+      hBox.add(this._butNewClient);
       this._butNewClient.addListener(
         "execute",
         () =>
@@ -84,6 +94,123 @@ qx.Mixin.define("bcp.client.MAppointment",
           this._buildClientForm();
         },
         this);
+
+      // Create a search box. First its label...
+      label = new qx.ui.basic.Label("Search:");
+      label.set(
+        {
+          alignY : "middle",
+          font   : "bold"
+        });
+      hBox.add(label);
+
+      // ... and then the search box itself.
+      search = new qx.ui.form.ComboBox();
+      txtSearch = search.getChildControl("textfield");
+      listSearch = search.getChildControl("list");
+      search.set(
+        {
+          width      : 250,
+        });
+      txtSearch.set(
+        {
+          liveUpdate : true
+        });
+      hBox.add(search);
+
+      cbPhone = new qx.ui.form.CheckBox("by Phone (slow)");
+      hBox.add(cbPhone);
+
+      // Each time a character is typed, build a list of all families
+      // with the text in the search box within the name
+      txtSearch.addListener(
+        "changeValue",
+        (e) =>
+        {
+          const           text = e.getData();
+          const           byPhone = cbPhone.getValue();
+          const           matches =
+            byPhone
+              ? this._trieSearchPhone.get(text)
+              : this._trieSearchFamily.get(text);
+
+          if (matches.length > 0)
+          {
+            txtSearch.setBackgroundColor(null);
+            search.open();
+            search.removeAll();
+            matches.forEach(
+              (entry) =>
+              {
+                let listItem = new qx.ui.form.ListItem(entry.family_name);
+                listItem.getChildControl("label").setWidth(300);
+                listItem._add(new qx.ui.basic.Label(entry.phone));
+                listItem.setUserData("index", entry.index);
+                search.add(listItem);
+              });
+          }
+          else if (text.length == 0)
+          {
+            // Remove no-match coloring when search is cleared
+            search.close();
+            txtSearch.setBackgroundColor(null);
+          }
+          else
+          {
+            // Indicate no match
+            txtSearch.setBackgroundColor("search-failure");
+            search.close();
+            search.clearTextSelection();
+            search.setTextSelection(text.length);
+          }
+
+        });
+
+      // changeSelection happens on mouseover, so just find out the
+      // family name here; don't actually select anything until
+      // pointerdown occurs
+      listSearch.addListener(
+        "changeSelection",
+        (e) =>
+        {
+          let             familyName;
+          const           selection = e.getData();
+
+          // If selection was emptied, we have nothing to do
+          if (selection.length === 0)
+          {
+            // Just clear the found index
+            setTimeout(() => listSearch.setUserData("foundIndex", null), 1);
+            return;
+          }
+
+          // Scroll to this family name
+          familyName = selection[0].getLabel();
+          listSearch.setUserData("familyName", familyName);
+        });
+
+      listSearch.addListener(
+        "pointerdown",
+        (e) =>
+        {
+          let             familyName = listSearch.getUserData("familyName");
+
+          // Clear the selected row to prevent mistakes on next search
+          listSearch.setUserData("familyName", null);
+
+          // Clear the search box
+          search.close();
+          txtSearch.setValue("");
+          search.removeAll();
+
+          if (! familyName)
+          {
+            return;
+          }
+
+          this._appointmentClients.setSelection(
+            [ this._appointmentLabelToListMap[familyName] ] );
+        });
 
       // After a new client is created, we'll get an event that tells us
       // the client list was changed. The event data contains the family
