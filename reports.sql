@@ -1804,3 +1804,82 @@ REPLACE INTO Report
      ORDER BY family_name;
   '
 );
+
+
+REPLACE INTO Report
+(
+  name,
+  description,
+  landscape,
+  input_fields,
+  subtitle_field,
+  separate_by,
+  number_style,
+  number_remaining,
+  pre_query,
+  query
+)
+ VALUES
+(
+  'Demographics for Board',
+  'Set of demographics requested by the Board',
+  0,
+  '',
+  '',
+  '',
+  '',
+  '',
+  '
+   INSERT INTO StoredProc_UpdateAge
+       (birthday, asOf, family_name, member_name)
+     SELECT
+         date_of_birth,
+         (SELECT MAX(start_date) FROM DistributionPeriod),
+         family_name,
+         member_name
+       FROM FamilyMember;
+  ',
+  'SELECT
+     (SELECT COUNT(*)
+        FROM Client
+        WHERE count_young_adult = 2
+          AND count_adult = 2
+          AND count_senior = 0
+          AND count_child > 0)
+        AS "Young families (two adults 18-25) with children",
+     (SELECT COUNT(*)
+        FROM Client
+        WHERE count_young_adult = 2
+          AND count_adult = 2
+          AND count_senior = 0
+          AND count_child = 0)
+        AS "Young families (two adults 18-25) without children",
+     (SELECT COUNT(*)
+        FROM Client
+        WHERE count_elderly > 0
+          AND (   count_adult > 0
+               OR count_senior > count_elderly))
+        AS "Elderly (80+) living with other adults",
+     (SELECT COUNT(*)
+        FROM Client
+        WHERE count_elderly > 0
+          AND count_adult > 0
+          AND count_senior = count_elderly)
+        AS "Elderly (80+) living without other adults",
+     (SELECT COUNT(*)
+        FROM Client
+        WHERE count_elderly > 0
+          AND count_child > 0
+          AND count_adult = 0
+          AND count_senior = count_elderly)
+        AS "Elderly (80+) living with children but without other adults",
+     (SELECT COUNT(*)
+        FROM FamilyMember)
+        AS "Family members in database",
+     (SELECT COUNT(*)
+       FROM (SELECT DISTINCT family_name FROM Fulfillment))
+       AS "Unique families who have participated since inception";
+ '
+);
+
+

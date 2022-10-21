@@ -16,8 +16,10 @@ CREATE TABLE Client
   email                     VARCHAR,
   ethnicity                 VARCHAR,
   language_abbreviation     VARCHAR DEFAULT 'en',
+  count_elderly             INTEGER DEFAULT 0,  -- number of family members 80+
   count_senior              INTEGER DEFAULT 0,  -- number of family members 65+
   count_adult               INTEGER DEFAULT 0,  -- number of family members 18-64
+  count_young_adult         INTEGER DEFAULT 0,  --  number of family members 18-25
   count_child               INTEGER DEFAULT 0,  -- number of family members 0-17
   count_sex_male            INTEGER DEFAULT 0,
   count_sex_female          INTEGER DEFAULT 0,
@@ -44,6 +46,9 @@ CREATE TABLE Client
 -- ALTER TABLE Client ADD COLUMN perishables_default VARCHAR NOT NULL DEFAULT '-- ALTER TABLE Client ADD COLUMN usda_eligible VARCHAR NOT NULL DEFAULT '';
 -- ALTER TABLE Client ADD COLUMN usda_eligible_next_distro VARCHAR DEFAULT NULL;
 -- ALTER TABLE Client ADD COLUMN language_abbreviation VARCHAR DEFAULT 'en';
+-- ALTER TABLE Client ADD COLUMN count_young_adult INTEGER DEFAULT 0;
+-- ALTER TABLE Client ADD COLUMN count_elderly INTEGER DEFAULT 0;
+
 
 --
 -- Maintain a permanent copy of the next-distribution eligibility, per
@@ -347,6 +352,14 @@ BEGIN
   -- enough for ~1000 clients totalling ~4000 family members. We'll see.
   --
   UPDATE Client
+    SET count_elderly =
+      (SELECT COUNT(*)
+         FROM FamilyMember
+         WHERE family_name = new.family_name
+           AND age >= 80)
+      WHERE family_name = new.family_name;
+
+  UPDATE Client
     SET count_senior =
       (SELECT COUNT(*)
          FROM FamilyMember
@@ -360,6 +373,14 @@ BEGIN
          FROM FamilyMember
          WHERE family_name = new.family_name
            AND age >= 18 AND age < 65)
+      WHERE family_name = new.family_name;
+
+  UPDATE Client
+    SET count_young_adult =
+      (SELECT COUNT(*)
+         FROM FamilyMember
+         WHERE family_name = new.family_name
+           AND age >= 18 AND age < 25)
       WHERE family_name = new.family_name;
 
   UPDATE Client

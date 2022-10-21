@@ -6,7 +6,128 @@
 *** #2: perform following ops on production
 ** Merge to master
 ** COMMENT Database changes
-ALTER TABLE Client ADD COLUMN language_abbreviation VARCHAR DEFAULT 'en';
+ALTER TABLE Client ADD COLUMN count_young_adult INTEGER DEFAULT 0;
+ALTER TABLE Client ADD COLUMN count_elderly INTEGER DEFAULT 0;
+
+DROP TRIGGER tr_ai_StoredProc_UpdateAge;
+CREATE TRIGGER tr_ai_StoredProc_UpdateAge
+AFTER INSERT ON StoredProc_UpdateAge
+BEGIN
+  -- age = today.year - birthday.year
+  UPDATE StoredProc_UpdateAge
+    SET age =
+      (SELECT strftime('%Y', new.asOf)) -
+      (SELECT strftime('%Y', new.birthday))
+    WHERE id = new.rowid;
+
+  -- mDiff = today.month - birthday.month
+  -- (see if birthday month has passed yet)
+  UPDATE StoredProc_UpdateAge
+    SET mDiff =
+      (SELECT strftime('%m', new.asOf)) -
+      (SELECT strftime('%m', new.birthday))
+    WHERE id = new.rowid;
+
+  -- if (mDiff < 0 || (mDiff === 0 && today.day < birthday.day)) --age;
+  UPDATE StoredProc_UpdateAge
+    SET age = age - 1
+    WHERE id == new.rowid
+      AND ((SELECT mDiff FROM StoredProc_UpdateAge WHERE id = new.rowid) < 0
+           OR (    (SELECT mDiff FROM StoredProc_UpdateAge WHERE id = new.rowid) = 0
+               AND (SELECT strftime('%d', new.asOf) < strftime('%d', new.birthday))));
+
+  -- update the specified family member record
+  UPDATE FamilyMember
+    SET age = (SELECT age FROM StoredProc_UpdateAge WHERE id = new.rowid)
+    WHERE family_name = new.family_name
+      AND member_name = new.member_name;
+
+  --
+  -- update the client with counts based on FamilyMember entries
+  --
+  -- This is slow, Slow, SLOW, as it recalculates counts after each
+  -- family member age is calculated, rather than once after all
+  -- family members' ages are calculated. There is no current
+  -- implementation to do the latter, though, and this should be fast
+  -- enough for ~1000 clients totalling ~4000 family members. We'll see.
+  --
+  UPDATE Client
+    SET count_elderly =
+      (SELECT COUNT(*)
+         FROM FamilyMember
+         WHERE family_name = new.family_name
+           AND age >= 80)
+      WHERE family_name = new.family_name;
+
+  UPDATE Client
+    SET count_senior =
+      (SELECT COUNT(*)
+         FROM FamilyMember
+         WHERE family_name = new.family_name
+           AND age >= 65)
+      WHERE family_name = new.family_name;
+
+  UPDATE Client
+    SET count_adult =
+      (SELECT COUNT(*)
+         FROM FamilyMember
+         WHERE family_name = new.family_name
+           AND age >= 18 AND age < 65)
+      WHERE family_name = new.family_name;
+
+  UPDATE Client
+    SET count_young_adult =
+      (SELECT COUNT(*)
+         FROM FamilyMember
+         WHERE family_name = new.family_name
+           AND age >= 18 AND age < 25)
+      WHERE family_name = new.family_name;
+
+  UPDATE Client
+    SET count_child =
+      (SELECT COUNT(*)
+         FROM FamilyMember
+         WHERE family_name = new.family_name
+           AND age < 18 AND age >= 0)
+      WHERE family_name = new.family_name;
+
+  UPDATE Client
+    SET count_sex_male =
+      (SELECT COUNT(*)
+         FROM FamilyMember
+         WHERE family_name = new.family_name
+           AND gender = 'M')
+      WHERE family_name = new.family_name;
+
+  UPDATE Client
+    SET count_sex_female =
+      (SELECT COUNT(*)
+         FROM FamilyMember
+         WHERE family_name = new.family_name
+           AND gender = 'F')
+      WHERE family_name = new.family_name;
+
+  UPDATE Client
+    SET count_sex_other =
+      (SELECT COUNT(*)
+         FROM FamilyMember
+         WHERE family_name = new.family_name
+           AND gender = 'O')
+      WHERE family_name = new.family_name;
+
+  UPDATE Client
+    SET count_veteran =
+      (SELECT COUNT(*)
+         FROM FamilyMember
+         WHERE family_name = new.family_name
+           AND is_veteran = 1)
+      WHERE family_name = new.family_name;
+
+  DELETE FROM StoredProc_UpdateAge
+    WHERE id = new.rowid;
+END;
+
+
 
 ** Reports changes
 *** DELETE FROM Report;
