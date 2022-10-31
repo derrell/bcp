@@ -1620,7 +1620,7 @@ REPLACE INTO Report
        FROM FamilyMember;
   ',
   '
-   SELECT DISTINCT
+   SELECT
        c.family_name AS "Family name",
        c.count_senior + c.count_adult + c.count_child AS "Family size",
        c.count_senior AS Seniors,
@@ -1629,24 +1629,25 @@ REPLACE INTO Report
        -- COALESCE(
        --   f.usda_signature_statement,
        --   "") AS "Statement&nbsp;attested&nbsp;to&nbsp;with&nbsp;signature",
+       -- COALESCE(
+       --   f.usda_signature_hash,
+       ---  "") AS "Security Hash",
        COALESCE(
          f.usda_eligible_signature,
          -- X image to request board member signature
          "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAB4AAAAeCAYAAAA7MK6iAAAACXBIWXMAAA3XAAAN1wFCKJt4AAAAB3RJTUUH5gIDDhEZWZAIawAAAJpJREFUSMfNl80OgCAMg9u9/zvjxYvGABtd6i4kyPqZyX4ETMZ7HR97answYnGgAwoAiN2DSug7rGPxXAXll7ASPtVi1kEBnQmewLd8eSpQ9ZEJZV+UotClo6P4bqX7wNNCUNVUpElJj6LCkNYKd1v8dagtl8uSTpYCYimZliZhaYuWQcAy+liGvQ7oFB7C5pHKnGiGdv8W5e0C2k4tIsqHIKsAAAAASUVORK5CYII="
          ) AS Signature
-       -- COALESCE(
-       --   f.usda_signature_hash,
-       ---  "") AS "Security Hash"
      FROM Client c
      LEFT JOIN Fulfillment f
        ON f.family_name = c.family_name
      LEFT JOIN UsdaEligibleNextDistro uend
-       ON uend.family_name = c.family_name
-     WHERE (uend.distribution = $distribution
-            AND uend.usda_eligible_next_distro = "yes")
-        OR (f.distribution = $distribution
-            AND f.usda_eligible_signature IS NOT NULL
-            AND length(f.usda_eligible_signature) > 0)
+       ON     uend.family_name = c.family_name
+          AND uend.distribution = f.distribution
+     WHERE
+           f.distribution = $distribution
+       AND (   uend.usda_eligible_next_distro = "yes"
+            OR (    f.usda_eligible_signature IS NOT NULL
+                AND length(f.usda_eligible_signature) > 0))
      ORDER BY c.family_name;
    '
 );
