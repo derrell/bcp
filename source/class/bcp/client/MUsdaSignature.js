@@ -265,8 +265,197 @@ qx.Mixin.define("bcp.client.MUsdaSignature",
       let             fUsdaSigResizeForm;
       let             fUsdaFormHandler;
       let             hidden = [];
+      let             fMore;
       const           MUsdaSignature = bcp.client.MUsdaSignature;
       const           _this = this;
+
+      // Function that brings up the More dialog. This is used both
+      // for the More button and for the tap handler on the treeitem,
+      // used when residency is unverified.
+      fMore =
+        () =>
+          {
+            let             p;
+
+            let moreForm = new qxl.dialog.Form(
+              {
+                caption   : `${data.family_name}`,
+                context   : this
+              });
+            let formData =
+              {
+                memo :
+                {
+                  type       : "TextArea",
+                  label      : "Memo",
+                  lines      : 3,
+                  value      : data.memo || "",
+                  properties :
+                  {
+                    font       : "big-bold"
+                  }
+                },
+
+                verified :
+                {
+                  type       : "Checkbox",
+                  label      : (data.verified
+                                ? "Residency Verified"
+                                : "Residency Unverified"),
+                  value      : !! data.verified,
+                  width      : 260,
+                  properties :
+                  {
+                    height     : 50,
+                    appearance : "toggle-button",
+                    marginLeft : 106,
+                    font       : "big-bold"
+                  },
+                  events    :
+                  {
+                    changeValue :
+                      function(e)
+                      {
+                        if (e.getData())
+                        {
+                          this.setLabel("Residency Verified");
+                        }
+                        else
+                        {
+                          this.setLabel("Residency Unverified");
+                        }
+                      }
+                  }
+                },
+
+                cancelArrived :
+                {
+                  type       : "Checkbox",
+                  label      : "Cancel Arrival",
+                  width      : 260,
+                  properties :
+                  {
+                    height     : 50,
+                    appearance : "toggle-button",
+                    marginLeft : 106,
+                    font       : "big-bold"
+                  },
+                  events    :
+                  {
+                   changeValue :
+                    function(e)
+                    {
+                      if (e.getData())
+                      {
+                        this.setLabel("Will Cancel Arrival...");
+                      }
+                      else
+                      {
+                        this.setLabel("Cancel Arrival");
+                      }
+                    }
+                  }
+                }
+              };
+
+            moreForm.set(
+              {
+                width    : 500,
+                height   : 300,
+                formData : formData
+              });
+
+            moreForm._okButton.set(
+              {
+                label    : "Save",
+                minWidth : 140,
+                font     : "big-bold"
+              });
+
+            moreForm._cancelButton.set(
+              {
+                minWidth : 140,
+                font     : "big-bold"
+              });
+
+            moreForm.show();
+
+            p = moreForm.promise();
+
+            p.then(
+              (formValues) =>
+              {
+                // If cancelled, there's nothing to do
+                if (! formValues)
+                {
+                  return;
+                }
+
+                this.rpc("updateFulfillmentAncillary",
+                         [
+                           distribution,
+                           data.family_name,
+                           formValues.memo,
+                           formValues.verified,
+                           formValues.cancelArrived
+                         ])
+                  .then(
+                    () =>
+                    {
+                      // Save the new values in case the form is created again
+                      data.memo = formValues.memo;
+                      data.verified = formValues.verified;
+
+                      // If they're verified, remove the tap handler
+                      // (if there was one) for getting to the More
+                      // dialog before arrival.
+                      if (data.verified)
+                      {
+                        treeItem.removeListener("tap", fMore);
+                      }
+
+
+                      // If arrival was cancelled and not fulfulled,
+                      // reset hidden fields
+                      if (formValues.cancelArrived && ! data.fulfilled)
+                      {
+                        arrived.show();
+                        hidden.forEach(
+                          (widget) =>
+                          {
+                            if (! widget.bNoHide)
+                            {
+                              widget.object.hide();
+                            }
+
+                            if (widget.onHide)
+                            {
+                              widget.onHide();
+                            }
+                          });
+                      }
+
+                      // Reset the label and color based on new verified status
+                      text =
+                        qx.bom.String.escape(data.family_name) +
+                        (data.verified ? "" : "<br>RESIDENCY UNVERIFIED");
+
+                      label.set(
+                        {
+                          value     : text,
+                          textColor : data.verified ? null : "red"
+                        });
+                    })
+                  .catch(
+                    (e) =>
+                    {
+                      console.warn("updateFulfillmentMore:", e);
+                      qxl.dialog.Dialog.alert(
+                        "Could not update fulfullment ancillary data: " +
+                        e.message);
+                    });
+              });
+          };
 
       // We don't want any icons on branches or leaves
       treeItem.set(
@@ -297,6 +486,11 @@ qx.Mixin.define("bcp.client.MUsdaSignature",
         text = qx.bom.String.escape(data.family_name);
         treeItem.addLabel(
           text + (data.verified ? "" : "<br>RESIDENCY UNVERIFIED"));
+
+        if (! data.verified)
+        {
+          treeItem.addListener("tap", fMore);
+        }
       }
 
       // There's no additional information on branches
@@ -346,6 +540,11 @@ qx.Mixin.define("bcp.client.MUsdaSignature",
         "execute",
         () =>
         {
+          // Remove the tap handler from unverified entries, now that
+          // they've arrived and the More button is available
+          treeItem.removeListener("tap", fMore);
+
+          // They're here!
           this.rpc(
             "updateClientArrival",
             [
@@ -1022,182 +1221,7 @@ qx.Mixin.define("bcp.client.MUsdaSignature",
       treeItem.addWidget(o);
 
       // When tapped, create the form for "more options"
-      o.addListener(
-        "execute",
-        () =>
-        {
-          let             p;
-
-          let moreForm = new qxl.dialog.Form(
-            {
-              caption   : `${data.family_name}`,
-              context   : this
-            });
-          let formData =
-            {
-              memo :
-              {
-                type       : "TextArea",
-                label      : "Memo",
-                lines      : 3,
-                value      : data.memo || "",
-                properties :
-                {
-                  font       : "big-bold"
-                }
-              },
-
-              verified :
-              {
-                type       : "Checkbox",
-                label      : (data.verified
-                              ? "Residency Verified"
-                              : "Residency Unverified"),
-                value      : !! data.verified,
-                width      : 260,
-                properties :
-                {
-                  height     : 50,
-                  appearance : "toggle-button",
-                  marginLeft : 106,
-                  font       : "big-bold"
-                },
-                events    :
-                {
-                  changeValue :
-                    function(e)
-                    {
-                      if (e.getData())
-                      {
-                        this.setLabel("Residency Verified");
-                      }
-                      else
-                      {
-                        this.setLabel("Residency Unverified");
-                      }
-                    }
-                }
-              },
-
-              cancelArrived :
-              {
-                type       : "Checkbox",
-                label      : "Cancel Arrival",
-                width      : 260,
-                properties :
-                {
-                  height     : 50,
-                  appearance : "toggle-button",
-                  marginLeft : 106,
-                  font       : "big-bold"
-                },
-                events    :
-                {
-                 changeValue :
-                  function(e)
-                  {
-                    if (e.getData())
-                    {
-                      this.setLabel("Will Cancel Arrival...");
-                    }
-                    else
-                    {
-                      this.setLabel("Cancel Arrival");
-                    }
-                  }
-                }
-              }
-            };
-
-          moreForm.set(
-            {
-              width    : 500,
-              height   : 300,
-              formData : formData
-            });
-
-          moreForm._okButton.set(
-            {
-              label    : "Save",
-              minWidth : 140,
-              font     : "big-bold"
-            });
-
-          moreForm._cancelButton.set(
-            {
-              minWidth : 140,
-              font     : "big-bold"
-            });
-
-          moreForm.show();
-
-          p = moreForm.promise();
-
-          p.then(
-            (formValues) =>
-            {
-              // If cancelled, there's nothing to do
-              if (! formValues)
-              {
-                return;
-              }
-
-              this.rpc("updateFulfillmentAncillary",
-                       [
-                         distribution,
-                         data.family_name,
-                         formValues.memo,
-                         formValues.verified,
-                         formValues.cancelArrived
-                       ])
-                .then(
-                  () =>
-                  {
-                    // Save the new values in case the form is created again
-                    data.memo = formValues.memo;
-                    data.verified = formValues.verified;
-
-                    // If arrival was cancelled and not fulfulled,
-                    // reset hidden fields
-                    if (formValues.cancelArrived && ! data.fulfilled)
-                    {
-                      arrived.show();
-                      hidden.forEach(
-                        (widget) =>
-                        {
-                          if (! widget.bNoHide)
-                          {
-                            widget.object.hide();
-                          }
-
-                          if (widget.onHide)
-                          {
-                            widget.onHide();
-                          }
-                        });
-                    }
-
-                    // Reset the label and color based on new verified status
-                    text =
-                      qx.bom.String.escape(data.family_name) +
-                      (data.verified ? "" : "<br>RESIDENCY UNVERIFIED");
-
-                    label.set(
-                      {
-                        value     : text,
-                        textColor : data.verified ? null : "red"
-                      });
-                  })
-                .catch(
-                  (e) =>
-                  {
-                    console.warn("updateFulfillmentMore:", e);
-                    qxl.dialog.Dialog.alert(
-                      "Could not update fulfullment ancillary data: " +
-                      e.message);
-                  });
-            });
-        });
+      o.addListener("execute", fMore);
 
       // Set the row's background color
       treeItem.setBackgroundColor(
