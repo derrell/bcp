@@ -87,7 +87,7 @@ REPLACE INTO Report
           FROM UsdaMaxIncome
           WHERE family_size = c.count_senior + c.count_adult + c.count_child
           ) AS USDA,
-       CASE c.usda_eligible
+       CASE ueh.usda_eligible
          WHEN "yes" THEN "Yes"
          WHEN "no" THEN "No"
          ELSE ""
@@ -96,6 +96,8 @@ REPLACE INTO Report
      FROM Fulfillment f
      LEFT JOIN Client c
        ON c.family_name = f.family_name
+     LEFT JOIN UsdaEligibleHistory ueh
+       ON ueh.distribution = $distribution AND ueh.family_name = f.family_name
      LEFT JOIN ClientId ci
        ON ci.family_name = c.family_name
      WHERE f.distribution = $distribution
@@ -186,7 +188,7 @@ REPLACE INTO Report
            ELSE " (Small)"
          END AS "Family size",
        COALESCE(perishables, "") AS Perishables,
-       CASE c.usda_eligible
+       CASE ueh.usda_eligible
          WHEN "yes" THEN "Yes"
          WHEN "no" THEN "No"
          ELSE ""
@@ -196,6 +198,8 @@ REPLACE INTO Report
        ON c.family_name = f.family_name
      LEFT JOIN ClientId ci
        ON ci.family_name = c.family_name
+     LEFT JOIN UsdaEligibleHistory ueh
+       ON ueh.distribution = $distribution AND ueh.family_name = f.family_name
      WHERE f.distribution = $distribution
        AND length(COALESCE(f.appt_time, "")) > 0
      ORDER BY Day, Time, f.family_name;
@@ -291,7 +295,7 @@ REPLACE INTO Report
           FROM UsdaMaxIncome
           WHERE family_size = c.count_senior + c.count_adult + c.count_child
           ) AS USDA,
-       CASE c.usda_eligible
+       CASE ueh.usda_eligible
          WHEN "yes" THEN "Yes"
          WHEN "no" THEN "No"
          ELSE ""
@@ -302,6 +306,8 @@ REPLACE INTO Report
        ON c.family_name = f.family_name
      LEFT JOIN ClientId ci
        ON ci.family_name = c.family_name
+     LEFT JOIN UsdaEligibleHistory ueh
+       ON ueh.distribution = $distribution AND ueh.family_name = f.family_name
      WHERE f.distribution = $distribution
        AND length(COALESCE(f.appt_time, "")) > 0
      ORDER BY _day, Time, "Family name";
@@ -398,7 +404,7 @@ REPLACE INTO Report
           FROM UsdaMaxIncome
           WHERE family_size = c.count_senior + c.count_adult + c.count_child
           ) AS USDA,
-       CASE c.usda_eligible
+       CASE ueh.usda_eligible
          WHEN "yes" THEN "Yes"
          WHEN "no" THEN "No"
          ELSE ""
@@ -409,6 +415,8 @@ REPLACE INTO Report
        ON c.family_name = f.family_name
      LEFT JOIN ClientId ci
        ON ci.family_name = c.family_name
+     LEFT JOIN UsdaEligibleHistory ueh
+       ON ueh.distribution = $distribution AND ueh.family_name = f.family_name
      WHERE f.distribution = $distribution
        AND length(COALESCE(f.appt_time, "")) > 0
      ORDER BY Day, Time, "Family name";
@@ -594,7 +602,7 @@ REPLACE INTO Report
           FROM UsdaMaxIncome
           WHERE family_size = c.count_senior + c.count_adult + c.count_child
           ) AS "USDA$",
-       CASE c.usda_eligible
+       CASE ueh.usda_eligible
          WHEN "yes" THEN "Yes"
          WHEN "no" THEN "No"
          ELSE ""
@@ -605,6 +613,8 @@ REPLACE INTO Report
        ON c.family_name = f.family_name
      LEFT JOIN ClientId ci
        ON ci.family_name = c.family_name
+     LEFT JOIN UsdaEligibleHistory ueh
+       ON ueh.distribution = $distribution AND ueh.family_name = f.family_name
      WHERE f.distribution = $distribution
        AND length(COALESCE(f.appt_time, "")) > 0
      ORDER BY Day, Time, "Family name";
@@ -1385,7 +1395,7 @@ REPLACE INTO Report
           FROM UsdaMaxIncome
           WHERE family_size = c.count_senior + c.count_adult + c.count_child
           ) AS USDA,
-       CASE c.usda_eligible
+       CASE ueh.usda_eligible
          WHEN "yes" THEN "Yes"
          WHEN "no" THEN "No"
          ELSE ""
@@ -1396,6 +1406,8 @@ REPLACE INTO Report
      FROM Client c
      LEFT JOIN ClientId ci
        ON ci.family_name = c.family_name
+     LEFT JOIN UsdaEligibleHistory ueh
+       ON ueh.distribution = $distribution AND ueh.family_name = f.family_name
      WHERE appt_time_default IS NOT NULL
         AND length(appt_time_default) > 0
      ORDER BY Day, Time, "Family name";
@@ -1640,7 +1652,7 @@ REPLACE INTO Report
      FROM Client c
      LEFT JOIN Fulfillment f
        ON f.family_name = c.family_name
-     LEFT JOIN UsdaEligibleNextDistro uend
+     LEFT JOIN UsdaEligibleNextDistroHistory uend
        ON     uend.family_name = c.family_name
           AND uend.distribution = f.distribution
      WHERE

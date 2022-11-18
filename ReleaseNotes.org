@@ -6,127 +6,92 @@
 *** #2: perform following ops on production
 ** Merge to master
 ** COMMENT Database changes
-ALTER TABLE Client ADD COLUMN count_young_adult INTEGER DEFAULT 0;
-ALTER TABLE Client ADD COLUMN count_elderly INTEGER DEFAULT 0;
+ALTER TABLE UsdaEligibleNextDistro RENAME TO UsdaEligibleNextDistroHistory;
 
-DROP TRIGGER tr_ai_StoredProc_UpdateAge;
-CREATE TRIGGER tr_ai_StoredProc_UpdateAge
-AFTER INSERT ON StoredProc_UpdateAge
+CREATE TABLE UsdaEligibleHistory
+(
+  distribution              VARCHAR REFERENCES DistributionPeriod
+                                ON DELETE CASCADE
+                                ON UPDATE CASCADE,
+  family_name               VARCHAR REFERENCES Client
+                                ON DELETE CASCADE
+                                ON UPDATE CASCADE,
+  usda_eligible             VARCHAR NOT NULL DEFAULT '',
+  PRIMARY KEY (distribution, family_name)
+);
+
+INSERT INTO UsdaEligibleHistory
+    (distribution, family_name, usda_eligible)
+  SELECT
+      (SELECT MAX(start_date) FROM DistributionPeriod) AS distribution,
+      family_name,
+      usda_eligible
+    FROM Client
+    WHERE length(usda_eligible) > 0;
+
+DROP TRIGGER IF EXISTS tr_ai_Client;
+CREATE TRIGGER tr_ai_Client
+AFTER INSERT ON Client
 BEGIN
-  -- age = today.year - birthday.year
-  UPDATE StoredProc_UpdateAge
-    SET age =
-      (SELECT strftime('%Y', new.asOf)) -
-      (SELECT strftime('%Y', new.birthday))
-    WHERE id = new.rowid;
+  REPLACE INTO UsdaEligibleHistory (
+      distribution,
+      family_name,
+      usda_eligible
+    ) VALUES (
+      (SELECT MAX(start_date) FROM DistributionPeriod),
+      new.family_name,
+      new.usda_eligible
+    );
 
-  -- mDiff = today.month - birthday.month
-  -- (see if birthday month has passed yet)
-  UPDATE StoredProc_UpdateAge
-    SET mDiff =
-      (SELECT strftime('%m', new.asOf)) -
-      (SELECT strftime('%m', new.birthday))
-    WHERE id = new.rowid;
+  REPLACE INTO UsdaEligibleNextDistroHistory (
+      distribution,
+      family_name,
+      usda_eligible_next_distro
+    ) VALUES (
+      (SELECT MAX(start_date) FROM DistributionPeriod),
+      new.family_name,
+      new.usda_eligible_next_distro
+    );
 
-  -- if (mDiff < 0 || (mDiff === 0 && today.day < birthday.day)) --age;
-  UPDATE StoredProc_UpdateAge
-    SET age = age - 1
-    WHERE id == new.rowid
-      AND ((SELECT mDiff FROM StoredProc_UpdateAge WHERE id = new.rowid) < 0
-           OR (    (SELECT mDiff FROM StoredProc_UpdateAge WHERE id = new.rowid) = 0
-               AND (SELECT strftime('%d', new.asOf) < strftime('%d', new.birthday))));
-
-  -- update the specified family member record
-  UPDATE FamilyMember
-    SET age = (SELECT age FROM StoredProc_UpdateAge WHERE id = new.rowid)
-    WHERE family_name = new.family_name
-      AND member_name = new.member_name;
-
-  --
-  -- update the client with counts based on FamilyMember entries
-  --
-  -- This is slow, Slow, SLOW, as it recalculates counts after each
-  -- family member age is calculated, rather than once after all
-  -- family members' ages are calculated. There is no current
-  -- implementation to do the latter, though, and this should be fast
-  -- enough for ~1000 clients totalling ~4000 family members. We'll see.
-  --
-  UPDATE Client
-    SET count_elderly =
-      (SELECT COUNT(*)
-         FROM FamilyMember
-         WHERE family_name = new.family_name
-           AND age >= 80)
-      WHERE family_name = new.family_name;
-
-  UPDATE Client
-    SET count_senior =
-      (SELECT COUNT(*)
-         FROM FamilyMember
-         WHERE family_name = new.family_name
-           AND age >= 65)
-      WHERE family_name = new.family_name;
-
-  UPDATE Client
-    SET count_adult =
-      (SELECT COUNT(*)
-         FROM FamilyMember
-         WHERE family_name = new.family_name
-           AND age >= 18 AND age < 65)
-      WHERE family_name = new.family_name;
-
-  UPDATE Client
-    SET count_young_adult =
-      (SELECT COUNT(*)
-         FROM FamilyMember
-         WHERE family_name = new.family_name
-           AND age >= 18 AND age < 25)
-      WHERE family_name = new.family_name;
-
-  UPDATE Client
-    SET count_child =
-      (SELECT COUNT(*)
-         FROM FamilyMember
-         WHERE family_name = new.family_name
-           AND age < 18 AND age >= 0)
-      WHERE family_name = new.family_name;
-
-  UPDATE Client
-    SET count_sex_male =
-      (SELECT COUNT(*)
-         FROM FamilyMember
-         WHERE family_name = new.family_name
-           AND gender = 'M')
-      WHERE family_name = new.family_name;
-
-  UPDATE Client
-    SET count_sex_female =
-      (SELECT COUNT(*)
-         FROM FamilyMember
-         WHERE family_name = new.family_name
-           AND gender = 'F')
-      WHERE family_name = new.family_name;
-
-  UPDATE Client
-    SET count_sex_other =
-      (SELECT COUNT(*)
-         FROM FamilyMember
-         WHERE family_name = new.family_name
-           AND gender = 'O')
-      WHERE family_name = new.family_name;
-
-  UPDATE Client
-    SET count_veteran =
-      (SELECT COUNT(*)
-         FROM FamilyMember
-         WHERE family_name = new.family_name
-           AND is_veteran = 1)
-      WHERE family_name = new.family_name;
-
-  DELETE FROM StoredProc_UpdateAge
-    WHERE id = new.rowid;
+  -- No need to maintain null entries here
+  DELETE FROM UsdaEligibleNextDistroHistory
+    WHERE
+      family_name = new.family_name
+      AND distribution = (SELECT MAX(start_date) FROM DistributionPeriod)
+      AND usda_eligible_next_distro IS NULL;
 END;
 
+-- ... and then for an update of an existing client
+DROP TRIGGER IF EXISTS tr_au_Client;
+CREATE TRIGGER tr_au_Client
+AFTER UPDATE ON Client
+BEGIN
+  REPLACE INTO UsdaEligibleHistory (
+      distribution,
+      family_name,
+      usda_eligible
+    ) VALUES (
+      (SELECT MAX(start_date) FROM DistributionPeriod),
+      new.family_name,
+      new.usda_eligible
+    );
+
+  REPLACE INTO UsdaEligibleNextDistroHistory (
+      distribution,
+      family_name,
+      usda_eligible_next_distro
+    ) VALUES (
+      (SELECT MAX(start_date) FROM DistributionPeriod),
+      new.family_name,
+      new.usda_eligible_next_distro
+    );
+
+  DELETE FROM UsdaEligibleNextDistroHistory
+    WHERE
+      family_name = new.family_name
+      AND distribution = (SELECT MAX(start_date) FROM DistributionPeriod)
+      AND usda_eligible_next_distro IS NULL;
+END;
 
 
 ** Reports changes

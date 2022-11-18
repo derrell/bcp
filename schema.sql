@@ -51,15 +51,29 @@ CREATE TABLE Client
 
 
 --
--- Maintain a permanent copy of the next-distribution eligibility, per
--- distribution, so that the USDA report can be generated for any
--- distribution
+-- Fulfillment records aren't created until needed, so we can't
+-- maintain USDA eligibility there, since it is copied from
+-- next-distribution eligibility of the prior distribution, when a new
+-- distribution is created. Instead, maintain a permanent copy of the
+-- next-distribution eligibility, per distribution, in a separate
+-- table so that the USDA report can be generated for any distribution.
+-- Similarly, for next-distribution eligibility.
 --
 -- First, for a new client...
 CREATE TRIGGER tr_ai_Client
 AFTER INSERT ON Client
 BEGIN
-  REPLACE INTO UsdaEligibleNextDistro (
+  REPLACE INTO UsdaEligibleHistory (
+      distribution,
+      family_name,
+      usda_eligible
+    ) VALUES (
+      (SELECT MAX(start_date) FROM DistributionPeriod),
+      new.family_name,
+      new.usda_eligible
+    );
+
+  REPLACE INTO UsdaEligibleNextDistroHistory (
       distribution,
       family_name,
       usda_eligible_next_distro
@@ -69,7 +83,8 @@ BEGIN
       new.usda_eligible_next_distro
     );
 
-  DELETE FROM UsdaEligibleNextDistro
+  -- No need to maintain null entries here
+  DELETE FROM UsdaEligibleNextDistroHistory
     WHERE
       family_name = new.family_name
       AND distribution = (SELECT MAX(start_date) FROM DistributionPeriod)
@@ -80,7 +95,17 @@ END;
 CREATE TRIGGER tr_au_Client
 AFTER UPDATE ON Client
 BEGIN
-  REPLACE INTO UsdaEligibleNextDistro (
+  REPLACE INTO UsdaEligibleHistory (
+      distribution,
+      family_name,
+      usda_eligible
+    ) VALUES (
+      (SELECT MAX(start_date) FROM DistributionPeriod),
+      new.family_name,
+      new.usda_eligible
+    );
+
+  REPLACE INTO UsdaEligibleNextDistroHistory (
       distribution,
       family_name,
       usda_eligible_next_distro
@@ -90,7 +115,7 @@ BEGIN
       new.usda_eligible_next_distro
     );
 
-  DELETE FROM UsdaEligibleNextDistro
+  DELETE FROM UsdaEligibleNextDistroHistory
     WHERE
       family_name = new.family_name
       AND distribution = (SELECT MAX(start_date) FROM DistributionPeriod)
@@ -268,7 +293,20 @@ INSERT INTO UsdaMaxIncome VALUES (13, 14034, '$14,034');
 INSERT INTO UsdaMaxIncome VALUES (14, 14980, '$14,980');
 
 
-CREATE TABLE UsdaEligibleNextDistro
+CREATE TABLE UsdaEligibleHistory
+(
+  distribution              VARCHAR REFERENCES DistributionPeriod
+                                ON DELETE CASCADE
+                                ON UPDATE CASCADE,
+  family_name               VARCHAR REFERENCES Client
+                                ON DELETE CASCADE
+                                ON UPDATE CASCADE,
+  usda_eligible             VARCHAR NOT NULL DEFAULT '',
+  PRIMARY KEY (distribution, family_name)
+);
+
+
+CREATE TABLE UsdaEligibleNextDistroHistory
 (
   distribution              VARCHAR REFERENCES DistributionPeriod
                                 ON DELETE CASCADE
@@ -280,6 +318,7 @@ CREATE TABLE UsdaEligibleNextDistro
   PRIMARY KEY (distribution, family_name)
 );
 
+-- ALTER TABLE UsdaEligibleNextDistro RENAME TO UsdaEligibleNextDistroHistory;
 
 CREATE TABLE KeyValueStore
 (
