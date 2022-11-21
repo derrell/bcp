@@ -176,6 +176,7 @@ CREATE TABLE Fulfillment
   usda_signature_statement VARCHAR DEFAULT NULL,
   usda_signature_hash      VARCHAR DEFAULT NULL,
   arrival_time      VARCHAR DEFAULT NULL,   -- %Y-%m-%d %H:%M:%S
+  arrival_order     INTEGER,
   memo              VARCHAR DEFAULT '',
   PRIMARY KEY (distribution, family_name)
 );
@@ -187,6 +188,7 @@ CREATE TABLE Fulfillment
 -- ALTER TABLE Fulfillment DROP COLUMN is_usda_current;
 -- ALTER TABLE Fulfillment ADD COLUMN arrival_time VARCHAR DEFAULT NULL;
 -- ALTER TABLE Fulfillment ADD COLUMN memo VARCHAR DEFAULT '';
+-- ALTER TABLE Fulfillment ADD COLUMN arrival_order INTEGER;
 
 
 CREATE INDEX Fulfillment_appt_idx
@@ -320,6 +322,20 @@ CREATE TABLE UsdaEligibleNextDistroHistory
 
 -- ALTER TABLE UsdaEligibleNextDistro RENAME TO UsdaEligibleNextDistroHistory;
 
+-- Misc data storage:
+--   motd
+--   greeterPin
+--
+-- These are reset to 0 when a new distribution is created, and
+-- incremented when a client arrives, to be used as the arrival order
+-- for that client:
+--   arrivalOrderDay1
+--   arrivalOrderDay2
+--   arrivalOrderDay3
+--   arrivalOrderDay4
+--   arrivalOrderDay5
+--   arrivalOrderDay6
+--   arrivalOrderDay7
 CREATE TABLE KeyValueStore
 (
   key               VARCHAR PRIMARY KEY NOT NULL,

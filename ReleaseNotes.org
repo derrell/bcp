@@ -1,11 +1,26 @@
 #+STARTUP: showeverything
-* USDA Signature update
+* High-level list of changes
+** Bug fixes
+- Fix bug whereby changing USDA eligibility in the current distribution
+caused reports from prior distributions to display the current
+distribution's USDA eligibility values
+** Feature changes
+*** Allow quick access to More dialog before arrival via tap on family name
+*** Arrival order is now shown on the Delivery Day tab
+The arrival order is delviery-day-specific, i.e., the first arrival on
+a delivery day gets number 1, the next arrival on that day gets number
+2, etc. Subsequent delivery days begin again at number 1. Delivery day
+counters are reset when a new distribution is created.
+* Upgrade procedures
 ** Shut down and back up production
 ** Iterations
 *** #1: copy db from production to dev; perform following ops locally
 *** #2: perform following ops on production
 ** Merge to master
 ** COMMENT Database changes
+--
+-- Changes for prior-distribution USDA eligibility availability in reports
+--
 ALTER TABLE UsdaEligibleNextDistro RENAME TO UsdaEligibleNextDistroHistory;
 
 CREATE TABLE UsdaEligibleHistory
@@ -93,6 +108,19 @@ BEGIN
       AND usda_eligible_next_distro IS NULL;
 END;
 
+
+--
+-- Arrival order changes
+--
+ALTER TABLE Fulfillment ADD COLUMN arrival_order INTEGER;
+
+INSERT INTO KeyValueStore (key, value) VALUES ('arrivalOrderDay1', 0);
+INSERT INTO KeyValueStore (key, value) VALUES ('arrivalOrderDay2', 0);
+INSERT INTO KeyValueStore (key, value) VALUES ('arrivalOrderDay3', 0);
+INSERT INTO KeyValueStore (key, value) VALUES ('arrivalOrderDay4', 0);
+INSERT INTO KeyValueStore (key, value) VALUES ('arrivalOrderDay5', 0);
+INSERT INTO KeyValueStore (key, value) VALUES ('arrivalOrderDay6', 0);
+INSERT INTO KeyValueStore (key, value) VALUES ('arrivalOrderDay7', 0);
 
 ** Reports changes
 *** DELETE FROM Report;

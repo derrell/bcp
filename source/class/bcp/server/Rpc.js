@@ -1275,6 +1275,7 @@ qx.Class.define("bcp.server.Rpc",
       let             preparedInsertOrUpdate;
       let             prepareUsda = null;
       let             prepareUsdaClearNextDistro = null;
+      let             prepareResetArrivalCounter = null;
       let             priorDistribution = null;
       const           distroInfo = args[0];
       const           bNew = args[1];
@@ -1392,6 +1393,15 @@ qx.Class.define("bcp.server.Rpc",
             "UPDATE Client",
             "  SET usda_eligible_next_distro = NULL;"
           ].join(""));
+
+        // Reset each day's arrival counter
+        prepareResetArrivalCounter = this._db.prepare(
+          [
+            "REPLACE INTO KeyValueStore",
+            "    (key, value)",
+            "  VALUES",
+            "    ($arrivalOrder, 0);"
+          ].join(""));
       }
 
       // TODO: move prepared statements to constructor
@@ -1505,6 +1515,31 @@ qx.Class.define("bcp.server.Rpc",
               console.log("Clearing USDA next-distro overrides");
               return prepareUsdaClearNextDistro
                 .then((stmt) => stmt.run({}));
+            }
+
+            return null;
+          })
+
+        .then(
+          () =>
+          {
+            // prepareResetArrivalCounter is only non-null for a new
+            // distribution creation.
+            if (prepareResetArrivalCounter)
+            {
+              let             p = [];
+
+              console.log("Resetting all days' arrival counters");
+              for (let i = 0; i <= 7; i++)
+              {
+                p.push(
+                  prepareResetArrivalCounter
+                    .then((stmt) => stmt.run(
+                      {
+                        $arrivalOrder : `arrivalOrderDay${i}`
+                      })));
+              }
+              return Promise.all(p);
             }
 
             return null;
@@ -1895,6 +1930,7 @@ qx.Class.define("bcp.server.Rpc",
                 "    f.notes AS notes,",
                 "    f.perishables AS perishables,",
                 "    f.arrival_time AS arrival_time,",
+                "    f.arrival_order AS arrival_order,",
                 "    f.fulfilled AS fulfilled,",
                 "    f.memo AS memo,",
                 "    c.count_senior + c.count_adult + c.count_child ",
@@ -2342,6 +2378,7 @@ qx.Class.define("bcp.server.Rpc",
     {
       let             startTime = new Date();
       let             arrivalTime = null;
+      let             arrivalOrder = null;
       let
       [
         distribution,
@@ -2358,9 +2395,59 @@ qx.Class.define("bcp.server.Rpc",
           {
             return this._db.prepare(
               [
+                "SELECT appt_day",
+                "  FROM Fulfillment",
+                "  WHERE distribution = $distribution",
+                "    AND family_name = $family_name;"
+              ].join(" "));
+          })
+
+        .then(
+          (stmt) =>
+          {
+            return stmt.all(
+              {
+                $distribution  : distribution,
+                $family_name   : familyName
+              });
+          })
+
+        .then(
+          (result) =>
+          {
+            let             appointmentDay = result[0].appt_day;
+            let             field = `arrivalOrderDay${appointmentDay}`;
+
+            return this._db.prepare(
+              [
+                "UPDATE KeyValueStore",
+                "  SET value = value + 1",
+                `  WHERE key = '${field}'`,
+                `  RETURNING value AS arrivalOrder;`
+              ].join(" "));
+          })
+
+        .then(
+          (stmt) =>
+          {
+            return stmt.all({});
+          })
+
+        .then(
+          (result) =>
+          {
+            arrivalOrder = result[0].arrivalOrder;
+          })
+
+        .then(
+          () =>
+          {
+            return this._db.prepare(
+              [
                 "UPDATE Fulfillment",
                 "  SET ",
-                "    arrival_time = $arrival_time",
+                "    arrival_time = $arrival_time,",
+                "    arrival_order = $arrival_order",
                 "  WHERE distribution = $distribution",
                 "    AND family_name = $family_name;"
               ].join(" "));
@@ -2387,9 +2474,11 @@ qx.Class.define("bcp.server.Rpc",
               {
                 $distribution  : distribution,
                 $family_name   : familyName,
-                $arrival_time  : arrivalTime
+                $arrival_time  : arrivalTime,
+                $arrival_order : arrivalOrder
               });
           })
+
         .then(
           (result) =>
           {
@@ -2410,7 +2499,8 @@ qx.Class.define("bcp.server.Rpc",
                 {
                   distribution : distribution,
                   familyName   : familyName,
-                  arrivalTime  : arrivalTime
+                  arrivalTime  : arrivalTime,
+                  arrivalOrder : arrivalOrder
                 }
               });
           })
@@ -2481,7 +2571,8 @@ qx.Class.define("bcp.server.Rpc",
               [
                 "UPDATE Fulfillment",
                 "  SET ",
-                "    arrival_time = null",
+                "    arrival_time = null,",
+                "    arrival_order = null",
                 "  WHERE distribution = $distribution",
                 "    AND family_name = $family_name"
               ].join(" "));

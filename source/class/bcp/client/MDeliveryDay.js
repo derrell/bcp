@@ -233,9 +233,21 @@ qx.Mixin.define("bcp.client.MDeliveryDay",
         });
       treeItem.addWidget(o);
 
-      arrived =
-        new qx.ui.basic.Image("bcp/client/decoration/icons8-car-32.png");
-      arrived.setToolTipText(data.arrival_time);
+      // Create a container for the arrival icon and number
+      arrived = new qx.ui.container.Composite(new qx.ui.layout.VBox(0));
+
+      // Add the arrival icon, ...
+      o = new qx.ui.basic.Image("bcp/client/decoration/icons8-car-32.png");
+      o.setToolTipText(data.arrival_time);
+      arrived.add(o);
+      arrived.setUserData("icon", o);
+
+      // ... and the arrival order number
+      o = new qx.ui.basic.Label(data.arrival_order + "");
+      o.setAlignX("center");
+      arrived.add(o);
+      arrived.setUserData("order", o);
+
       if (! data.arrival_time || data.fulfilled)
       {
         arrived.hide();
@@ -251,6 +263,7 @@ qx.Mixin.define("bcp.client.MDeliveryDay",
           if (messageData.arrivalTime && ! data.fulfilled)
           {
             arrived.setToolTipText(messageData.arrivalTime);
+            arrived.getUserData("order").setValue(messageData.arrivalOrder);
             arrived.show();
           }
           else
