@@ -11,6 +11,13 @@ The arrival order is delviery-day-specific, i.e., the first arrival on
 a delivery day gets number 1, the next arrival on that day gets number
 2, etc. Subsequent delivery days begin again at number 1. Delivery day
 counters are reset when a new distribution is created.
+*** Removed PIN entry
+The requirement for entering a PIN to return from the signature page
+back to the Greeter page has been replaced with a screen showing what
+operation was specified (save signature, cancel, not eligible, paper
+signature), and requesting the client to hand the tablet back to the
+greeter. This new page is displayed in the client's specified
+language.
 * Upgrade procedures
 ** Shut down and back up production
 ** Iterations
