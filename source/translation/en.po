@@ -89,3 +89,23 @@ msgstr ""
 #: bcp/client/MUsdaSignature.js
 msgid "Clear"
 msgstr ""
+
+#: bcp/client/MUsdaSignature.js
+msgid "Thank you. Please hand the tablet back to your greeter."
+msgstr ""
+
+#: bcp/client/MUsdaSignature.js
+msgid "You cancelled the signature operation."
+msgstr ""
+
+#: bcp/client/MUsdaSignature.js
+msgid "You indicated you are not eligible for USDA assistance."
+msgstr ""
+
+#: bcp/client/MUsdaSignature.js
+msgid "You requested to sign on paper."
+msgstr ""
+
+#: bcp/client/MUsdaSignature.js
+msgid "Please hand the tablet back to your greeter."
+msgstr ""

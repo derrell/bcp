@@ -1,16 +1,6 @@
+#. NO LONGER USED
 msgid ""
-msgstr ""
-"Project-Id-Version: Billerica Community Pantry\n"
-"POT-Creation-Date: \n"
-"PO-Revision-Date: \n"
-"Last-Translator: \n"
-"Language-Team: \n"
-"Language: es\n"
-"MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=UTF-8\n"
-"Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=2; plural=(n != 1);\n"
-"X-Generator: Poedit 3.0.1\n"
+msgstr "Project-Id-Version: Billerica Community Pantry\nPOT-Creation-Date: \nPO-Revision-Date: \nLast-Translator: \nLanguage-Team: \nLanguage: es\nMIME-Version: 1.0\nContent-Type: text/plain; charset=UTF-8\nContent-Transfer-Encoding: 8bit\nPlural-Forms: nplurals=2; plural=(n != 1);\nX-Generator: Poedit 3.0.1\n"
 
 #: bcp/client/MUsdaSignature.js
 msgid "Paper Signature"
@@ -103,3 +93,23 @@ msgstr "No elegible"
 #: bcp/client/MUsdaSignature.js
 msgid "Clear"
 msgstr "Limpiar"
+
+#: bcp/client/MUsdaSignature.js
+msgid "Thank you. Please hand the tablet back to your greeter."
+msgstr "Gracias. Por favor, devuélvale la tableta a su saludador."
+
+#: bcp/client/MUsdaSignature.js
+msgid "You cancelled the signature operation."
+msgstr "Ha cancelado la operación de firma."
+
+#: bcp/client/MUsdaSignature.js
+msgid "You indicated you are not eligible for USDA assistance."
+msgstr "Usted indicó que no es elegible para la asistencia del USDA."
+
+#: bcp/client/MUsdaSignature.js
+msgid "You requested to sign on paper."
+msgstr "Usted solicitó firmar en papel."
+
+#: bcp/client/MUsdaSignature.js
+msgid "Please hand the tablet back to your greeter."
+msgstr "Por favor devuelva la tableta a su saludador."

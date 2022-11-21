@@ -15,7 +15,6 @@ qx.Mixin.define("bcp.client.MUsdaSignature",
 {
   statics :
   {
-    __USE_PIN_SECURITY      : true,
     __TREE_WIDTH            : 0, // set in initiall "appear" handler
     __TREE_ITEM_WIDTH       : 0, // ditto
 
@@ -108,29 +107,7 @@ qx.Mixin.define("bcp.client.MUsdaSignature",
 
           page.removeAll();
 
-          if (bcp.client.MUsdaSignature.__USE_PIN_SECURITY &&
-              me.permissionLevel <= 40)
-          {
-            // Prompt for the PIN before showing the client list
-            this.createLogin(
-              "Accept",
-              (err, username) =>
-              {
-                // Was the password accepted?
-                if (err)
-                {
-                  // Nope. Let them re-enter it
-                  return;
-                }
-
-                buildUsdaSignatureTree();
-              });
-          }
-          else
-          {
-            // No need for PIN as it's not a greeter station
-            buildUsdaSignatureTree();
-          }
+          buildUsdaSignatureTree();
         });
     },
 
@@ -635,7 +612,7 @@ qx.Mixin.define("bcp.client.MUsdaSignature",
           if (checkbox.getValue() === null)
           {
             checkbox.setIcon(null);
-            checkbox.setLabel("Sign");
+            checkbox.setLabel(text);
           }
           else if (! checkbox.getValue())
           {
@@ -732,6 +709,9 @@ qx.Mixin.define("bcp.client.MUsdaSignature",
                     // Clear the signature
                     form._formElements["signature"].clear();
 
+                    // Indicate how we're leaving the form
+                    fUsdaFormHandler.result = "ineligible";
+
                     // Submit the form
                     form._okButton.execute();
                   });
@@ -767,6 +747,9 @@ qx.Mixin.define("bcp.client.MUsdaSignature",
                     // Convert the "On file" text to a data URL, for
                     // saving as signature
                     sigFormField.setValue(canvas.toDataURL("image/png"));
+
+                    // Indicate how we're leaving the form
+                    fUsdaFormHandler.result = "paper";
 
                     // Submit the form
                     form._okButton.execute();
@@ -1046,14 +1029,21 @@ qx.Mixin.define("bcp.client.MUsdaSignature",
                   // We can now hide the form.
                   this._usdaForm.hide();
 
-                  // Reset the locale back to English
-                  qx.locale.Manager.getInstance().setLocale("en");
-
                   // If the form was cancelled...
                   if (! result)
                   {
                     // ... then we're done
+                    fUsdaFormHandler.result = "cancel";
                     return;
+                  }
+
+                  // If it's a normal signature save (vs. "Not
+                  // eligible" or "Paper signature"), indicate so. If
+                  // it was one of those other two, this will already
+                  // have been set.
+                  if (! fUsdaFormHandler.result)
+                  {
+                    fUsdaFormHandler.result = "save";
                   }
 
                   // If they said Not Eligible, set signature to 0-length
@@ -1095,31 +1085,12 @@ qx.Mixin.define("bcp.client.MUsdaSignature",
               // Reshow the signature until PIN is accepted
               this._usdaForm.show();
 
-              if (bcp.client.MUsdaSignature.__USE_PIN_SECURITY)
-              {
-                // Prompt for the password that allows returning to
-                // the secure environment
-                this.createLogin(
-                  "Accept",
-                  (err, username) =>
-                  {
-                    // Accepted?
-                    if (err)
-                    {
-                      // Nope. Let them re-enter it
-                      return;
-                    }
-
-                    saveSignature();
-                  });
-              }
-              else
-              {
-                // Save the signature and ask the client to return the
-                // tablet to the greeter
-                saveSignature();
-                this.awaitReturnToGreeter();
-              }
+              // Save the signature and ask the client to return the
+              // tablet to the greeter
+              saveSignature();
+              this.awaitReturnToGreeter(
+                fUsdaFormHandler.result,
+                data.language_abbreviation);
             };
 
           // Handle "Ok", retrieving signature form results
@@ -1268,16 +1239,66 @@ qx.Mixin.define("bcp.client.MUsdaSignature",
 
     /**
      * Inform the client to return the tablet to the greeter
+     *
+     * @param type {"save"|"cancel"|"ineligible"|"paper"}
+     *   The way the form was exited: a normal signature save, cancelled, tap
+     *   on "Not Eligible", or tap on "Paper signature"
+     *
      * @return {Promise}
      */
-    awaitReturnToGreeter : function()
+    awaitReturnToGreeter : function(type, language)
     {
+      let             message;
+      let             cancelled = " [cancelled]";
+      let             ineligible = " [ineligible]";
+      let             paper = " [sign on paper]";
       let             root = this.getRoot();
       let             rootSize = root.getInnerSize();
 
+      switch(type)
+      {
+      case "save" :
+        message =
+          this.tr("Thank you. Please hand the tablet back to your greeter.");
+        break;
+
+      case "cancel" :
+        message =
+          "<span style='color: red;'>" +
+          this.tr("You cancelled the signature operation.") +
+          (language == "en" ? "" : cancelled) +
+          "</span>" +
+          "<p>" +
+          this.tr("Please hand the tablet back to your greeter.") +
+          "</p>";
+        break;
+
+      case "ineligible" :
+        message =
+          "<span style='color: blue;'>" +
+          this.tr("You indicated you are not eligible for USDA assistance.") +
+          (language == "en" ? "" : ineligible) +
+          "</span>" +
+          "<p>" +
+          this.tr("Thank you. Please hand the tablet back to your greeter.") +
+          "<p>";
+        break;
+
+      case "paper" :
+        message =
+          "<span style='color: red;'>" +
+          this.tr("You requested to sign on paper.") +
+          (language == "en" ? "" : paper) +
+          "</span>" +
+          "<p>" +
+          this.tr("Thank you. Please hand the tablet back to your greeter.") +
+          "<p>";
+        break;
+      }
+
       let alert = new qxl.dialog.Alert(
         {
-          message  : "Thank you. Please hand the tablet back to your greeter.",
+          message  : message,
           context  : this,
           caption  : "Signature complete",
           image    : "qxl.dialog.icon.info"
@@ -1303,6 +1324,9 @@ qx.Mixin.define("bcp.client.MUsdaSignature",
         new qx.ui.core.Spacer(),
         1,
         { flex : 1 });
+
+      // Reset the locale back to English
+      qx.locale.Manager.getInstance().setLocale("en");
 
       return alert.promise();
     },
