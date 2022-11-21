@@ -77,6 +77,16 @@ qx.Class.define("bcp.server.GetReport",
         (req, res) =>
         {
           console.log("getReport: ", req.params);
+
+          // Validate the file ID to ensure no deviant behavior
+          if (typeof req.params.fileId != "string" ||
+              /\/|\.\./.test(req.params.fileId))
+          {
+            console.error(
+              "getReport: requested file ID is illegal (contains / or ..)");
+            return;
+          }
+
           res.download(
             this._path + "/" + req.params.fileId,
             req.params.fileId,

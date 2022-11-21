@@ -1660,6 +1660,19 @@ qx.Class.define("bcp.server.Rpc",
 
       // TODO: move prepared statements to constructor
       return Promise.resolve()
+        .then(
+          () =>
+          {
+            // Ensure report name has no characters that make
+            // security difficult: no / nor ..
+            if (typeof args[0].name != "string" ||
+                /[/]|\.\./g.test(args[0].name))
+            {
+              throw new Error(
+                "Report name may not contain '/' or '..'");
+            }
+          })
+
         // Begin a transaction
         .then(() => this._beginTransaction())
 

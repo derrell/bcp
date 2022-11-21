@@ -1118,7 +1118,7 @@ REPLACE INTO Report
 )
  VALUES
 (
-  'Distribution large/small meals required',
+  'Distribution meals required, by size',
   'Number of meals for solo (1), small (2-3) and large (4+) families',
   0,
   '{
@@ -1728,7 +1728,7 @@ REPLACE INTO Report
 )
  VALUES
 (
-  'Recent family/child attendees',
+  'Recent family child attendees',
   'Children who attended within most recent three distributions',
   0,
   '',
@@ -1786,7 +1786,7 @@ REPLACE INTO Report
 )
  VALUES
 (
-  'Recent family/veteran attendees',
+  'Recent family veteran attendees',
   'Veterans who attended within most recent three distributions',
   0,
   '',
