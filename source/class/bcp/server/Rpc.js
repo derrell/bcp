@@ -258,6 +258,7 @@ qx.Class.define("bcp.server.Rpc",
               typeof req.session.permissionLevel != "number")
           {
             res.status(401).send("Authentication failed");
+            return;
           }
 
           // Look at the method and ensure this user is allowed to access it
@@ -271,7 +272,7 @@ qx.Class.define("bcp.server.Rpc",
               `User ${username} does not have permission ` +
                 `for method ${req.body.method} ` +
                 `(requires ${requests[req.body.method].permission_level}; ` +
-                `user has ${permissionLevel}`);
+                `user has permission level ${permissionLevel}`);
             req.body.method = "MethodDoesNotExist";
           }
 

@@ -25,7 +25,8 @@ qx.Class.define("bcp.client.Client",
     bcp.client.MDeliveryDay,
     bcp.client.MUsdaSignature,
     bcp.client.MDistribution,
-    bcp.client.MReports
+    bcp.client.MReports,
+    bcp.client.MAdmin
   ],
 
   statics :
@@ -552,6 +553,10 @@ qx.Class.define("bcp.client.Client",
               {
                 requiredPermission : 50,
                 implementation     : this._createReportsTab
+              },
+              {
+                requiredPermission : 60,
+                implementation     : this._createAdminTab
               }
             ].forEach(
               (pageInfo) =>

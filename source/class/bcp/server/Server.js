@@ -180,6 +180,9 @@ qx.Class.define("bcp.server.Server",
       // Create the get-report interface
       bcp.server.GetReport.getInstance().init(app, protocol === https);
 
+      // Create the database backup download interface
+      bcp.server.DbDownload.getInstance().init(app, protocol === https);
+
       app.use(
         (err, req, res, next) =>
         {
