@@ -110,12 +110,12 @@ qx.Class.define("bcp.server.DbDownload",
                   return;
                 }
 
-                console.log(`Database backup was downloaded`);
+                console.log(`Database backup was downloaded by ${username}`);
               });
           }
           catch(e)
           {
-            console.log("dbBackup failed:", e);
+            console.log(`dbBackup failed for ${username}:`, e);
             res.status(401).send("Backup not available");            
           }
         });
