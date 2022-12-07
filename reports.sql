@@ -1407,7 +1407,8 @@ REPLACE INTO Report
      LEFT JOIN ClientId ci
        ON ci.family_name = c.family_name
      LEFT JOIN UsdaEligibleHistory ueh
-       ON ueh.distribution = $distribution AND ueh.family_name = f.family_name
+       ON ueh.distribution = (SELECT MAX(start_date) FROM DistributionPeriod)
+          AND ueh.family_name = c.family_name
      WHERE appt_time_default IS NOT NULL
         AND length(appt_time_default) > 0
      ORDER BY Day, Time, "Family name";
