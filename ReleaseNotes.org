@@ -21,8 +21,9 @@ language.
 * Upgrade procedures
 ** Shut down and back up production
 ** Iterations
-*** #1: copy db from production to dev; perform following ops locally
-*** #2: perform following ops on production
+*** #1: copy db from production to bcp-test; perform following ops there
+*** #2: perform following ops on bcp-test
+*** #3: once all is tested and working, repeat on production
 ** Merge to master
 ** COMMENT Database changes
 --
@@ -129,9 +130,9 @@ INSERT INTO KeyValueStore (key, value) VALUES ('arrivalOrderDay5', 0);
 INSERT INTO KeyValueStore (key, value) VALUES ('arrivalOrderDay6', 0);
 INSERT INTO KeyValueStore (key, value) VALUES ('arrivalOrderDay7', 0);
 
-** Reports changes
-*** DELETE FROM Report;
-*** Add the entirety of reports.sql
-** mkdir -p <toplevel>/reports
-** Install new software
+*** #4: Reports changes
+**** DELETE FROM Report;
+**** Add the entirety of reports.sql
+*** #5: Install new software
+*** #6: Install latest node packages: npm install
 ** Run new software
