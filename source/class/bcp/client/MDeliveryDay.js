@@ -237,8 +237,15 @@ qx.Mixin.define("bcp.client.MDeliveryDay",
       arrived = new qx.ui.container.Composite(new qx.ui.layout.VBox(0));
 
       // Add the arrival icon, ...
-      o = new qx.ui.basic.Image("bcp/client/decoration/icons8-car-32.png");
-      o.setToolTipText(data.arrival_time);
+      o = new qx.ui.basic.Image(
+        data.fulfilled
+        ? "static/blank.gif"
+        : "bcp/client/decoration/icons8-car-32.png");
+      o.set(
+        {
+          width       : 40,
+          toolTipText : data.arrival_time
+        });
       arrived.add(o);
       arrived.setUserData("icon", o);
 
@@ -248,7 +255,7 @@ qx.Mixin.define("bcp.client.MDeliveryDay",
       arrived.add(o);
       arrived.setUserData("order", o);
 
-      if (! data.arrival_time || data.fulfilled)
+      if (! data.arrival_time)
       {
         arrived.hide();
       }
@@ -263,8 +270,14 @@ qx.Mixin.define("bcp.client.MDeliveryDay",
           if (messageData.arrivalTime && ! data.fulfilled)
           {
             arrived.setToolTipText(messageData.arrivalTime);
+            arrived.getUserData("icon").setSource(
+              "bcp/client/decoration/icons8-car-32.png");
             arrived.getUserData("order").setValue(messageData.arrivalOrder);
             arrived.show();
+          }
+          else if (messageData.arrivalTime)
+          {
+            arrived.getUserData("icon").setSource("static/blank.gif");
           }
           else
           {
@@ -305,13 +318,14 @@ qx.Mixin.define("bcp.client.MDeliveryDay",
           {
             checkbox.setIcon("qxl.dialog.icon.warning");
             checkbox.setLabel("Unfulfilled");
-            data.arrival_time && arrived.show();
+            arrived.getUserData("icon").setSource(
+              "bcp/client/decoration/icons8-car-32.png");
           }
           else
           {
             checkbox.setIcon("qxl.dialog.icon.ok");
             checkbox.setLabel("Fulfilled");
-            arrived.hide();
+            arrived.getUserData("icon").setSource("static/blank.gif");
           }
         });
 
