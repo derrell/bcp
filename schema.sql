@@ -265,12 +265,14 @@ CREATE TABLE Report
   subtitle_field    VARCHAR,
   separate_by       VARCHAR,
   landscape         BOOLEAN DEFAULT 0,
+  format_key_value  BOOLEAN DEFAULT 0,
   number_style      VARCHAR,
   number_remaining  VARCHAR,
   UNIQUE (name COLLATE NOCASE)
 );
 
 -- ALTER TABLE Report ADD COLUMN pre_query VARCHAR;
+-- ALTER TABLE Report ADD COLUMN format_key_value BOOLEAN DEFAULT 0;
 
 CREATE TABLE UsdaMaxIncome
 (

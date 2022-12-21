@@ -385,189 +385,215 @@ qx.Mixin.define("bcp.client.MReports",
                       report[0][reportInfo.subtitle_field],
                     reportInfo.landscape);
 
-                  // Write the heading
-                  this._reportWin.document.write("<thead><tr>");
-
-                  // If numbers are requested...
-                  if (reportInfo.number_style)
+                  if (! reportInfo.format_key_value)
                   {
-                    this._reportWin.document.write(
-                      "<th>#</th>");
+                    // Key/Value reports have two fields: `key` and `value`.
+                    // This is a vertical-format report
+                    this._reportWin.document.write("<tbody>");
+                    report.forEach(
+                      (row) =>
+                      {
+                        this._reportWin.document.write("<tr>");
+
+                        this._reportWin.document.write(
+                          "<td style='font-weight: bold;'>");
+                        this._reportWin.document.write(row.key);
+                        this._reportWin.document.write("</td>");
+
+                        this._reportWin.document.write("<td>");
+                        this._reportWin.document.write(row.value);
+                        this._reportWin.document.write("</td>");
+
+                        this._reportWin.document.write("</tr>");
+                      });
                   }
-                  Object.keys(report[0]).forEach(
-                    (heading) =>
+                  else
+                  {
+                    // Write the heading
+                    this._reportWin.document.write("<thead><tr>");
+
+                    // If numbers are requested...
+                    if (reportInfo.number_style)
                     {
-                      // Ignore column names beginning with underscore
-                      if (heading.charAt(0) == "_")
+                      this._reportWin.document.write(
+                        "<th>#</th>");
+                    }
+                    Object.keys(report[0]).forEach(
+                      (heading) =>
                       {
-                        return;
-                      }
-
-                      this._reportWin.document.write(`<th>${heading}</th>`);
-                    });
-                  this._reportWin.document.write("</tr></thead>");
-
-                  // Write the body
-                  this._reportWin.document.write("<tbody>");
-                  report.forEach(
-                    (row, index) =>
-                    {
-                      // If we're showing remaining entries, and were
-                      // told to restart numbering when some field
-                      // changes...
-                      if (reportInfo.number_remaining &&
-                          row[reportInfo.number_remaining] !=
-                          priorForRemaining)
-                      {
-                        // ... then remember what value we're
-                        // tracking, and reset the number of lines
-                        // remaining.
-                        priorForRemaining = row[reportInfo.number_remaining];
-                        lineRemaining = 0;
-
-                        // If we're numbering by the same as remaining
-                        if (reportInfo.number_style == "$remaining")
+                        // Ignore column names beginning with underscore
+                        if (heading.charAt(0) == "_")
                         {
-                          // ... then restart line numbers
-                          lineNumber = 0;
+                          return;
                         }
-                      }
 
-                      // See if we need a separator here
-                      if (reportInfo.separate_by &&
-                          row[reportInfo.separate_by] != priorForSep)
+                        this._reportWin.document.write(`<th>${heading}</th>`);
+                      });
+                    this._reportWin.document.write("</tr></thead>");
+
+                    // Write the body
+                    this._reportWin.document.write("<tbody>");
+                    report.forEach(
+                      (row, index) =>
                       {
-                        // Yup, we do. Insert one here. We do it with
-                        // two separate rows so that the zebra
-                        // striping remains consistent.
-                        heading =
-                          (reportInfo.separate_by == "Time" ||
-                           reportInfo.separate_by == "_separatorWithTime")
-                          ? this.convert24to12(row[reportInfo.separate_by])
-                          : row[reportInfo.separate_by];
-                        this._reportWin.document.write(
-                          [
-                            `<tr>`,
-                            "<td ",
-                            `  colspan='${Object.keys(report[0]).length}'`,
-                            "  class='sep'>",
-                            "&nbsp;",
-                            "</td>",
-                            "</tr>",
-
-                            `<tr>`,
-                            "<td ",
-                            `  colspan='${Object.keys(report[0]).length}'`,
-                            "  class='sep'>",
-                            "<span style='font-weight: bold;'>",
-                            `${heading}`,
-                            "</span>",
-                            "</td>",
-                            "</tr>"
-                          ].join(""));
-
-                        // Line numbering is either "$sections" or
-                        // "$remaining" or "$continuous". If we're
-                        // numbering by section, restart numbering
-                        // now.
-                        if (reportInfo.number_style == "$sections")
+                        // If we're showing remaining entries, and were
+                        // told to restart numbering when some field
+                        // changes...
+                        if (reportInfo.number_remaining &&
+                            row[reportInfo.number_remaining] !=
+                            priorForRemaining)
                         {
-                          lineNumber = 0;
+                          // ... then remember what value we're
+                          // tracking, and reset the number of lines
+                          // remaining.
+                          priorForRemaining = row[reportInfo.number_remaining];
+                          lineRemaining = 0;
+
+                          // If we're numbering by the same as remaining
+                          if (reportInfo.number_style == "$remaining")
+                          {
+                            // ... then restart line numbers
+                            lineNumber = 0;
+                          }
                         }
-                      }
 
-                      // Save the separator field for next comparison
-                      priorForSep = row[reportInfo.separate_by];
-
-                      this._reportWin.document.write(`<tr>`);
-
-                      if (reportInfo.number_style)
-                      {
-                        // Use provided Id if available
-                        let         digits0 = "ABCDEFGHIJ".split("");
-                        let         digits1 = "KLMNOPQRST".split("");
-                        let         num = "_id" in row ? row._id : lineNumber;
-
-                        // Format it as three digits
-                        num = ("000" + num).substr(-3);
-
-                        // Increment line number regardless of whether
-                        // it was used or not
-                        ++lineNumber;
-
-                        this._reportWin.document.write(
-                          [
-                            "<td>",
-                            "<span style='font-weight: bold;'>",
-                            `#${num}`,
-                            "</span>"
-                          ].join(""));
-                        if (reportInfo.number_remaining)
+                        // See if we need a separator here
+                        if (reportInfo.separate_by &&
+                            row[reportInfo.separate_by] != priorForSep)
                         {
+                          // Yup, we do. Insert one here. We do it with
+                          // two separate rows so that the zebra
+                          // striping remains consistent.
+                          heading =
+                            (reportInfo.separate_by == "Time" ||
+                             reportInfo.separate_by == "_separatorWithTime")
+                            ? this.convert24to12(row[reportInfo.separate_by])
+                            : row[reportInfo.separate_by];
                           this._reportWin.document.write(
                             [
-                              " ",
-                              "<span style='color:black'>",
-                              "(+",
-                              (totals[row[reportInfo.number_remaining]] -
-                               ++lineRemaining),
-                              ")",
+                              `<tr>`,
+                              "<td ",
+                              `  colspan='${Object.keys(report[0]).length}'`,
+                              "  class='sep'>",
+                              "&nbsp;",
+                              "</td>",
+                              "</tr>",
+
+                              `<tr>`,
+                              "<td ",
+                              `  colspan='${Object.keys(report[0]).length}'`,
+                              "  class='sep'>",
+                              "<span style='font-weight: bold;'>",
+                              `${heading}`,
+                              "</span>",
+                              "</td>",
+                              "</tr>"
+                            ].join(""));
+
+                          // Line numbering is either "$sections" or
+                          // "$remaining" or "$continuous". If we're
+                          // numbering by section, restart numbering
+                          // now.
+                          if (reportInfo.number_style == "$sections")
+                          {
+                            lineNumber = 0;
+                          }
+                        }
+
+                        // Save the separator field for next comparison
+                        priorForSep = row[reportInfo.separate_by];
+
+                        this._reportWin.document.write(`<tr>`);
+
+                        if (reportInfo.number_style)
+                        {
+                          // Use provided Id if available
+                          let         digits0 = "ABCDEFGHIJ".split("");
+                          let         digits1 = "KLMNOPQRST".split("");
+                          let         num = "_id" in row ? row._id : lineNumber;
+
+                          // Format it as three digits
+                          num = ("000" + num).substr(-3);
+
+                          // Increment line number regardless of whether
+                          // it was used or not
+                          ++lineNumber;
+
+                          this._reportWin.document.write(
+                            [
+                              "<td>",
+                              "<span style='font-weight: bold;'>",
+                              `#${num}`,
                               "</span>"
                             ].join(""));
+                          if (reportInfo.number_remaining)
+                          {
+                            this._reportWin.document.write(
+                              [
+                                " ",
+                                "<span style='color:black'>",
+                                "(+",
+                                (totals[row[reportInfo.number_remaining]] -
+                                 ++lineRemaining),
+                                ")",
+                                "</span>"
+                              ].join(""));
+                          }
+                          this._reportWin.document.write("</td>");
                         }
-                        this._reportWin.document.write("</td>");
-                      }
-                      Object.keys(report[0]).forEach(
-                        (heading) =>
-                        {
-                          // Ignore column names beginning with underscore
-                          if (heading.charAt(0) == "_")
+                        Object.keys(report[0]).forEach(
+                          (heading) =>
                           {
-                            return;
-                          }
+                            // Ignore column names beginning with underscore
+                            if (heading.charAt(0) == "_")
+                            {
+                              return;
+                            }
 
-                          // Convert times to 12-hour format
-                          if (heading == "Time")
-                          {
-                            row[heading] = this.convert24to12(row[heading]);
-                          }
+                            // Convert times to 12-hour format
+                            if (heading == "Time")
+                            {
+                              row[heading] = this.convert24to12(row[heading]);
+                            }
 
-                          // Convert signature URLs into images
-                          if (heading == "Signature" &&
-                              row[heading].length > 0)
-                          {
-                            row[heading] =
-                              [
-                                `<img src='${row[heading]}'`,
-                                "  style='",
-                                "    max-height: 50px;",
-                                "    height: 50px;",
-                                "    width: auto;",
-                                "  '",
-                                "/>"
-                              ].join(" ");
+                            // Convert signature URLs into images
+                            if (heading == "Signature" &&
+                                row[heading].length > 0)
+                            {
+                              row[heading] =
+                                [
+                                  `<img src='${row[heading]}'`,
+                                  "  style='",
+                                  "    max-height: 50px;",
+                                  "    height: 50px;",
+                                  "    width: auto;",
+                                  "  '",
+                                  "/>"
+                                ].join(" ");
 
-                            // Write this column's data ensuring adequate width
-                            this._reportWin.document.write(
-                              [
-                                "<td style='width: 300px;'>",
-                                `${row[heading]}`,
-                                "</td>"
-                              ].join(" "));
-                          }
-                          else
-                          {
-                            // Non-signature column. Automatic width.
-                            this._reportWin.document.write(
-                              `<td>${row[heading]}</td>`);
-                          }
-                        });
+                              // Write this column's data ensuring
+                              // adequate width
+                              this._reportWin.document.write(
+                                [
+                                  "<td style='width: 300px;'>",
+                                  `${row[heading]}`,
+                                  "</td>"
+                                ].join(" "));
+                            }
+                            else
+                            {
+                              // Non-signature column. Automatic width.
+                              this._reportWin.document.write(
+                                `<td>${row[heading]}</td>`);
+                            }
+                          });
 
-                      // That's the end of this row
-                      this._reportWin.document.write("</tr>");
-                    });
+                        // That's the end of this row
+                        this._reportWin.document.write("</tr>");
+                      });
 
-                  this._reportWin.document.write("</tbody>");
+                    this._reportWin.document.write("</tbody>");
+                  }
 
                   // Insert the common suffix HTML code
                   this._insertSuffix(this._reportWin);

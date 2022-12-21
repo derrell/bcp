@@ -1825,6 +1825,7 @@ REPLACE INTO Report
   name,
   description,
   landscape,
+  format_key_value,
   input_fields,
   subtitle_field,
   separate_by,
@@ -1838,6 +1839,7 @@ REPLACE INTO Report
   'Demographics for Board',
   'Set of demographics requested by the Board',
   0,
+  1,
   '',
   '',
   '',
@@ -1853,47 +1855,122 @@ REPLACE INTO Report
          member_name
        FROM FamilyMember;
   ',
-  'SELECT
+  '
+   SELECT
+     "Families with adults (one or more 18-64) raising children"
+       AS key,
      (SELECT COUNT(*)
         FROM Client
-        WHERE count_young_adult = 2
-          AND count_adult = 2
-          AND count_senior = 0
+        WHERE count_adult > 0
           AND count_child > 0)
-        AS "Young families (two adults 18-25) with children",
+        AS value
+   UNION ALL
+   SELECT
+     "Families with seniors (one or more 65+, no 18-64) raising children"
+       AS key,
      (SELECT COUNT(*)
         FROM Client
-        WHERE count_young_adult = 2
-          AND count_adult = 2
+        WHERE count_senior > 0
+          AND count_adult = 0
+          AND count_child > 0)
+        AS value
+   UNION ALL
+   SELECT
+     "Adult couples (two 18-64) without children or seniors"
+       AS key,
+     (SELECT COUNT(*)
+        FROM Client
+        WHERE count_adult = 2
           AND count_senior = 0
           AND count_child = 0)
-        AS "Young families (two adults 18-25) without children",
+        AS value
+   UNION ALL
+   SELECT
+     "Seniors (65+) living with other adults or seniors"
+       AS key,
+     (SELECT COUNT(*)
+        FROM Client
+        WHERE count_senior > 0
+          AND (   count_adult > 0
+               OR count_senior > 1))
+        AS value
+   UNION ALL
+   SELECT
+     "Elderly (80+) living with other adults or seniors"
+       AS key,
      (SELECT COUNT(*)
         FROM Client
         WHERE count_elderly > 0
           AND (   count_adult > 0
-               OR count_senior > count_elderly))
-        AS "Elderly (80+) living with other adults",
+               OR count_senior > 1))
+        AS value
+   UNION ALL
+   SELECT
+     "Elderly (80+) living alone"
+       AS key,
      (SELECT COUNT(*)
         FROM Client
-        WHERE count_elderly > 0
-          AND count_adult > 0
-          AND count_senior = count_elderly)
-        AS "Elderly (80+) living without other adults",
-     (SELECT COUNT(*)
-        FROM Client
-        WHERE count_elderly > 0
-          AND count_child > 0
+        WHERE count_elderly = 1
+          AND count_senior = 1
           AND count_adult = 0
-          AND count_senior = count_elderly)
-        AS "Elderly (80+) living with children but without other adults",
-     (SELECT COUNT(*)
-        FROM FamilyMember)
-        AS "Family members in database",
+          AND count_child = 0)
+        AS value
+   UNION ALL
+   SELECT
+     "Family members in database"
+       AS key,
+     (SELECT COUNT(*) FROM FamilyMember)
+        AS value
+   UNION ALL
+   SELECT
+     "Unique families who have participated since record keeping began"
+       AS key,
      (SELECT COUNT(*)
        FROM (SELECT DISTINCT family_name FROM Fulfillment))
-       AS "Unique families who have participated since inception";
- '
+        AS value
+   UNION ALL
+   SELECT
+     "Unique families who have participated 3 times in past 3 months"
+       AS key,
+     (SELECT COUNT(*)
+       FROM
+         (SELECT family_name, COUNT(*) AS count
+             FROM Fulfillment
+             WHERE distribution IN
+               (SELECT start_date
+                  FROM DistributionPeriod
+                  ORDER BY start_date DESC LIMIT 3)
+             GROUP BY family_name)
+           WHERE count = 3)
+        AS value
+   UNION ALL
+   SELECT
+     "Unique families who have participated 2 times in past 3 months"
+       AS key,
+     (SELECT COUNT(*)
+       FROM
+         (SELECT family_name, COUNT(*) AS count
+             FROM Fulfillment
+             WHERE distribution IN
+               (SELECT start_date
+                  FROM DistributionPeriod
+                  ORDER BY start_date DESC LIMIT 3)
+             GROUP BY family_name)
+           WHERE count = 2)
+        AS value
+   UNION ALL
+   SELECT
+     "Unique families who have participated 1 time in past 3 months" AS key,
+     (SELECT COUNT(*)
+       FROM
+         (SELECT family_name, COUNT(*) AS count
+             FROM Fulfillment
+             WHERE distribution IN
+               (SELECT start_date
+                  FROM DistributionPeriod
+                  ORDER BY start_date DESC LIMIT 3)
+             GROUP BY family_name)
+           WHERE count = 1)
+        AS value
+   ;'
 );
-
-
