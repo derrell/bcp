@@ -392,9 +392,8 @@ qx.Mixin.define("bcp.client.MUsdaSignature",
                       }
 
 
-                      // If arrival was cancelled and not fulfulled,
-                      // reset hidden fields
-                      if (formValues.cancelArrived && ! data.fulfilled)
+                      // If arrival was cancelled, reset hidden fields
+                      if (formValues.cancelArrived)
                       {
                         arrived.show();
                         hidden.forEach(

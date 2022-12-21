@@ -269,6 +269,7 @@ qx.Mixin.define("bcp.client.MDeliveryDay",
           // A greeter indicates that a client has arrived. Show it here.
           if (messageData.arrivalTime && ! data.fulfilled)
           {
+            data.arrival_time = messageData.arrivalTime;
             arrived.setToolTipText(messageData.arrivalTime);
             arrived.getUserData("icon").setSource(
               "bcp/client/decoration/icons8-car-32.png");
@@ -277,10 +278,14 @@ qx.Mixin.define("bcp.client.MDeliveryDay",
           }
           else if (messageData.arrivalTime)
           {
+            data.arrival_time = messageData.arrivalTime;
+            arrived.show();
             arrived.getUserData("icon").setSource("static/blank.gif");
+            arrived.getUserData("order").setValue(messageData.arrivalOrder);
           }
           else
           {
+            data.arrival_time = null;
             arrived.hide();
           }
         },
@@ -314,8 +319,11 @@ qx.Mixin.define("bcp.client.MDeliveryDay",
         "changeValue",
         () =>
         {
+          data.arrival_time && arrived.show();
+
           if (! checkbox.getValue())
           {
+            data.fulfilled = false;
             checkbox.setIcon("qxl.dialog.icon.warning");
             checkbox.setLabel("Unfulfilled");
             arrived.getUserData("icon").setSource(
@@ -323,6 +331,7 @@ qx.Mixin.define("bcp.client.MDeliveryDay",
           }
           else
           {
+            data.fulfilled = true;
             checkbox.setIcon("qxl.dialog.icon.ok");
             checkbox.setLabel("Fulfilled");
             arrived.getUserData("icon").setSource("static/blank.gif");
