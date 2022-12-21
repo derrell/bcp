@@ -1,23 +1,12 @@
 #+STARTUP: showeverything
 * High-level list of changes
 ** Bug fixes
-- Fix bug whereby changing USDA eligibility in the current distribution
-caused reports from prior distributions to display the current
-distribution's USDA eligibility values
+*** Fulfilled before Arrived would show car upon arrival even though already fulfilled
+*** Cancelling arrival after fulfilled cancelled but didn't update greeter page
 ** Feature changes
-*** Allow quick access to More dialog before arrival via tap on family name
-*** Arrival order is now shown on the Delivery Day tab
-The arrival order is delviery-day-specific, i.e., the first arrival on
-a delivery day gets number 1, the next arrival on that day gets number
-2, etc. Subsequent delivery days begin again at number 1. Delivery day
-counters are reset when a new distribution is created.
-*** Removed PIN entry
-The requirement for entering a PIN to return from the signature page
-back to the Greeter page has been replaced with a screen showing what
-operation was specified (save signature, cancel, not eligible, paper
-signature), and requesting the client to hand the tablet back to the
-greeter. This new page is displayed in the client's specified
-language.
+*** Arrival order is shown even after order is fulfilled
+*** Added report feature "format_key_value" as a vertical list of key/value
+*** Revised Demographics For Board report to use key/value report format
 * Upgrade procedures
 ** Shut down and back up production
 ** Iterations
@@ -26,109 +15,7 @@ language.
 *** #3: once all is tested and working, repeat on production
 ** Merge to master
 ** COMMENT Database changes
---
--- Changes for prior-distribution USDA eligibility availability in reports
---
-ALTER TABLE UsdaEligibleNextDistro RENAME TO UsdaEligibleNextDistroHistory;
-
-CREATE TABLE UsdaEligibleHistory
-(
-  distribution              VARCHAR REFERENCES DistributionPeriod
-                                ON DELETE CASCADE
-                                ON UPDATE CASCADE,
-  family_name               VARCHAR REFERENCES Client
-                                ON DELETE CASCADE
-                                ON UPDATE CASCADE,
-  usda_eligible             VARCHAR NOT NULL DEFAULT '',
-  PRIMARY KEY (distribution, family_name)
-);
-
-INSERT INTO UsdaEligibleHistory
-    (distribution, family_name, usda_eligible)
-  SELECT
-      (SELECT MAX(start_date) FROM DistributionPeriod) AS distribution,
-      family_name,
-      usda_eligible
-    FROM Client
-    WHERE length(usda_eligible) > 0;
-
-DROP TRIGGER IF EXISTS tr_ai_Client;
-CREATE TRIGGER tr_ai_Client
-AFTER INSERT ON Client
-BEGIN
-  REPLACE INTO UsdaEligibleHistory (
-      distribution,
-      family_name,
-      usda_eligible
-    ) VALUES (
-      (SELECT MAX(start_date) FROM DistributionPeriod),
-      new.family_name,
-      new.usda_eligible
-    );
-
-  REPLACE INTO UsdaEligibleNextDistroHistory (
-      distribution,
-      family_name,
-      usda_eligible_next_distro
-    ) VALUES (
-      (SELECT MAX(start_date) FROM DistributionPeriod),
-      new.family_name,
-      new.usda_eligible_next_distro
-    );
-
-  -- No need to maintain null entries here
-  DELETE FROM UsdaEligibleNextDistroHistory
-    WHERE
-      family_name = new.family_name
-      AND distribution = (SELECT MAX(start_date) FROM DistributionPeriod)
-      AND usda_eligible_next_distro IS NULL;
-END;
-
--- ... and then for an update of an existing client
-DROP TRIGGER IF EXISTS tr_au_Client;
-CREATE TRIGGER tr_au_Client
-AFTER UPDATE ON Client
-BEGIN
-  REPLACE INTO UsdaEligibleHistory (
-      distribution,
-      family_name,
-      usda_eligible
-    ) VALUES (
-      (SELECT MAX(start_date) FROM DistributionPeriod),
-      new.family_name,
-      new.usda_eligible
-    );
-
-  REPLACE INTO UsdaEligibleNextDistroHistory (
-      distribution,
-      family_name,
-      usda_eligible_next_distro
-    ) VALUES (
-      (SELECT MAX(start_date) FROM DistributionPeriod),
-      new.family_name,
-      new.usda_eligible_next_distro
-    );
-
-  DELETE FROM UsdaEligibleNextDistroHistory
-    WHERE
-      family_name = new.family_name
-      AND distribution = (SELECT MAX(start_date) FROM DistributionPeriod)
-      AND usda_eligible_next_distro IS NULL;
-END;
-
-
---
--- Arrival order changes
---
-ALTER TABLE Fulfillment ADD COLUMN arrival_order INTEGER;
-
-INSERT INTO KeyValueStore (key, value) VALUES ('arrivalOrderDay1', 0);
-INSERT INTO KeyValueStore (key, value) VALUES ('arrivalOrderDay2', 0);
-INSERT INTO KeyValueStore (key, value) VALUES ('arrivalOrderDay3', 0);
-INSERT INTO KeyValueStore (key, value) VALUES ('arrivalOrderDay4', 0);
-INSERT INTO KeyValueStore (key, value) VALUES ('arrivalOrderDay5', 0);
-INSERT INTO KeyValueStore (key, value) VALUES ('arrivalOrderDay6', 0);
-INSERT INTO KeyValueStore (key, value) VALUES ('arrivalOrderDay7', 0);
+ALTER TABLE Report ADD COLUMN format_key_value BOOLEAN DEFAULT 0;
 
 *** #4: Reports changes
 **** DELETE FROM Report;
