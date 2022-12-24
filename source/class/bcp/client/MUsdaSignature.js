@@ -552,7 +552,7 @@ qx.Mixin.define("bcp.client.MUsdaSignature",
                   `${data.family_name}: ${e.message}`);
             });
         });
-      (data.arrival_time || data.fulfilled) && arrived.exclude();
+      data.arrival_time && arrived.exclude();
       treeItem.addWidget(arrived);
 
       o = new qx.ui.basic.Label(`USDA:<br>${data.usda_amount}`);
@@ -563,7 +563,7 @@ qx.Mixin.define("bcp.client.MUsdaSignature",
           alignY : "middle",
           font   : "big-bold"
         });
-      ! data.arrival_time && ! data.fulfilled && o.hide();
+      ! data.arrival_time && o.hide();
       hidden.push({ object : o });
       treeItem.addWidget(o);
 
@@ -1117,7 +1117,7 @@ qx.Mixin.define("bcp.client.MUsdaSignature",
             });
         });
 
-      ! data.arrival_time && ! data.fulfilled && checkbox.hide();
+      ! data.arrival_time && checkbox.hide();
       hidden.push({ object : checkbox });
       treeItem.addWidget(checkbox);
 
@@ -1133,7 +1133,7 @@ qx.Mixin.define("bcp.client.MUsdaSignature",
           alignY      : "middle",
           font        : "big-bold"
         });
-      ! data.arrival_time && ! data.fulfilled && o.hide();
+      ! data.arrival_time && o.hide();
       hidden.push({ object : o });
       treeItem.addWidget(o);
 
@@ -1157,7 +1157,7 @@ qx.Mixin.define("bcp.client.MUsdaSignature",
         {
           notes.getContentElement().setStyles( { "line-height": 1 } );
         });
-      ! data.arrival_time && ! data.fulfilled && notes.setDecorator(null);
+      ! data.arrival_time && notes.setDecorator(null);
       hidden.push(
         {
           object  : notes,
@@ -1175,7 +1175,7 @@ qx.Mixin.define("bcp.client.MUsdaSignature",
           height      : 38,
           source      : data.usda_eligible_signature
         });
-      ! data.arrival_time && ! data.fulfilled && signature.hide();
+      ! data.arrival_time && signature.hide();
       hidden.push({ object : signature });
       treeItem.addWidget(signature);
 
@@ -1186,7 +1186,7 @@ qx.Mixin.define("bcp.client.MUsdaSignature",
           maxWidth : 70,
           font     : "big-bold"
         });
-      ! data.arrival_time && ! data.fulfilled && o.hide();
+      ! data.arrival_time && o.hide();
       hidden.push({ object : o });
       treeItem.addWidget(o);
 
