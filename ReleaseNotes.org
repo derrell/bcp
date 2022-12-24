@@ -2,11 +2,11 @@
 * High-level list of changes
 ** Bug fixes
 *** Fulfilled before Arrived would show car upon arrival even though already fulfilled
-*** Cancelling arrival after fulfilled cancelled but didn't update greeter page
+*** Cancelling arrival after fulfilled did the cancel, but didn't correctly update greeter page
 ** Feature changes
 *** Arrival order is shown even after order is fulfilled
-*** Added report feature "format_key_value" as a vertical list of key/value
-*** Revised Demographics For Board report to use key/value report format
+*** Added report feature for a vertical list of key/value pairs
+*** Revised Demographics For Board report to use vertical key/value report format
 * Upgrade procedures
 ** Shut down and back up production
 ** Iterations
