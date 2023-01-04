@@ -385,7 +385,7 @@ qx.Mixin.define("bcp.client.MReports",
                       report[0][reportInfo.subtitle_field],
                     reportInfo.landscape);
 
-                  if (! reportInfo.format_key_value)
+                  if (reportInfo.format_key_value)
                   {
                     // Key/Value reports have two fields: `key` and `value`.
                     // This is a vertical-format report

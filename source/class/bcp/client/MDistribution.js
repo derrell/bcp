@@ -173,6 +173,31 @@ qx.Mixin.define("bcp.client.MDistribution",
 
             renderer._setLayout(layout);
             return renderer;
+          },
+          addContainerFunction : function(container, form)
+          {
+            let scrollContainer = new qx.ui.container.Scroll();
+            scrollContainer.add(container);
+            form.add(scrollContainer);
+
+            // When the scroll container appears, determine the width
+            // of the list, and resize the scroll container to use
+            // remaining horizontal space for it.
+            scrollContainer.addListenerOnce(
+              "appear",
+              () =>
+              {
+                let             layoutParent = form.getLayoutParent();
+                let             parentBounds = layoutParent.getBounds();
+                let             children = layoutParent.getChildren();
+                let             listBounds = children[0].getBounds();
+
+                scrollContainer.set(
+                  {
+                    width  : parentBounds.width - listBounds.width - 20,
+                    height : listBounds.height
+                  });
+              });
           }
         });
 

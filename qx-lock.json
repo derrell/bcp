@@ -27,10 +27,10 @@
     {
       "library_name": "qxl.dialog",
       "library_version": "5.0.0",
-      "path": "qx_packages/qooxdoo_qxl_dialog_v5_0_0",
+      "path": "qx_packages/qooxdoo_qxl_dialog_v5_1_0",
       "uri": "qooxdoo/qxl.dialog",
       "repo_name": "qooxdoo/qxl.dialog",
-      "repo_tag": "v5.0.0"
+      "repo_tag": "v5.1.0"
     }
   ],
   "version": "2.1.0"

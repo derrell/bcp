@@ -1233,6 +1233,25 @@ qx.Mixin.define("bcp.client.MClientMgmt",
           this._veteranWarning.setRich(true);
           this._veteranWarning.exclude();
         },
+        addContainerFunction : function(container, form)
+        {
+          // When the form window appears, resize it to slightly less
+          // than the application's size
+          form.addListenerOnce(
+            "appear",
+            () =>
+            {
+              let             root = qx.core.Init.getApplication().getRoot();
+              let             rootSize = root.getInnerSize();
+              let             scrollContainer = new qx.ui.container.Scroll();
+              let             width = rootSize.width - 100;
+              let             height = rootSize.height - 100;
+
+              scrollContainer.set({ width, height });
+              scrollContainer.add(container);
+              form.add(scrollContainer);
+            });
+        },
         setupFormRendererFunction : function(form) {
           let         layout;
           let         renderer;

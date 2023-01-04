@@ -358,6 +358,32 @@ qx.Mixin.define("bcp.client.MAppointment",
             _this._requireAppointment.setRich(true);
             _this._requireAppointment.exclude();
           },
+          addContainerFunction : function(container, form)
+          {
+            let             scrollContainer = new qx.ui.container.Scroll();
+
+            scrollContainer.add(container);
+            form.add(scrollContainer);
+
+            // When the scroll container appears, determine the width
+            // of the list, and resize the scroll container to use
+            // remaining horizontal space for it.
+            scrollContainer.addListenerOnce(
+              "appear",
+              () =>
+              {
+                let             layoutParent = form.getLayoutParent();
+                let             parentBounds = layoutParent.getBounds();
+                let             children = layoutParent.getChildren();
+                let             listBounds = children[0].getBounds();
+
+                scrollContainer.set(
+                  {
+                    width  : parentBounds.width - listBounds.width - 20,
+                    height : listBounds.height
+                  });
+              });
+          },
           setupFormRendererFunction : function(form)
           {
             var renderer = new qxl.dialog.MultiColumnFormRenderer(form);
@@ -749,7 +775,7 @@ qx.Mixin.define("bcp.client.MAppointment",
                   {
                     row      : 0,
                     column   : 4,
-                    rowspan  : 20
+                    rowspan  : 10
                   }
                 },
 
