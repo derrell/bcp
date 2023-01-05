@@ -1,12 +1,8 @@
 #+STARTUP: showeverything
 * High-level list of changes
 ** Bug fixes
-*** Fulfilled before Arrived would show car upon arrival even though already fulfilled
-*** Cancelling arrival after fulfilled did the cancel, but didn't correctly update greeter page
 ** Feature changes
-*** Arrival order is shown even after order is fulfilled
-*** Added report feature for a vertical list of key/value pairs
-*** Revised Demographics For Board report to use vertical key/value report format
+*** Forms are now scrollable
 * Upgrade procedures
 ** Shut down and back up production
 ** Iterations
@@ -15,7 +11,6 @@
 *** #3: once all is tested and working, repeat on production
 ** Merge to master
 ** COMMENT Database changes
-ALTER TABLE Report ADD COLUMN format_key_value BOOLEAN DEFAULT 0;
 
 *** #4: Reports changes
 **** DELETE FROM Report;
