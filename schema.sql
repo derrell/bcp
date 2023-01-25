@@ -370,14 +370,14 @@ CREATE TABLE StoredProc_UpdateAge
 CREATE TRIGGER tr_ai_StoredProc_UpdateAge
 AFTER INSERT ON StoredProc_UpdateAge
 BEGIN
-  -- age = today.year - birthday.year
+  -- age = asOf.year - birthday.year
   UPDATE StoredProc_UpdateAge
     SET age =
       (SELECT strftime('%Y', new.asOf)) -
       (SELECT strftime('%Y', new.birthday))
     WHERE id = new.rowid;
 
-  -- mDiff = today.month - birthday.month
+  -- mDiff = asOf.month - birthday.month
   -- (see if birthday month has passed yet)
   UPDATE StoredProc_UpdateAge
     SET mDiff =
@@ -385,13 +385,20 @@ BEGIN
       (SELECT strftime('%m', new.birthday))
     WHERE id = new.rowid;
 
-  -- if (mDiff < 0 || (mDiff === 0 && today.day < birthday.day)) --age;
+  -- if (mDiff < 0 || (mDiff === 0 && asOf.day < birthday.day)) --age;
+  -- "asOf.day" is taken to be the last day of the asOf month, so
+  -- that a baby born during the month is considered an existing child
+  -- during any day of the distribution.
   UPDATE StoredProc_UpdateAge
     SET age = age - 1
     WHERE id == new.rowid
       AND ((SELECT mDiff FROM StoredProc_UpdateAge WHERE id = new.rowid) < 0
            OR (    (SELECT mDiff FROM StoredProc_UpdateAge WHERE id = new.rowid) = 0
-               AND (SELECT strftime('%d', new.asOf) < strftime('%d', new.birthday))));
+               AND (SELECT strftime('%d',
+                      DATE(new.asOf,
+                           'start of month',
+                           '+1 months',
+                           '-1 days')) < strftime('%d', new.birthday))));
 
   -- update the specified family member record
   UPDATE FamilyMember
