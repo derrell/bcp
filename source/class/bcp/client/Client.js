@@ -54,6 +54,7 @@ qx.Class.define("bcp.client.Client",
       let             font;
       let             label;
       let             idLabel;
+      let             clock;
       let             butLogin;
       let             butLogout;
       let             butMotd;
@@ -281,6 +282,15 @@ qx.Class.define("bcp.client.Client",
 
           xhr.send();
         });
+
+      clock = new qx.ui.basic.Label("");
+      clock.set(
+        {
+          rich       : true,
+          visibility : "excluded" // clock is only shown to Greeter user
+        });
+      clock.exclude();
+      rightButtonContainer.add(clock);
 
       butMotd = new qx.ui.form.Button("MOTD");
       butMotd.set(
@@ -514,6 +524,25 @@ qx.Class.define("bcp.client.Client",
 
               // Reduce the application identity padding to save space
               idLabel.setPaddingTop(0);
+
+              // Show the clock
+              clock.show();
+              setInterval(
+                () =>
+                {
+                  let             now = new Date();
+                  let             hours = now.getHours() % 12 || 12;
+
+                  clock.setValue(
+                    "<span style='font-weight: bold;'>" +
+                    ("0" + hours).substr(-2) +
+                    ":" +
+                    ("0" + now.getMinutes()).substr(-2) +
+                    ":" +
+                    ("0" + now.getSeconds()).substr(-2) +
+                    "</span>");
+                },
+                1000);
             }
 
             // Regardless, the logout button needs to be shown
