@@ -1974,3 +1974,44 @@ REPLACE INTO Report
         AS value
    ;'
 );
+
+REPLACE INTO Report
+(
+  name,
+  description,
+  landscape,
+  input_fields,
+  subtitle_field,
+  separate_by,
+  number_style,
+  number_remaining,
+  query
+)
+ VALUES
+(
+  'Per-distribution fulfillments',
+  'Statistics: Counts of default appointments and per-distribution fulfillments',
+  0,
+  '',
+  '',
+  '',
+  '',
+  '',
+  '
+    SELECT COUNT(*) AS "Default Appointment Count",
+           "" AS "Distribution",
+           "" as "Distribution Count"
+      FROM Client
+      WHERE length(appt_time_default) > 0
+
+    UNION ALL
+
+    SELECT "" AS "Default Appointment Count",
+           distribution AS "Distribution",
+           COUNT(*) AS "Distribution Count"
+      FROM Fulfillment
+      WHERE fulfilled
+      GROUP BY distribution
+      ORDER BY "Default Appointment Count" ASC, distribution DESC
+   ;'
+);

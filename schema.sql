@@ -1,7 +1,3 @@
---
--- Compare with mdb-to-sqlite.sh. Latest is likely there
---
-
 CREATE TABLE User
 (
   username          VARCHAR PRIMARY KEY NOT NULL,
