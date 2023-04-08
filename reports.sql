@@ -1938,8 +1938,10 @@ REPLACE INTO Report
              FROM Fulfillment
              WHERE distribution IN
                (SELECT start_date
-                  FROM DistributionPeriod
-                  ORDER BY start_date DESC LIMIT 3)
+                 FROM (SELECT start_date
+                         FROM DistributionPeriod
+                         ORDER BY start_date DESC LIMIT 4 OFFSET 1)
+                 LIMIT 3)
              GROUP BY family_name)
            WHERE count = 3)
         AS value
@@ -1953,8 +1955,10 @@ REPLACE INTO Report
              FROM Fulfillment
              WHERE distribution IN
                (SELECT start_date
-                  FROM DistributionPeriod
-                  ORDER BY start_date DESC LIMIT 3)
+                 FROM (SELECT start_date
+                         FROM DistributionPeriod
+                         ORDER BY start_date DESC LIMIT 4 OFFSET 1)
+                 LIMIT 3)
              GROUP BY family_name)
            WHERE count = 2)
         AS value
@@ -1967,8 +1971,10 @@ REPLACE INTO Report
              FROM Fulfillment
              WHERE distribution IN
                (SELECT start_date
-                  FROM DistributionPeriod
-                  ORDER BY start_date DESC LIMIT 3)
+                 FROM (SELECT start_date
+                         FROM DistributionPeriod
+                         ORDER BY start_date DESC LIMIT 4 OFFSET 1)
+                 LIMIT 3)
              GROUP BY family_name)
            WHERE count = 1)
         AS value
