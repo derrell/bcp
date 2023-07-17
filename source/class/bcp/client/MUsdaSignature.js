@@ -278,7 +278,7 @@ qx.Mixin.define("bcp.client.MUsdaSignature",
                   type       : "Checkbox",
                   label      : (data.verified
                                 ? "Residency Verified"
-                                : "Residency Unverified"),
+                                : "Change to Verified"),
                   value      : !! data.verified,
                   width      : 260,
                   properties :
@@ -299,7 +299,7 @@ qx.Mixin.define("bcp.client.MUsdaSignature",
                         }
                         else
                         {
-                          this.setLabel("Residency Unverified");
+                          this.setLabel("Change to Verified");
                         }
                       }
                   }
