@@ -28,6 +28,6 @@
     "yargs": "^16.2.0"
   },
   "devDependencies": {
-    "@qooxdoo/framework": "^7.1.1"
+    "@qooxdoo/framework": "^7.6.0"
   }
 }

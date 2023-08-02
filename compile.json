@@ -103,6 +103,7 @@
     }
   ],
   "libraries": [
+    "../../qxl.dialog.git",
     "."
   ],
   "eslintConfig": {
