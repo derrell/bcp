@@ -1065,6 +1065,139 @@ REPLACE INTO Report
   input_fields,
   subtitle_field,
   separate_by,
+  pre_query,
+  query
+)
+ VALUES
+(
+  'Fiscal year total attendance',
+  'Total attendance during fiscal year (with breakdown)',
+  0,
+  '{
+     "$year" :
+     {
+       "type" : "TextField",
+       "label" : "Year",
+       "validation" :
+        {
+          "required"  : true
+        }
+     }
+   }',
+  '$year',
+  '',
+  '
+   INSERT INTO StoredProc_UpdateAge
+       (birthday, asOf, family_name, member_name)
+     SELECT
+         date_of_birth, $year || ''-12-31 23:59'', family_name, member_name
+       FROM FamilyMember;
+  ',
+  '
+    SELECT
+        COALESCE(SUM(Total), 0) AS Total,
+        COALESCE(SUM(Senior), 0) AS Senior,
+        COALESCE(SUM(Adult), 0) AS Adult,
+        COALESCE(SUM(Child), 0) AS Child,
+        COALESCE(SUM(Male), 0) AS Male,
+        COALESCE(SUM(Female), 0) AS Female,
+        COALESCE(SUM(Other), 0) AS Other,
+        COALESCE(SUM(Veteran), 0) AS Veteran
+      FROM
+       (SELECT
+          c.family_name AS "Family name",
+          (c.count_senior + c.count_adult + c.count_child) AS Total,
+          c.count_senior AS Senior,
+          c.count_adult AS Adult,
+          c.count_child AS Child,
+          c.count_sex_male AS Male,
+          c.count_sex_female AS Female,
+          c.count_sex_other AS Other,
+          c.count_veteran AS Veteran
+        FROM Fulfillment f, Client c
+        WHERE f.distribution >= $year || "-06-01"
+          AND f.distribution < ($year + 1) || "-06-01"
+          AND f.fulfilled
+          AND c.family_name = f.family_name);
+  '
+);
+
+REPLACE INTO Report
+(
+  name,
+  description,
+  landscape,
+  input_fields,
+  subtitle_field,
+  separate_by,
+  pre_query,
+  query
+)
+ VALUES
+(
+  'Fiscal year total attendance - detail',
+  'Detail of total attendance during fiscal year (with breakdown)',
+  0,
+  '{
+     "$year" :
+     {
+       "type" : "TextField",
+       "label" : "Year",
+       "validation" :
+        {
+          "required"  : true
+        }
+     }
+   }',
+  '$year',
+  '',
+  '
+   INSERT INTO StoredProc_UpdateAge
+       (birthday, asOf, family_name, member_name)
+     SELECT
+         date_of_birth, $year || "-12-31 23:59", family_name, member_name
+       FROM FamilyMember;
+  ',
+  '
+   SELECT
+       "Family name",
+       COALESCE(COUNT(*), 0) AS "Distributions",
+       COALESCE(SUM(Total), 0) AS "Total",
+       COALESCE(SUM(Senior), 0) AS Senior,
+       COALESCE(SUM(Adult), 0) AS Adult,
+       COALESCE(SUM(Child), 0) AS Child,
+       COALESCE(SUM(Male), 0) AS Male,
+       COALESCE(SUM(Female), 0) AS Female,
+       COALESCE(SUM(Other), 0) AS Other,
+       COALESCE(SUM(Veteran), 0) AS Veteran
+     FROM
+      (SELECT
+         c.family_name AS "Family name",
+         (c.count_senior + c.count_adult + c.count_child) AS Total,
+         c.count_senior AS Senior,
+         c.count_adult AS Adult,
+         c.count_child AS Child,
+         c.count_sex_male AS Male,
+         c.count_sex_female AS Female,
+         c.count_sex_other AS Other,
+         c.count_veteran AS Veteran
+       FROM Fulfillment f, Client c
+       WHERE f.distribution >= $year || "-06-01"
+         AND f.distribution < ($year + 1) || "-06-01"
+         AND f.fulfilled
+         AND c.family_name = f.family_name)
+     GROUP BY "Family name";
+  '
+);
+
+REPLACE INTO Report
+(
+  name,
+  description,
+  landscape,
+  input_fields,
+  subtitle_field,
+  separate_by,
   query
 )
  VALUES
