@@ -1115,8 +1115,8 @@ REPLACE INTO Report
           c.count_sex_other AS Other,
           c.count_veteran AS Veteran
         FROM Fulfillment f, Client c
-        WHERE f.distribution >= $year || "-06-01"
-          AND f.distribution < ($year + 1) || "-06-01"
+        WHERE f.distribution >= $year || "-07-01"
+          AND f.distribution < ($year + 1) || "-07-01"
           AND f.fulfilled
           AND c.family_name = f.family_name);
   '
@@ -1182,8 +1182,8 @@ REPLACE INTO Report
          c.count_sex_other AS Other,
          c.count_veteran AS Veteran
        FROM Fulfillment f, Client c
-       WHERE f.distribution >= $year || "-06-01"
-         AND f.distribution < ($year + 1) || "-06-01"
+       WHERE f.distribution >= $year || "-07-01"
+         AND f.distribution < ($year + 1) || "-07-01"
          AND f.fulfilled
          AND c.family_name = f.family_name)
      GROUP BY "Family name";
