@@ -10,6 +10,7 @@ CREATE TABLE Client
   family_name               VARCHAR PRIMARY KEY NOT NULL,
   phone                     VARCHAR,
   email                     VARCHAR,
+  email_confirmed           BOOLEAN DEFAULT FALSE,
   ethnicity                 VARCHAR,
   language_abbreviation     VARCHAR DEFAULT 'en',
   count_elderly             INTEGER DEFAULT 0,  -- number of family members 80+
@@ -44,6 +45,7 @@ CREATE TABLE Client
 -- ALTER TABLE Client ADD COLUMN language_abbreviation VARCHAR DEFAULT 'en';
 -- ALTER TABLE Client ADD COLUMN count_young_adult INTEGER DEFAULT 0;
 -- ALTER TABLE Client ADD COLUMN count_elderly INTEGER DEFAULT 0;
+-- ALTER TABLE Client ADD COLUMN email_confirmed BOOLEAN DEFAULT FALSE;
 
 
 --

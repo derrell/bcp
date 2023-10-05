@@ -2,7 +2,7 @@
 * High-level list of changes
 ** Bug fixes
 ** Feature changes
-*** Forms are now scrollable
+*** Added email address confirmation (once, until Client.email_confirmed is reset)
 * Upgrade procedures
 ** Shut down and back up production
 ** Iterations
@@ -11,10 +11,11 @@
 *** #3: once all is tested and working, repeat on production
 ** Merge to master
 ** COMMENT Database changes
-
-*** #4: Reports changes
+*** Schema changes
+**** ALTER TABLE Client ADD COLUMN email_confirmed BOOLEAN DEFAULT FALSE;
+*** Reports changes
 **** DELETE FROM Report;
 **** Add the entirety of reports.sql
-*** #5: Install new software
-*** #6: Install latest node packages: npm install
+*** Install new software
+*** Install latest node packages: npm install
 ** Run new software

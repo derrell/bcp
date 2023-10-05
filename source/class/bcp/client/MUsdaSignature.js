@@ -528,6 +528,7 @@ qx.Mixin.define("bcp.client.MUsdaSignature",
               data.family_name,
               true
             ])
+
           .then(
             () =>
             {
@@ -543,6 +544,92 @@ qx.Mixin.define("bcp.client.MUsdaSignature",
                   }
                 });
             })
+
+          // Verify their email address
+          .then(
+            () =>
+            {
+              // If email has already been confirmed, we have nothing to do
+              if (data.email_confirmed)
+              {
+                return null;
+              }
+
+              let root = this.getRoot();
+              let rootSize = root.getInnerSize();
+              let confirmEmail = qxl.dialog.Dialog.prompt("Enter or confirm email address");
+              confirmEmail.set(
+                {
+                  caption : data.family_name,
+                  value   : (data.email || "").replace(/#.*/, ""),
+                  width   : rootSize.width,
+                  height  : rootSize.height,
+                  font    : "big-bold"
+                });
+
+              let fConfirmEmailResizeForm =
+                (e) =>
+                {
+                  let             data = e.getData();
+
+                  confirmEmail.set(
+                    {
+                      width           : data.width,
+                      height          : data.height
+                    });
+                };
+
+              // If the window resizes (or orientation changes), resize
+              // the form to fill the available space.
+              root.addListener("resize", fConfirmEmailResizeForm);
+
+              // Stop trying to resize the form when the form closes
+              [ "ok", "cancel" ].forEach(
+                (event) =>
+                {
+                  confirmEmail.addListenerOnce(
+                    event,
+                    () =>
+                    {
+                      root.removeListener("resize", fConfirmEmailResizeForm);
+                    });
+                });
+
+              confirmEmail._okButton.setLabel("Confirmed");
+              confirmEmail._cancelButton.setLabel("Can not confirm at present");
+              confirmEmail._textField.setMaxWidth(800);
+              confirmEmail._textField.setMarginLeft(100);
+
+              return confirmEmail.promise();
+            })
+
+           .then(
+             (email) =>
+             {
+               // If cancelled or was previously confirmed, don't save anything
+               if (! email)
+               {
+                 return true;
+               }
+
+               // Save the email address locally in case they cancel arrival
+               data.email = email;
+               data.email_confirmed = true;
+
+               // Save it remotely as well
+               return this.rpc(
+                 "updateClientEmail",
+                 [
+                   data.family_name,
+                   email
+                 ]);
+             })
+          .then(
+            () =>
+            {
+              return true;
+            })
+
           .catch(
             (e) =>
             {

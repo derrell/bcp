@@ -2154,3 +2154,37 @@ REPLACE INTO Report
       ORDER BY "Default Appointment Count" ASC, distribution DESC
    ;'
 );
+
+REPLACE INTO Report
+(
+  name,
+  description,
+  landscape,
+  input_fields,
+  subtitle_field,
+  separate_by,
+  query
+)
+ VALUES
+(
+  'Distribution email addresses',
+  'Generate list of email addresses for families with distribution appointments',
+  0,
+  '{
+     "$distribution" :
+     {
+       "type"  : "SelectBox",
+       "label" : "Distribution Date"
+     }
+   }',
+  '$distribution',
+  'Email addresses',
+  '
+   SELECT
+       c.family_name AS "Family name",
+       COALESCE(c.email, "<null>") AS Email
+     FROM Client c, Fulfillment f
+     WHERE f.distribution = $distribution
+       AND c.family_name = f.family_name
+     ORDER BY c.family_name;'
+);

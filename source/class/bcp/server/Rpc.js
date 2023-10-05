@@ -185,6 +185,12 @@ qx.Class.define("bcp.server.Rpc",
             permission_level    : 40
           },
 
+          updateClientEmail   :
+          {
+            handler             : this._updateClientEmail.bind(this),
+            permission_level    : 40
+          },
+
           updateFulfillmentAncillary   :
           {
             handler             : this._updateFulfillmentAncillary.bind(this),
@@ -2214,7 +2220,9 @@ qx.Class.define("bcp.server.Rpc",
             "      ELSE 'Small'",
             "    END AS 'family_size_text',",
             "    c.verified AS verified,",
-            "    c.usda_eligible_next_distro AS usda_eligible_next_distro",
+            "    c.usda_eligible_next_distro AS usda_eligible_next_distro,",
+            "    c.email AS email,",
+            "    c.email_confirmed AS email_confirmed",
             "  FROM",
             "    Fulfillment f,",
             "    Client c,",
@@ -2534,6 +2542,187 @@ qx.Class.define("bcp.server.Rpc",
             console.log(`${endTime.getTime() - startTime.getTime()}` +
                         "ms elapsed time in _updateClientArrival");
           });
+    },
+
+    /**
+     * Update client email address
+     *
+     * @param args {Array}
+     *   args[0] {familyName}
+     *     The client whose email is being saved
+     *
+     *   args[1] {email}
+     *     Updated email address
+     *
+     * @param callback {Function}
+     *   @signature(err, result)
+     */
+    _updateClientEmail(args, callback)
+    {
+      let             startTime = new Date();
+      let
+      [
+        familyName,
+        email
+      ] = args;
+
+      // TODO: move prepared statements to constructor
+      return Promise.resolve()
+        .then(() => this._beginTransaction())
+
+        // Update arrival flag, if requested
+        .then(
+          () =>
+          {
+            return this._db.prepare(
+              [
+                "UPDATE Client",
+                "  SET ",
+                "    email = $email,",
+                "    email_confirmed = TRUE",
+                "  WHERE family_name = $family_name;",
+
+              ].join(" "));
+          })
+        .then(
+          (stmt) =>
+          {
+            return stmt.all(
+              {
+                $family_name   : familyName,
+                $email         : email
+              });
+          })
+
+        .catch((e) =>
+          {
+            console.warn("Error in updateClientEmail", e);
+            callback( { message : e.toString() } );
+          })
+
+        .finally(
+          () =>
+          {
+            let             endTime = new Date;
+
+            this._endTransaction();
+            console.log(`${endTime.getTime() - startTime.getTime()}` +
+                        "ms elapsed time in _updateClientEmail");
+          });
+    },
+
+    /**
+     * Save a new or updated fulfillment. When updating the record is
+     * replaced in its entirety.
+     *
+     * @param args {Array}
+     *   args[0] {Map}
+     *     The map containing complete data for a fulfillment record
+     *
+     *   args[1] {Boolean}
+     *     true if this is a new entry; false if it is an edit
+     *
+     * @param callback {Function}
+     *   @signature(err, result)
+     */
+    _saveFulfillment(args, callback)
+    {
+      let             p;
+      let             day = null;
+      let             time = null;
+      const           fulfillmentInfo = args[0];
+
+      // If there's an appointment...
+      if (fulfillmentInfo.appointments)
+      {
+        day = fulfillmentInfo.appointments.day;
+        time = fulfillmentInfo.appointments.time;
+      }
+
+      // TODO: move prepared statements to constructor
+      return Promise.resolve()
+        .then(() => this._beginTransaction())
+
+        .then(
+          () =>
+          {
+            return this._db.prepare(
+              [
+                "INSERT INTO Fulfillment",
+                "  (",
+                "    distribution,",
+                "    family_name,",
+                "    appt_day,",
+                "    appt_time,",
+                "    notes,",
+                "    perishables,",
+                "    fulfilled,",
+                "    fulfillment_time",
+                "  )",
+                "  VALUES",
+                "  (",
+                "    $distribution,",
+                "    $family_name,",
+                "    $appt_day,",
+                "    $appt_time,",
+                "    $notes,",
+                "    $perishables,",
+                "    $fulfilled,",
+                "    $fulfillment_time",
+                "  )",
+                "  ON CONFLICT(distribution, family_name)",
+                "    DO UPDATE SET ",
+                "      appt_day = $appt_day,",
+                "      appt_time = $appt_time,",
+                "      notes = $notes,",
+                "      perishables = $perishables,",
+                "      fulfilled = $fulfilled,",
+                "      fulfillment_time = $fulfillment_time;"
+              ].join(" "));
+          })
+        .then(stmt => stmt.run(
+          {
+            $distribution      : fulfillmentInfo.distribution,
+            $family_name       : fulfillmentInfo.family_name,
+            $appt_day          : day,
+            $appt_time         : time,
+            $notes             : fulfillmentInfo.notes,
+            $perishables       : fulfillmentInfo.perishables,
+            $fulfilled         : fulfillmentInfo.fulfilled,
+            $fulfillment_time  : fulfillmentInfo.fulfillment_time
+          }))
+
+        .then(
+          () =>
+          {
+            return this._db.prepare(
+              [
+                "UPDATE Client",
+                "  SET usda_eligible = $usda_eligible,",
+                "      usda_eligible_next_distro = $usda_eligible_next_distro",
+                "  WHERE family_name = $family_name;"
+              ].join(" "));
+          })
+        .then(stmt => stmt.run(
+          {
+            $family_name               : fulfillmentInfo.family_name,
+            $usda_eligible             : fulfillmentInfo.usda_eligible,
+            $usda_eligible_next_distro : fulfillmentInfo.usda_eligible_next_distro
+          }))
+
+        // Give 'em what they came for!
+        .then(() => callback(null, null))
+        .catch((e) =>
+          {
+            let             error = { message : e.toString() };
+
+            console.warn(`Error in saveFulfillment`, e);
+            callback(error);
+          })
+
+        .finally(() => this._endTransaction());
+
+      return p;
     },
 
     /**
