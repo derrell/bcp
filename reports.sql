@@ -1990,60 +1990,66 @@ REPLACE INTO Report
   ',
   '
    SELECT
-     "Families with adults (one or more 18-64) raising children"
+     "Among recent clients, families with adults (one or more 18-64) raising children"
        AS key,
      (SELECT COUNT(*)
         FROM Client
-        WHERE count_adult > 0
+        WHERE length(COALESCE(appt_time_default, '''')) > 0
+          AND count_adult > 0
           AND count_child > 0)
         AS value
    UNION ALL
    SELECT
-     "Families with seniors (one or more 65+, no 18-64) raising children"
+     "Among recent clients, families with seniors (one or more 65+, no 18-64) raising children"
        AS key,
      (SELECT COUNT(*)
         FROM Client
-        WHERE count_senior > 0
+        WHERE length(COALESCE(appt_time_default, '''')) > 0
+          AND count_senior > 0
           AND count_adult = 0
           AND count_child > 0)
         AS value
    UNION ALL
    SELECT
-     "Adult couples (two 18-64) without children or seniors"
+     "Among recent clients, adult couples (two 18-64) without children or seniors"
        AS key,
      (SELECT COUNT(*)
         FROM Client
-        WHERE count_adult = 2
+        WHERE length(COALESCE(appt_time_default, '''')) > 0
+          AND count_adult = 2
           AND count_senior = 0
           AND count_child = 0)
         AS value
    UNION ALL
    SELECT
-     "Seniors (65+) living with other adults or seniors"
+     "Among recent clients, seniors (65+) living with other adults or seniors"
        AS key,
      (SELECT COUNT(*)
         FROM Client
-        WHERE count_senior > 0
+        WHERE length(COALESCE(appt_time_default, '''')) > 0
+          AND count_senior > 0
           AND (   count_adult > 0
                OR count_senior > 1))
         AS value
    UNION ALL
    SELECT
-     "Elderly (80+) living with other adults or seniors"
+     "Among recent clients, elderly (80+) living with other adults or seniors"
        AS key,
      (SELECT COUNT(*)
         FROM Client
-        WHERE count_elderly > 0
+        WHERE length(COALESCE(appt_time_default, '''')) > 0
+          AND count_elderly > 0
           AND (   count_adult > 0
                OR count_senior > 1))
         AS value
    UNION ALL
    SELECT
-     "Elderly (80+) living alone"
+     "Among recent clients, elderly (80+) living alone"
        AS key,
      (SELECT COUNT(*)
         FROM Client
-        WHERE count_elderly = 1
+        WHERE length(COALESCE(appt_time_default, '''')) > 0
+          AND count_elderly = 1
           AND count_senior = 1
           AND count_adult = 0
           AND count_child = 0)
