@@ -2188,3 +2188,31 @@ REPLACE INTO Report
        AND c.family_name = f.family_name
      ORDER BY c.family_name;'
 );
+
+REPLACE INTO Report
+(
+  name,
+  description,
+  landscape,
+  input_fields,
+  separate_by,
+  query
+)
+ VALUES
+(
+  'Email addresses of current clients',
+  'Show the email addresses of all clients who have a default appointment',
+  1,
+  '',
+  '',
+  '
+   SELECT
+       family_name AS `Family Name`,
+       COALESCE(email, "") AS Email
+     FROM Client
+     WHERE length(COALESCE(appt_time_default, '''')) > 0
+       AND length(Email) > 0
+     ORDER BY `Family Name`;
+  '
+);
+
