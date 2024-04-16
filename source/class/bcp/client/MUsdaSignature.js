@@ -1195,7 +1195,7 @@ qx.Mixin.define("bcp.client.MUsdaSignature",
               // tablet to the greeter
               saveSignature();
 
-              if (! result.bPrior)
+              if (! result || ! result.bPrior)
               {
                 this.awaitReturnToGreeter(
                   fUsdaFormHandler.result,
