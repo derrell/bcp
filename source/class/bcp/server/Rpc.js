@@ -1281,6 +1281,7 @@ qx.Class.define("bcp.server.Rpc",
     {
       let             preparedInsertOrUpdate;
       let             prepareUsda = null;
+      let             prepareUsdaPriorSig = null;
       let             prepareUsdaClearNextDistro = null;
       let             prepareResetArrivalCounter = null;
       let             priorDistribution = null;
@@ -1385,7 +1386,13 @@ qx.Class.define("bcp.server.Rpc",
             "            AND length(f.usda_eligible_signature) > 0",
             "         THEN 'yes' ",
             "       ELSE 'no'",
-            "     END)",
+            "     END),",
+            "    usda_prior_signature = NULL,",
+            "    usda_prior_signature_statement = NULL,",
+            "    usda_prior_signature_hash = NULL,",
+            "    usda_prior_signature_date = NULL,",
+            "    usda_prior_family_size = 0,",
+            "    usda_prior_max_income = 0",
             "  FROM Fulfillment AS f",
             "  WHERE",
             "   c.usda_eligible_next_distro IS NOT NULL",
@@ -1393,6 +1400,43 @@ qx.Class.define("bcp.server.Rpc",
             "   (    f.distribution = $distribution",
             "    AND f.family_name = c.family_name",
             "    AND (f.fulfilled OR f.usda_eligible_signature IS NOT NULL));"
+          ].join(""));
+
+        prepareUsdaPriorSig = this._db.prepare(
+          [
+            "UPDATE Client AS c",
+            "  SET",
+            "     usda_prior_signature = ",
+            "       COALESCE(f.usda_eligible_signature, NULL),",
+            "     usda_prior_signature_statement = ",
+            "       COALESCE(f.usda_signature_statement, NULL),",
+            "     usda_prior_signature_hash = ",
+            "       COALESCE(f.usda_signature_hash, NULL),",
+            "     usda_prior_signature_date = ",
+            "       COALESCE(f.usda_signature_date, NULL),",
+            "     usda_prior_family_size = ",
+            "       COALESCE(f.usda_family_size, 0),",
+            "     usda_prior_max_income = ",
+            "       COALESCE(f.usda_max_income, 0)",
+            "   FROM ",
+            "     (SELECT",
+            "          distribution,",
+            "          family_name,",
+            "          usda_eligible_signature,",
+            "          usda_signature_statement,",
+            "          usda_signature_hash,",
+            "          usda_signature_date,",
+            "          usda_family_size,",
+            "          usda_max_income",
+            "        FROM Fulfillment",
+            "        WHERE LENGTH(usda_eligible_signature) > 0",
+            "          AND usda_signature_date > (SELECT DATE('now', '-1 year'))",
+            "        GROUP BY family_name",
+            "        HAVING MAX(distribution))",
+            "      AS f",
+            "   WHERE c.family_name = f.family_name",
+            "     AND f.usda_signature_date > (SELECT DATE('now', '-1 year'))",
+            "     AND LENGTH(f.usda_eligible_signature) > 0;"
           ].join(""));
 
         prepareUsdaClearNextDistro = this._db.prepare(
@@ -1422,8 +1466,8 @@ qx.Class.define("bcp.server.Rpc",
           {
             if (prepareUsda)    // only non-null if creating new distribution
             {
-              return this._db .prepare(
-                "SELECT MAX(start_date) AS distro FROM DistributionPeriod");
+              return this._db.prepare(
+                "SELECT MAX(start_date) AS distro FROM DistributionPeriod;");
             }
             else
             {
@@ -1507,6 +1551,24 @@ qx.Class.define("bcp.server.Rpc",
                   {
                     $distribution : priorDistribution
                   }));
+            }
+
+            return null;
+          })
+
+        // Update the client's concept of most recent USDA signature,
+        // allowing use of a prior signature if it is within the past
+        // year.
+        .then(
+          () =>
+          {
+            // prepareUsdaPriorSig is only non-null for a new
+            // distribution creation
+            if (prepareUsdaPriorSig)
+            {
+              console.log("Determining prior signatures within past year");
+              return prepareUsdaPriorSig
+                .then((stmt) => stmt.run({}));
             }
 
             return null;
@@ -2192,6 +2254,14 @@ qx.Class.define("bcp.server.Rpc",
             "    f.memo AS memo,",
             "    f.fulfilled AS fulfilled,",
             "    (SELECT",
+            "       COALESCE(max_income_num, 0)",
+            "       FROM UsdaMaxIncome",
+            "       WHERE family_size = ",
+            "          (SELECT COUNT(*) ",
+            "            FROM FamilyMember fam ",
+            "            WHERE fam.family_name = f.family_name)",
+            "       ) AS usda_amount_num,",
+            "    (SELECT",
             "       COALESCE(max_income_text, 'See Taryn')",
             "       FROM UsdaMaxIncome",
             "       WHERE family_size = ",
@@ -2201,6 +2271,13 @@ qx.Class.define("bcp.server.Rpc",
             "       ) AS usda_amount,",
             "    c.usda_eligible AS usda_eligible,",
             "    f.usda_eligible_signature AS usda_eligible_signature,",
+            "    f.usda_signature_date AS usda_signature_date,",
+            "    c.usda_prior_signature AS usda_prior_signature,",
+            "    c.usda_prior_signature_statement AS usda_prior_signature_statement,",
+            "    c.usda_prior_signature_hash AS usda_prior_signature_hash,",
+            "    c.usda_prior_signature_date AS usda_prior_signature_date,",
+            "    c.usda_prior_family_size AS usda_prior_family_size,",
+            "    c.usda_prior_max_income AS usda_prior_max_income,",
             "    c.count_child AS family_count_child,",
             "    c.count_adult AS family_count_adult,",
             "    c.count_senior AS family_count_senior,",
@@ -2302,7 +2379,10 @@ qx.Class.define("bcp.server.Rpc",
         distribution,
         familyName,
         signature,
-        sigStatement
+        sigStatement,
+        sigDate,
+        sigFamilySize,
+        sigMaxIncome
       ] = args;
 
       // TODO: move prepared statements to constructor
@@ -2332,14 +2412,16 @@ qx.Class.define("bcp.server.Rpc",
         .then(
           () =>
           {
-            // First, retrieve the most recent distribution start date
             return this._db.prepare(
               [
                 "UPDATE Fulfillment",
                 "  SET ",
                 "    usda_eligible_signature = $usda_eligible_signature,",
                 "    usda_signature_statement = $usda_signature_statement,",
-                "    usda_signature_hash = $usda_signature_hash",
+                "    usda_signature_hash = $usda_signature_hash,",
+                "    usda_signature_date = COALESCE($usda_signature_date, date('now')),",
+                "    usda_family_size = $usda_family_size,",
+                "    usda_max_income = $usda_max_income",
                 "  WHERE distribution = $distribution",
                 "    AND family_name = $family_name;"
               ].join(" "));
@@ -2353,14 +2435,40 @@ qx.Class.define("bcp.server.Rpc",
                 $family_name              : familyName,
                 $usda_eligible_signature  : signature,
                 $usda_signature_statement : sigStatement,
+                $usda_signature_date      : sigDate,
+                $usda_family_size         : sigFamilySize || 0,
+                $usda_max_income          : sigMaxIncome || 0,
                 $usda_signature_hash      : signatureHash
+              });
+          })
+        .then(
+          () =>
+          {
+            // Get the signature and its date
+            return this._db.prepare(
+              [
+                "SELECT",
+                "    usda_eligible_signature,",
+                "    usda_signature_date",
+                "  FROM Fulfillment",
+                "  WHERE distribution = $distribution",
+                "    AND family_name = $family_name;",
+              ].join(" "));
+          })
+        .then(
+          (stmt) =>
+          {
+            return stmt.all(
+              {
+                $distribution             : distribution,
+                $family_name              : familyName
               });
           })
         .then(
           (result) =>
           {
             // Give 'em what they came for
-            callback(null, null);
+            callback(null, result.length > 0 ? result[0] : null);
           })
 
         .catch((e) =>

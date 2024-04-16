@@ -26,6 +26,12 @@ CREATE TABLE Client
   income_amount             REAL,
   usda_eligible             VARCHAR NOT NULL DEFAULT '',
   usda_eligible_next_distro VARCHAR DEFAULT NULL,
+  usda_prior_signature      VARCHAR DEFAULT NULL,
+  usda_prior_signature_statement VARCHAR DEFAULT NULL,
+  usda_prior_signature_hash VARCHAR DEFAULT NULL,
+  usda_prior_signature_date VARCHAR DEFAULT NULL,
+  usda_prior_family_size    INTEGER DEFAULT 0,    -- family size at time of signature
+  usda_prior_max_income     INTEGER DEFAULT 0,    -- usda max income for that family size
   pet_types                 VARCHAR,
   address_default           VARCHAR, -- default address for delivery
   appt_day_default          INTEGER, -- 1-relative to distro start
@@ -40,12 +46,19 @@ CREATE TABLE Client
 -- Changes from original to derive the above table
 --
 -- ALTER TABLE Client ADD COLUMN notes_default VARCHAR NOT NULL DEFAULT '';
--- ALTER TABLE Client ADD COLUMN perishables_default VARCHAR NOT NULL DEFAULT '-- ALTER TABLE Client ADD COLUMN usda_eligible VARCHAR NOT NULL DEFAULT '';
+-- ALTER TABLE Client ADD COLUMN perishables_default VARCHAR NOT NULL DEFAULT '';
+-- ALTER TABLE Client ADD COLUMN usda_eligible VARCHAR NOT NULL DEFAULT '';
 -- ALTER TABLE Client ADD COLUMN usda_eligible_next_distro VARCHAR DEFAULT NULL;
 -- ALTER TABLE Client ADD COLUMN language_abbreviation VARCHAR DEFAULT 'en';
 -- ALTER TABLE Client ADD COLUMN count_young_adult INTEGER DEFAULT 0;
 -- ALTER TABLE Client ADD COLUMN count_elderly INTEGER DEFAULT 0;
 -- ALTER TABLE Client ADD COLUMN email_confirmed BOOLEAN DEFAULT FALSE;
+-- ALTER TABLE Client ADD COLUMN usda_prior_signature VARCHAR DEFAULT NULL;
+-- ALTER TABLE Client ADD COLUMN usda_prior_signature_statement VARCHAR DEFAULT NULL;
+-- ALTER TABLE Client ADD COLUMN usda_prior_signature_hash VARCHAR DEFAULT NULL;
+-- ALTER TABLE Client ADD COLUMN usda_prior_signature_date VARCHAR DEFAULT NULL;
+-- ALTER TABLE Client ADD COLUMN usda_prior_family_size INTEGER DEFAULT 0;
+-- ALTER TABLE Client ADD COLUMN usda_prior_max_income INTEGER DEFAULT 0;
 
 
 --
@@ -170,9 +183,12 @@ CREATE TABLE Fulfillment
   fulfillment_time  VARCHAR,                -- %Y-%m-%d %H:%M:%S
   notes             VARCHAR,
   perishables       VARCHAR,
-  usda_eligible_signature VARCHAR DEFAULT NULL,
+  usda_eligible_signature  VARCHAR DEFAULT NULL,
   usda_signature_statement VARCHAR DEFAULT NULL,
   usda_signature_hash      VARCHAR DEFAULT NULL,
+  usda_signature_date      VARCHAR DEFAULT NULL,
+  usda_family_size  INTEGER DEFAULT 0,    -- family size at time of signature
+  usda_max_income   INTEGER DEFAULT 0,    -- usda max income for that family size
   arrival_time      VARCHAR DEFAULT NULL,   -- %Y-%m-%d %H:%M:%S
   arrival_order     INTEGER,
   memo              VARCHAR DEFAULT '',
@@ -187,6 +203,9 @@ CREATE TABLE Fulfillment
 -- ALTER TABLE Fulfillment ADD COLUMN arrival_time VARCHAR DEFAULT NULL;
 -- ALTER TABLE Fulfillment ADD COLUMN memo VARCHAR DEFAULT '';
 -- ALTER TABLE Fulfillment ADD COLUMN arrival_order INTEGER;
+-- ALTER TABLE Fulfillment ADD COLUMN usda_signature_date VARCHAR DEFAULT NULL;
+-- ALTER TABLE Fulfillment ADD COLUMN usda_family_size INTEGER DEFAULT 0;
+-- ALTER TABLE Fulfillment ADD COLUMN usda_max_income INTEGER DEFAULT 0;
 
 
 CREATE INDEX Fulfillment_appt_idx

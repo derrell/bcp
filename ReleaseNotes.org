@@ -2,7 +2,7 @@
 * High-level list of changes
 ** Bug fixes
 ** Feature changes
-*** Added email address confirmation (once, until Client.email_confirmed is reset)
+*** Allow use of with-one-year-prior USDA signature instead of new signature
 * Upgrade procedures
 ** Shut down and back up production
 ** Iterations
@@ -12,7 +12,34 @@
 ** Merge to master
 ** COMMENT Database changes
 *** Schema changes
-**** ALTER TABLE Client ADD COLUMN email_confirmed BOOLEAN DEFAULT FALSE;
+**** ALTER TABLE Client ADD COLUMN usda_prior_signature VARCHAR DEFAULT NULL;
+**** ALTER TABLE Client ADD COLUMN usda_prior_signature_statement VARCHAR DEFAULT NULL;
+**** ALTER TABLE Client ADD COLUMN usda_prior_signature_hash VARCHAR DEFAULT NULL;
+**** ALTER TABLE Client ADD COLUMN usda_prior_signature_date VARCHAR DEFAULT NULL;
+**** ALTER TABLE Client ADD COLUMN usda_prior_family_size INTEGER DEFAULT 0;
+**** ALTER TABLE Client ADD COLUMN usda_prior_max_income INTEGER DEFAULT 0;
+**** ALTER TABLE Fulfillment ADD COLUMN usda_signature_date VARCHAR DEFAULT NULL;
+**** ALTER TABLE Fulfillment ADD COLUMN usda_family_size INTEGER DEFAULT 0;
+**** ALTER TABLE Fulfillment ADD COLUMN usda_max_income INTEGER DEFAULT 0;
+**** -- add missing field data to most recent distribution
+UPDATE Fulfillment AS f
+  SET
+      usda_signature_date = distribution,
+      usda_family_size =
+        (SELECT COUNT(*)
+           FROM FamilyMember fam
+           WHERE fam.family_name = f.family_name),
+      usda_max_income =
+        (SELECT max_income_num
+           FROM UsdaMaxIncome
+           WHERE family_size =
+              (SELECT COUNT(*)
+                FROM FamilyMember fam
+                WHERE fam.family_name = f.family_name))
+    WHERE
+          distribution = (SELECT MAX(start_date) FROM DistributionPeriod)
+      AND LENGTH(usda_eligible_signature) > 0;
+
 *** Reports changes
 **** DELETE FROM Report;
 **** Add the entirety of reports.sql

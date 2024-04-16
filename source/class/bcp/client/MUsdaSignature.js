@@ -32,6 +32,39 @@ qx.Mixin.define("bcp.client.MUsdaSignature",
     _loginWidget                : null,
 
     /**
+     * Create a confirm dialog in our standard format. The confirm dialog is
+     * shown at completion of this method.
+     *
+     * @param message {String}
+     *   The question to present, to be confirmed
+     *
+     * @return {Promise}
+     *   A promise that resolves with the boolean result of the confirmation.
+     */
+    _createConfirm(message)
+    {
+      let             confirm = new qxl.dialog.Confirm({ message });
+
+      // Make the confirm box easily usable on a phone/tablet
+      confirm.set(
+        {
+          width : 500
+        });
+      confirm._yesButton.set(
+        {
+          width  : 100,
+          height : 50
+        });
+      confirm._noButton.set(
+        {
+          width  : 100,
+          height : 50
+        });
+
+      return confirm.show().promise();
+    },
+
+    /**
      * Create the delivery day page
      *
      * @param tabView {qx.ui.tabview.TabView}
@@ -235,6 +268,8 @@ qx.Mixin.define("bcp.client.MUsdaSignature",
       let             arrived;
       let             checkbox;
       let             signature;
+      let             sigImage;
+      let             sigDate;
       let             sigStatement;
       let             formData;
       let             root;
@@ -752,6 +787,7 @@ qx.Mixin.define("bcp.client.MUsdaSignature",
         "execute",
         () =>
         {
+          let             bSigRequired;
           let             priorValue = checkbox.getUserData("priorValue");
           let             value = checkbox.getValue();
           let             _this = this;
@@ -885,30 +921,9 @@ qx.Mixin.define("bcp.client.MUsdaSignature",
               .then(
                 () =>
                 {
-                  let             confirm;
-                  const           message =
-                      "Are you sure you want to switch back to " +
-                      "'Sign' and discard the signature?";
-
-                  confirm = new qxl.dialog.Confirm({ message });
-
-                  // Make the confirm box easily usable on a phone/tablet
-                  confirm.set(
-                    {
-                      width : 500
-                    });
-                  confirm._yesButton.set(
-                    {
-                      width  : 100,
-                      height : 50
-                    });
-                  confirm._noButton.set(
-                    {
-                      width  : 100,
-                      height : 50
-                    });
-
-                  return confirm.show().promise();
+                  return this._createConfirm(
+                    "Are you sure you want to switch back to " +
+                      "'Sign' and discard the signature?");
                 })
               .then(
                 (result) =>
@@ -947,7 +962,8 @@ qx.Mixin.define("bcp.client.MUsdaSignature",
                   }
 
                   // remove the signature from the tree
-                  signature.setSource(null);
+                  sigImage.setSource(null);
+                  sigDate.setValue("");
 
                   // Set the button back to Sign
                   checkbox.setValue(null);
@@ -1098,9 +1114,6 @@ qx.Mixin.define("bcp.client.MUsdaSignature",
               minWidth : 140
             });
 
-          this._usdaForm.center();
-          this._usdaForm.show();
-
           // Don't use the callback mechanism as we might need to
           // submit the form multiple times if the PIN entry fails
           // of if the greeter decides the signature is incomplete
@@ -1144,16 +1157,23 @@ qx.Mixin.define("bcp.client.MUsdaSignature",
                       distribution,
                       data.family_name,
                       result.signature,
-                      result.signature ? sigStatement : ""
+                      result.signature ? result.sigStatement || sigStatement : "",
+                      result.usda_signature_date,
+                      result.family_size_count || data.family_size_count,
+                      result.usda_amount_num || data.usda_amount_num
                     ])
                     .then(
-                      () =>
+                      (sigInfo) =>
                       {
                         const         bEligible = result.signature.length > 0;
 
                         // Add the signature to the tree
-                        signature.setSource(
+                        sigImage.setSource(
                           bEligible ? result.signature : null);
+                        sigDate.setValue(
+                          bEligible && sigInfo
+                            ? sigInfo.usda_signature_date || null
+                            : null);
 
                         // Set checkbox to Eligible
                         checkbox.setValue(bEligible);
@@ -1174,9 +1194,13 @@ qx.Mixin.define("bcp.client.MUsdaSignature",
               // Save the signature and ask the client to return the
               // tablet to the greeter
               saveSignature();
-              this.awaitReturnToGreeter(
-                fUsdaFormHandler.result,
-                data.language_abbreviation);
+
+              if (! result.bPrior)
+              {
+                this.awaitReturnToGreeter(
+                  fUsdaFormHandler.result,
+                  data.language_abbreviation);
+              }
             };
 
           // Handle "Ok", retrieving signature form results
@@ -1202,6 +1226,75 @@ qx.Mixin.define("bcp.client.MUsdaSignature",
               checkbox.setValue(priorValue); // revert indicator
               checkbox.setUserData("priorValue", priorValue);
             });
+
+          // Prepare to show the signature form
+          this._usdaForm.center();
+
+          // Assume no signature is required
+          bSigRequired = false;
+
+          // If the cleint's language isn't English, we'll always have
+          // them sign, since the greeters don't necessarily speak the
+          // client's language and therefore can't ask them if their
+          // income is still less than the maximum.
+          if (data.language_abbreviation != "en")
+          {
+            bSigRequired = true;
+          }
+
+          // If there is no recent signature, or the family size has
+          // changed, then a signature is required.
+          if (! data.usda_prior_signature ||
+              data.usda_prior_family_size != data.family_size_count)
+          {
+            bSigRequired = true;
+          }
+
+          // If a signature is required...
+          if (bSigRequired)
+          {
+            // ... then show the signature form now
+            this._usdaForm.show();
+          }
+          else
+          {
+            // There's a prior signature on file. See if we can use it
+            Promise.resolve()
+              .then(
+                () =>
+                {
+                  return this._createConfirm(
+                    "There is a prior signature on file." +
+                      "<p>" +
+                      "Ask the client: " +
+                      "\"Is your family's combined monthly income currently " +
+                      "at or below " + data.usda_amount + "?\"");
+                })
+              .then(
+                (bEligible) =>
+                {
+                  let             result = { bPrior : true };
+
+                  // If they're not eligible...
+                  if (! bEligible)
+                  {
+                    result.signature = "";
+                  }
+                  else
+                  {
+                    // We can use the prior signature.
+                    result.eligible = true;
+                    result.signature = data.usda_prior_signature;
+                    result.sigStatement = data.usda_prior_signature_statement;
+                    result.usda_signature_date = data.usda_prior_signature_date;
+                    result.family_size_count = data.usda_prior_family_size;
+                    result.usda_amount_num = data.usda_prior_max_income;
+                  }
+
+                  // Simulate the signature form having been completed
+                  fUsdaFormHandler(result);
+                });
+          }
         });
 
       ! data.arrival_time && checkbox.hide();
@@ -1254,8 +1347,10 @@ qx.Mixin.define("bcp.client.MUsdaSignature",
         });
       treeItem.addWidget(notes, { flex : 1 });
 
-      signature = new qx.ui.basic.Image();
-      signature.set(
+      signature = new qx.ui.container.Composite(new qx.ui.layout.VBox(8));
+
+      sigImage = new qx.ui.basic.Image();
+      sigImage.set(
         {
           scale       : true,
           width       : 150,
@@ -1264,6 +1359,18 @@ qx.Mixin.define("bcp.client.MUsdaSignature",
         });
       ! data.arrival_time && signature.hide();
       hidden.push({ object : signature });
+      signature.add(sigImage);
+
+      sigDate = new qx.ui.basic.Label(
+        data.usda_eligible_signature && data.usda_signature_date
+          ? data.usda_signature_date :
+          null);
+      o = new qx.ui.container.Composite(new qx.ui.layout.HBox());
+      o.add(new qx.ui.core.Spacer(), { flex : 1 });
+      o.add(sigDate);
+      o.add(new qx.ui.core.Spacer(), { flex : 1 });
+      signature.add(o);
+
       treeItem.addWidget(signature);
 
       o = new qx.ui.form.Button("More");
