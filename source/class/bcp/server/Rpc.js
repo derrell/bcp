@@ -1281,6 +1281,7 @@ qx.Class.define("bcp.server.Rpc",
     {
       let             preparedInsertOrUpdate;
       let             prepareUsda = null;
+      let             initUsdaPriorSig = null;
       let             prepareUsdaPriorSig = null;
       let             prepareUsdaClearNextDistro = null;
       let             prepareResetArrivalCounter = null;
@@ -1402,6 +1403,18 @@ qx.Class.define("bcp.server.Rpc",
             "    AND (f.fulfilled OR f.usda_eligible_signature IS NOT NULL));"
           ].join(""));
 
+        initUsdaPriorSig = this._db.prepare(
+          [
+            "UPDATE Client AS c",
+            "  SET",
+            "    usda_prior_signature = NULL,",
+            "    usda_prior_signature_statement = NULL,",
+            "    usda_prior_signature_hash = NULL,",
+            "    usda_prior_signature_date = NULL,",
+            "    usda_prior_family_size = 0,",
+            "    usda_prior_max_income = 0;",
+          ].join(""));
+
         prepareUsdaPriorSig = this._db.prepare(
           [
             "UPDATE Client AS c",
@@ -1430,13 +1443,11 @@ qx.Class.define("bcp.server.Rpc",
             "          usda_max_income",
             "        FROM Fulfillment",
             "        WHERE LENGTH(usda_eligible_signature) > 0",
-            "          AND usda_signature_date > (SELECT DATE('now', '-1 year'))",
+            "          AND usda_signature_date > (SELECT DATE($start_date, '-1 year'))",
             "        GROUP BY family_name",
             "        HAVING MAX(distribution))",
             "      AS f",
-            "   WHERE c.family_name = f.family_name",
-            "     AND f.usda_signature_date > (SELECT DATE('now', '-1 year'))",
-            "     AND LENGTH(f.usda_eligible_signature) > 0;"
+            "   WHERE c.family_name = f.family_name;",
           ].join(""));
 
         prepareUsdaClearNextDistro = this._db.prepare(
@@ -1562,13 +1573,31 @@ qx.Class.define("bcp.server.Rpc",
         .then(
           () =>
           {
+            // initUsdaPriorSig is only non-null for a new
+            // distribution creation
+            if (initUsdaPriorSig)
+            {
+              console.log("Initializing no prior signatures");
+              return initUsdaPriorSig
+                .then((stmt) => stmt.run({}));
+            }
+
+            return null;
+          })
+        .then(
+          () =>
+          {
             // prepareUsdaPriorSig is only non-null for a new
             // distribution creation
             if (prepareUsdaPriorSig)
             {
-              console.log("Determining prior signatures within past year");
+              console.log("Determining signatures within one year prior to",
+                          distroInfo.start_date);
               return prepareUsdaPriorSig
-                .then((stmt) => stmt.run({}));
+                .then((stmt) => stmt.run(
+                  {
+                    $start_date       : distroInfo.start_date,
+                  }));
             }
 
             return null;
