@@ -18,7 +18,6 @@ qx.Mixin.define("bcp.client.MAppointment",
     _appointmentClients        : null,
     _appointmentForm           : null,
     _appointmentLabelToListMap : null,
-    _butNewClient              : null,
     _butCancelAppointment      : null,
     _tabLabelAppointment       : null,
 
@@ -59,7 +58,7 @@ qx.Mixin.define("bcp.client.MAppointment",
       // Initialize the label to list map
       this._appointmentLabelToListMap = {};
 
-      // Create a vbox for the client list and New Client button
+      // Create a vbox for the client list and footer
       vBox = new qx.ui.container.Composite(new qx.ui.layout.VBox(10));
       page.add(vBox);
 
@@ -76,24 +75,9 @@ qx.Mixin.define("bcp.client.MAppointment",
       this._appointmentClients.addListener(
         "changeSelection", this._onAppointmentListChangeSelection, this);
 
-      // Create an hbox for the New Client and Search facilities
+      // Create an hbox for the Search facilities and checkboxes
       hBox = new qx.ui.container.Composite(new qx.ui.layout.HBox(10));
       vBox.add(hBox);
-
-      // Allow creating a new client right from here
-      this._butNewClient = new qx.ui.form.Button("New Client");
-      this._butNewClient.set(
-        {
-          maxWidth : 80
-        });
-      hBox.add(this._butNewClient);
-      this._butNewClient.addListener(
-        "execute",
-        () =>
-        {
-          this._buildClientForm();
-        },
-        this);
 
       // Create a search box. First its label...
       label = new qx.ui.basic.Label("Search:");
@@ -129,10 +113,17 @@ qx.Mixin.define("bcp.client.MAppointment",
         {
           const           text = e.getData();
           const           byPhone = cbPhone.getValue();
-          const           matches =
+          let             matches =
             byPhone
               ? this._trieSearchPhone.get(text)
               : this._trieSearchFamily.get(text);
+
+          // Filter out matches that have no default appointment
+          matches = matches.filter(
+            (entry) =>
+            {
+              return entry.appt_time_default && entry.appt_time_default.length > 0;
+            });
 
           if (matches.length > 0)
           {
@@ -478,7 +469,6 @@ qx.Mixin.define("bcp.client.MAppointment",
     _disableAllForAppointment : function(bDisable)
     {
       this._appointmentClients.setEnabled(! bDisable);
-      this._butNewClient.setEnabled(! bDisable);
 
       // Disable/Enable all tabs other than the current one
       this._tabView.getChildren().forEach(
@@ -510,6 +500,11 @@ qx.Mixin.define("bcp.client.MAppointment",
 
       // Recreate the list of clients
       this._tm.getDataAsMapArray()
+        .filter(
+          (entry) =>
+          {
+            return entry.appt_time_default && entry.appt_time_default.length > 0;
+          })
         .sort(
           (a, b) =>
           {
