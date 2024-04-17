@@ -1772,17 +1772,14 @@ REPLACE INTO Report
        c.count_senior AS Seniors,
        c.count_adult AS Adults,
        c.count_child AS Children,
-       -- COALESCE(
-       --   f.usda_signature_statement,
-       --   "") AS "Statement&nbsp;attested&nbsp;to&nbsp;with&nbsp;signature",
-       -- COALESCE(
-       --   f.usda_signature_hash,
-       ---  "") AS "Security Hash",
        COALESCE(
          f.usda_eligible_signature,
          -- X image to request board member signature
          "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAB4AAAAeCAYAAAA7MK6iAAAACXBIWXMAAA3XAAAN1wFCKJt4AAAAB3RJTUUH5gIDDhEZWZAIawAAAJpJREFUSMfNl80OgCAMg9u9/zvjxYvGABtd6i4kyPqZyX4ETMZ7HR97answYnGgAwoAiN2DSug7rGPxXAXll7ASPtVi1kEBnQmewLd8eSpQ9ZEJZV+UotClo6P4bqX7wNNCUNVUpElJj6LCkNYKd1v8dagtl8uSTpYCYimZliZhaYuWQcAy+liGvQ7oFB7C5pHKnGiGdv8W5e0C2k4tIsqHIKsAAAAASUVORK5CYII="
-         ) AS Signature
+         ) AS Signature,
+       COALESCE(
+         f.usda_signature_date,
+         "") AS "Date signed"
      FROM Client c
      LEFT JOIN Fulfillment f
        ON f.family_name = c.family_name
