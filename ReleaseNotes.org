@@ -3,6 +3,7 @@
 ** Bug fixes
 ** Feature changes
 *** Allow use of with-one-year-prior USDA signature instead of new signature
+*** Only list, on Appointments tab, clients with an assigned default appointment
 * Upgrade procedures
 ** Shut down and back up production
 ** Iterations
