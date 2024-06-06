@@ -2219,3 +2219,57 @@ REPLACE INTO Report
   '
 );
 
+REPLACE INTO Report
+(
+  name,
+  description,
+  landscape,
+  input_fields,
+  subtitle_field,
+  separate_by,
+  pre_query,
+  query
+)
+ VALUES
+(
+  'Female participants in past 3 months',
+  'Female members of families who have had appointments in past 3 months',
+  0,
+  '',
+  '',
+  'Family',
+  '
+    INSERT INTO StoredProc_UpdateAge
+        (birthday, asOf, family_name, member_name)
+      SELECT
+          date_of_birth,
+          (SELECT MAX(start_date) FROM DistributionPeriod),
+          family_name,
+          member_name
+        FROM FamilyMember;
+  ',
+  '
+    SELECT age AS Age,
+           CASE
+             WHEN age < 18 THEN "Child"
+             WHEN age < 25 THEN "Young Adult"
+             WHEN age < 65 THEN "Adult"
+             WHEN age < 80 THEN "Senior"
+             ELSE               "Elderly"
+           END AS "Age Group",
+           member_name AS Name,
+           family_name AS Family
+      FROM FamilyMember
+      WHERE family_name IN
+        (SELECT DISTINCT family_name
+           FROM Fulfillment f
+           WHERE distribution IN
+             (SELECT start_date
+                FROM (SELECT start_date
+                        FROM DistributionPeriod
+                        ORDER BY start_date DESC LIMIT 4 OFFSET 1)
+                LIMIT 3))
+        AND gender = "F"
+      ORDER BY family_name, age;
+  '
+);
