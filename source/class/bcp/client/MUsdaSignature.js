@@ -525,7 +525,7 @@ qx.Mixin.define("bcp.client.MUsdaSignature",
         });
 
       // Add the remaining fields
-      data.id = ("00" + data.id).substr(-3);
+      data.id = ("000" + data.id).substr(-4);
       o = new qx.ui.basic.Label(`#${data.id}`);
       o.set(
         {

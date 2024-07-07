@@ -2,48 +2,20 @@
 * High-level list of changes
 ** Bug fixes
 ** Feature changes
-*** Allow use of with-one-year-prior USDA signature instead of new signature
-*** Only list, on Appointments tab, clients with an assigned default appointment
+*** Use 4-digit, instead of 3-digit client ID numbers
 * Upgrade procedures
 ** Shut down and back up production
 ** Iterations
-*** #1: copy db from production to bcp-test; perform following ops there
+*** #1: copy db from production to bcp-test
 *** #2: perform following ops on bcp-test
 *** #3: once all is tested and working, repeat on production
-** Merge to master
+** Merge to main
 ** COMMENT Database changes
 *** Schema changes
-**** ALTER TABLE Client ADD COLUMN usda_prior_signature VARCHAR DEFAULT NULL;
-**** ALTER TABLE Client ADD COLUMN usda_prior_signature_statement VARCHAR DEFAULT NULL;
-**** ALTER TABLE Client ADD COLUMN usda_prior_signature_hash VARCHAR DEFAULT NULL;
-**** ALTER TABLE Client ADD COLUMN usda_prior_signature_date VARCHAR DEFAULT NULL;
-**** ALTER TABLE Client ADD COLUMN usda_prior_family_size INTEGER DEFAULT 0;
-**** ALTER TABLE Client ADD COLUMN usda_prior_max_income INTEGER DEFAULT 0;
-**** ALTER TABLE Fulfillment ADD COLUMN usda_signature_date VARCHAR DEFAULT NULL;
-**** ALTER TABLE Fulfillment ADD COLUMN usda_family_size INTEGER DEFAULT 0;
-**** ALTER TABLE Fulfillment ADD COLUMN usda_max_income INTEGER DEFAULT 0;
-**** -- add missing field data to most recent distribution
-UPDATE Fulfillment AS f
-  SET
-      usda_signature_date = distribution,
-      usda_family_size =
-        (SELECT COUNT(*)
-           FROM FamilyMember fam
-           WHERE fam.family_name = f.family_name),
-      usda_max_income =
-        (SELECT max_income_num
-           FROM UsdaMaxIncome
-           WHERE family_size =
-              (SELECT COUNT(*)
-                FROM FamilyMember fam
-                WHERE fam.family_name = f.family_name))
-    WHERE
-          distribution = (SELECT MAX(start_date) FROM DistributionPeriod)
-      AND LENGTH(usda_eligible_signature) > 0;
-
+**** <none>
 *** Reports changes
 **** DELETE FROM Report;
-**** Add the entirety of reports.sql
+**** Add the entirety of reports.sql: `.read reports.sql`
 *** Install new software
-*** Install latest node packages: npm install
+*** Install latest node packages: npm update ; npm install
 ** Run new software
