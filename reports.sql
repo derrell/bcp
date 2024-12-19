@@ -438,6 +438,98 @@ REPLACE INTO Report
 )
  VALUES
 (
+  'Distribution appointments for pets',
+  'Schedule of appointments for a specified distribution, specifically for pets',
+  1,
+  '{
+     "$distribution" :
+     {
+       "type"  : "SelectBox",
+       "label" : "Distribution Date"
+     }
+   }',
+  '$distribution',
+  '_separatorWithTime',
+  '$remaining',
+  'Day',
+  '
+   INSERT INTO StoredProc_UpdateAge
+       (birthday, asOf, family_name, member_name)
+     SELECT
+         date_of_birth, $distribution, family_name, member_name
+       FROM FamilyMember;
+  ',
+  '
+   SELECT
+       ci.id AS _id,
+       f.appt_day as Day,
+       f.appt_time AS Time,
+       "Day " || f.appt_day || " (" ||
+         CASE f.appt_day
+           WHEN 1 THEN
+             (SELECT day_1_date
+                FROM DistributionPeriod
+                WHERE start_date = $distribution)
+           WHEN 2 THEN
+             (SELECT day_2_date
+                FROM DistributionPeriod
+                WHERE start_date = $distribution)
+           WHEN 3 THEN
+             (SELECT day_3_date
+                FROM DistributionPeriod
+                WHERE start_date = $distribution)
+           WHEN 4 THEN
+             (SELECT day_4_date
+                FROM DistributionPeriod
+                WHERE start_date = $distribution)
+           WHEN 5 THEN
+             (SELECT day_5_date
+                FROM DistributionPeriod
+                WHERE start_date = $distribution)
+           WHEN 6 THEN
+             (SELECT day_6_date
+                FROM DistributionPeriod
+                WHERE start_date = $distribution)
+           WHEN 7 THEN
+             (SELECT day_7_date
+                FROM DistributionPeriod
+                WHERE start_date = $distribution)
+         END ||
+         ") at " || f.appt_time AS _separatorWithTime,
+       c.family_name || CASE c.verified WHEN 1 THEN "&check;" ELSE "" END
+          AS "Family name",
+       COALESCE(pet_types, "") AS Pets,
+       COALESCE(phone, "") AS Phone,
+       COALESCE(notes, "") AS Notes
+     FROM Fulfillment f
+     LEFT JOIN Client c
+       ON c.family_name = f.family_name
+     LEFT JOIN ClientId ci
+       ON ci.family_name = c.family_name
+     LEFT JOIN UsdaEligibleHistory ueh
+       ON ueh.distribution = $distribution AND ueh.family_name = f.family_name
+     WHERE f.distribution = $distribution
+       AND length(COALESCE(f.appt_time, "")) > 0
+       AND length(COALESCE(c.pet_types, "")) > 0
+     ORDER BY Day, Time, "Family name";
+  '
+);
+
+REPLACE INTO Report
+(
+  name,
+  description,
+  landscape,
+  input_fields,
+  subtitle_field,
+  separate_by,
+  number_style,
+  number_remaining,
+  pre_query,
+  query
+)
+ VALUES
+(
   'Distribution appointments',
   'Schedule of appointments for a specified distribution, without family name',
   1,
