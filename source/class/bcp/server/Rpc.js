@@ -751,8 +751,42 @@ qx.Class.define("bcp.server.Rpc",
             return Promise.all(promises);
           })
 
+        .then(
+          () =>
+          {
+            if (! clientInfo.requireNewUsdaSignature)
+            {
+              return null;
+            }
+
+            return this._db.prepare(
+              [
+                "UPDATE Client",
+                "  SET ",
+                "    usda_prior_signature = NULL,",
+                "    usda_prior_signature_statement = NULL,",
+                "    usda_prior_signature_hash = NULL,",
+                "    usda_prior_signature_date = NULL",
+                "  WHERE family_name = $family_name;"
+              ].join(" "));
+          })
+
+        .then(
+          (stmt) =>
+          {
+            if (! stmt)
+            {
+              return null;
+            }
+
+            return stmt.run(
+              {
+                $family_name         : clientInfo.family_name
+              });
+          })
+
         // Give 'em what they came for!
-        .then((result) => callback(null, null))
+        .then(() => callback(null, null))
         .catch((e) =>
           {
             let             error = { message : e.toString() };

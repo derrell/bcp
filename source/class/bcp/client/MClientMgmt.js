@@ -782,6 +782,16 @@ qx.Mixin.define("bcp.client.MClientMgmt",
               tabIndex   : null
             }
           },
+          requireNewUsdaSignature :
+          {
+            type       : "Checkbox",
+            label      : "Require new USDA signature",
+            value      : false,
+            properties :
+            {
+              tabIndex   : null
+            }
+          },
           count_senior :
           {
             type      : "TextField",

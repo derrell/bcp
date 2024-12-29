@@ -38,12 +38,26 @@ qx.Mixin.define("bcp.client.MUsdaSignature",
      * @param message {String}
      *   The question to present, to be confirmed
      *
+     * @param fontExtras {String?""}
+     *   Font characteristics readable by `qx.bom.Font.fromString()`
+     *   added to the default size and font ("30px Arial ")
+     *
+     * @param textColor {String?""}
+     *   The color of the text to override the default
+     *
      * @return {Promise}
      *   A promise that resolves with the boolean result of the confirmation.
      */
-    _createConfirm(message)
+    _createConfirm(message, fontExtras = "", textColor = "")
     {
       let             confirm = new qxl.dialog.Confirm({ message });
+
+      // Make the confirm box easily usable on a phone/tablet
+      confirm._message.setFont(qx.bom.Font.fromString("30px Arial " + fontExtras));
+      if (textColor)
+      {
+        confirm._message.setTextColor(textColor);
+      }
 
       // Make the confirm box easily usable on a phone/tablet
       confirm.set(
@@ -262,6 +276,7 @@ qx.Mixin.define("bcp.client.MUsdaSignature",
     {
       let             o;
       let             text;
+      let             signText;
       let             label;
       let             topic;
       let             notes;
@@ -690,13 +705,13 @@ qx.Mixin.define("bcp.client.MUsdaSignature",
       treeItem.addWidget(o);
 
       // On leaves, add a checkbox for indicating whether they're USDA eligible
-      text =
+      signText =
         [
           "<div style='text-align: center'>",
         ];
       if (data.usda_eligible == "no")
       {
-        text.push(
+        signText.push(
           "<span style='font-weight: bold;'>Sign</span>",
           "<div style='color: darkorange; font-weight: bold;'>",
           "  currently ineligible",
@@ -704,13 +719,13 @@ qx.Mixin.define("bcp.client.MUsdaSignature",
       }
       else
       {
-        text.push("Sign");
+        signText.push("Sign");
       }
-      text.push(
+      signText.push(
         "</div>");
-      text = text.join("");
+      signText = signText.join("");
 
-      checkbox = new qx.ui.form.ToggleButton(text);
+      checkbox = new qx.ui.form.ToggleButton(signText);
       checkbox.set(
         {
           rich        : true,
@@ -733,7 +748,7 @@ qx.Mixin.define("bcp.client.MUsdaSignature",
           if (checkbox.getValue() === null)
           {
             checkbox.setIcon(null);
-            checkbox.setLabel(text);
+            checkbox.setLabel(signText);
           }
           else if (! checkbox.getValue())
           {
@@ -813,7 +828,8 @@ qx.Mixin.define("bcp.client.MUsdaSignature",
                   _this.tr("Not Eligible"), "qxl.dialog.icon.warning");
                 butNotEligible.set(
                   {
-                    minWidth : 140
+                    font     : qx.bom.Font.fromString("24px Arial"),
+                    minWidth : 180
                   });
                 buttonBar.add(butNotEligible);
 
@@ -842,6 +858,7 @@ qx.Mixin.define("bcp.client.MUsdaSignature",
                   new qx.ui.form.Button(_this.tr("Paper Signature"));
                 butPaperSignature.set(
                   {
+                    font     : qx.bom.Font.fromString("24px Arial"),
                     minWidth : 140
                   });
                 buttonBar.add(butPaperSignature);
@@ -883,7 +900,11 @@ qx.Mixin.define("bcp.client.MUsdaSignature",
 
                 // Create the Clear button
                 butClear = new qx.ui.form.Button(_this.tr("Clear"));
-                butClear.setWidth(100);
+                butClear.set(
+                  {
+                    font     : qx.bom.Font.fromString("24px Arial"),
+                    minWidth : 140
+                  });
 
                 butClear.addListener(
                   "execute",
@@ -923,7 +944,9 @@ qx.Mixin.define("bcp.client.MUsdaSignature",
                 {
                   return this._createConfirm(
                     "Are you sure you want to switch back to " +
-                      "'Sign' and discard the signature?");
+                      "'Sign' and discard the signature?",
+                    "bold",
+                    "orange");
                 })
               .then(
                 (result) =>
@@ -1111,6 +1134,7 @@ qx.Mixin.define("bcp.client.MUsdaSignature",
           this._usdaForm._cancelButton.set(
             {
               label    : this.tr("Cancel"),
+              font     : qx.bom.Font.fromString("24px Arial"),
               minWidth : 140
             });
 
@@ -1264,8 +1288,8 @@ qx.Mixin.define("bcp.client.MUsdaSignature",
                 () =>
                 {
                   return this._createConfirm(
-                    "There is a prior signature on file." +
-                      "<p>" +
+//                    "There is a prior signature on file." +
+//                      "<p>" +
                       "Ask the client: " +
                       "\"Is your family's combined monthly income currently " +
                       "at or below " + data.usda_amount + "?\"");

@@ -2,8 +2,9 @@
 * High-level list of changes
 ** Bug fixes
 ** Feature changes
-*** Use 4-digit, instead of 3-digit client ID numbers
-*** Update to latest USDA income requirements
+*** On the Client detail page, there is a new checkbox, below "Verified", that says "Require new USDA signature". Checking this box and then Save will force a new signature to be obtained on the Greeter page.
+*** Pop-up confirmations on the Greeter page use a larger font, so they are easier to read.
+*** Cancel, Not Eligible, Paper Signature, and Clear buttons all use a large font (the same size as Save, but not bold like Save), so they are easier to read.
 * Upgrade procedures
 ** Shut down and back up production
 ** Iterations
@@ -13,20 +14,6 @@
 ** Merge to main
 ** COMMENT Database changes
 *** Schema changes
-REPLACE INTO UsdaMaxIncome VALUES (1, 3138, '$3,138');
-REPLACE INTO UsdaMaxIncome VALUES (2, 4258, '$4,258');
-REPLACE INTO UsdaMaxIncome VALUES (3, 5379, '$5,379');
-REPLACE INTO UsdaMaxIncome VALUES (4, 6500, '$6,500');
-REPLACE INTO UsdaMaxIncome VALUES (5, 7621, '$7,621');
-REPLACE INTO UsdaMaxIncome VALUES (6, 8742, '$8,742');
-REPLACE INTO UsdaMaxIncome VALUES (7, 9863, '$9,863');
-REPLACE INTO UsdaMaxIncome VALUES (8, 10983, '$10,983');
-REPLACE INTO UsdaMaxIncome VALUES (9, 12104, '$12,104');
-REPLACE INTO UsdaMaxIncome VALUES (10, 13225, '$13,225');
-REPLACE INTO UsdaMaxIncome VALUES (11, 14346, '$14,346');
-REPLACE INTO UsdaMaxIncome VALUES (12, 15467, '$15,467');
-REPLACE INTO UsdaMaxIncome VALUES (13, 16588, '$16,588');
-REPLACE INTO UsdaMaxIncome VALUES (14, 17709, '$17,709');
 *** Reports changes
 **** DELETE FROM Report;
 **** Add the entirety of reports.sql: `.read reports.sql`
