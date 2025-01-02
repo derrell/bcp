@@ -867,6 +867,10 @@ qx.Mixin.define("bcp.client.MUsdaSignature",
                   });
                 buttonBar.add(butPaperSignature);
 
+                // FIXME: Paper signature is obsolete. For now just
+                // don't display the button
+                butPaperSignature.exclude();
+
                 butPaperSignature.addListener(
                   "execute",
                   ()  =>
