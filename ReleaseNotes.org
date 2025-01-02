@@ -14,6 +14,7 @@
 ** Merge to main
 ** COMMENT Database changes
 *** Schema changes
+**** ALTER TABLE Client ADD COLUMN usda_require_new_signature BOOLEAN DEFAULT FALSE;
 *** Reports changes
 **** DELETE FROM Report;
 **** Add the entirety of reports.sql: `.read reports.sql`

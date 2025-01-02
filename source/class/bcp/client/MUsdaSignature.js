@@ -765,8 +765,12 @@ qx.Mixin.define("bcp.client.MUsdaSignature",
       // If set to ineligible (indicated by zero-length signature),
       // set button state to Not Eligible. If there's already a
       // signature, set button state to Eligible
-      if (typeof data.usda_eligible_signature == "string" &&
-          data.usda_eligible_signature.length === 0)
+      if (data.usda_require_new_signature)
+      {
+        checkbox.setValue(null);
+      }
+      else if (typeof data.usda_eligible_signature == "string" &&
+               data.usda_eligible_signature.length === 0)
       {
         checkbox.setValue(false);
       }
@@ -1268,7 +1272,8 @@ qx.Mixin.define("bcp.client.MUsdaSignature",
 
           // If there is no recent signature, or the family size has
           // changed, then a signature is required.
-          if (! data.usda_prior_signature ||
+          if (data.usda_require_new_signature ||
+              ! data.usda_prior_signature ||
               data.usda_prior_family_size != data.family_size_count)
           {
             bSigRequired = true;

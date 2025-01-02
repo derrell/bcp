@@ -763,10 +763,7 @@ qx.Class.define("bcp.server.Rpc",
               [
                 "UPDATE Client",
                 "  SET ",
-                "    usda_prior_signature = NULL,",
-                "    usda_prior_signature_statement = NULL,",
-                "    usda_prior_signature_hash = NULL,",
-                "    usda_prior_signature_date = NULL",
+                "    usda_require_new_signature = TRUE",
                 "  WHERE family_name = $family_name;"
               ].join(" "));
           })
@@ -2341,6 +2338,7 @@ qx.Class.define("bcp.server.Rpc",
             "    c.usda_prior_signature_date AS usda_prior_signature_date,",
             "    c.usda_prior_family_size AS usda_prior_family_size,",
             "    c.usda_prior_max_income AS usda_prior_max_income,",
+            "    c.usda_require_new_signature AS usda_require_new_signature,",
             "    c.count_child AS family_count_child,",
             "    c.count_adult AS family_count_adult,",
             "    c.count_senior AS family_count_senior,",
@@ -2502,6 +2500,25 @@ qx.Class.define("bcp.server.Rpc",
                 $usda_family_size         : sigFamilySize || 0,
                 $usda_max_income          : sigMaxIncome || 0,
                 $usda_signature_hash      : signatureHash
+              });
+          })
+        .then(
+          () =>
+          {
+            return this._db.prepare(
+              [
+                "UPDATE Client",
+                "  SET ",
+                "    usda_require_new_signature = false",
+                "  WHERE family_name = $family_name;"
+              ].join(" "));
+          })
+        .then(
+          (stmt) =>
+          {
+            return stmt.run(
+              {
+                $family_name              : familyName,
               });
           })
         .then(

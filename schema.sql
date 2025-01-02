@@ -32,6 +32,7 @@ CREATE TABLE Client
   usda_prior_signature_date VARCHAR DEFAULT NULL,
   usda_prior_family_size    INTEGER DEFAULT 0,    -- family size at time of signature
   usda_prior_max_income     INTEGER DEFAULT 0,    -- usda max income for that family size
+  usda_require_new_signature BOOLEAN DEFAULT FALSE,
   pet_types                 VARCHAR,
   address_default           VARCHAR, -- default address for delivery
   appt_day_default          INTEGER, -- 1-relative to distro start
@@ -59,6 +60,7 @@ CREATE TABLE Client
 -- ALTER TABLE Client ADD COLUMN usda_prior_signature_date VARCHAR DEFAULT NULL;
 -- ALTER TABLE Client ADD COLUMN usda_prior_family_size INTEGER DEFAULT 0;
 -- ALTER TABLE Client ADD COLUMN usda_prior_max_income INTEGER DEFAULT 0;
+-- ALTER TABLE Client ADD COLUMN usda_require_new_signature BOOLEAN DEFAULT FALSE;
 
 
 --
