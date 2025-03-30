@@ -2,9 +2,7 @@
 * High-level list of changes
 ** Bug fixes
 ** Feature changes
-*** On the Client detail page, there is a new checkbox, below "Verified", that says "Require new USDA signature". Checking this box and then Save will force a new signature to be obtained on the Greeter page.
-*** Pop-up confirmations on the Greeter page use a larger font, so they are easier to read.
-*** Cancel, Not Eligible, Paper Signature, and Clear buttons all use a large font (the same size as Save, but not bold like Save), so they are easier to read.
+*** Updated and added ethnicities
 * Upgrade procedures
 ** Shut down and back up production
 ** Iterations
@@ -14,7 +12,9 @@
 ** Merge to main
 ** COMMENT Database changes
 *** Schema changes
-**** ALTER TABLE Client ADD COLUMN usda_require_new_signature BOOLEAN DEFAULT FALSE;
+**** UPDATE Client SET ethnicity='African American/Black' WHERE ethnicity='African American';
+**** UPDATE Client SET ethnicity='White/Caucasian' WHERE ethnicity='White';
+**** UPDATE Client SET ethnicity='Hispanic/Latino' WHERE ethnicity='Hispanic';
 *** Reports changes
 **** DELETE FROM Report;
 **** Add the entirety of reports.sql: `.read reports.sql`

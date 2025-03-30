@@ -682,12 +682,15 @@ qx.Mixin.define("bcp.client.MClientMgmt",
             value      : clientInfo.ethnicity || "Undeclared",
             options :
             [
-              { label : "Undeclared",       value : "Undeclared" },
-              { label : "African American", value : "African American" },
-              { label : "Amer. Indian",     value : "Amer. Indian" },
-              { label : "Asian",            value : "Asian" },
-              { label : "Hispanic",         value : "Hispanic" },
-              { label : "White",            value : "White" }
+              { label : "Undeclared",                   value : "Undeclared" },
+              { label : "White/Caucasian",              value : "White/Caucasian" },
+              { label : "African American/Black",       value : "African American/Black" },
+              { label : "Asian",                        value : "Asian" },
+              { label : "Hispanic/Latino",              value : "Hispanic/Latino" },
+              { label : "Amer. Indian",                 value : "Amer. Indian" },
+              { label : "Native American/Indigenous",   value : "Native American/Indigenous" },
+              { label : "Middle Eastern/North African", value : "Middle Eastern/North African" },
+              { label : "Multi-Racial",                 value : "Multi-Racial" }
             ],
             properties :
             {
