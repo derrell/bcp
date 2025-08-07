@@ -2,7 +2,8 @@
 * High-level list of changes
 ** Bug fixes
 ** Feature changes
-*** Updated and added ethnicities
+*** Added Haitian Creole locale
+*** Updated USAA income requirements
 * Upgrade procedures
 ** Shut down and back up production
 ** Iterations
@@ -12,9 +13,20 @@
 ** Merge to main
 ** COMMENT Database changes
 *** Schema changes
-**** UPDATE Client SET ethnicity='African American/Black' WHERE ethnicity='African American';
-**** UPDATE Client SET ethnicity='White/Caucasian' WHERE ethnicity='White';
-**** UPDATE Client SET ethnicity='Hispanic/Latino' WHERE ethnicity='Hispanic';
+    REPLACE INTO UsdaMaxIncome VALUES (1, 3260, '$3,260');
+    REPLACE INTO UsdaMaxIncome VALUES (2, 4406, '$4,406');
+    REPLACE INTO UsdaMaxIncome VALUES (3, 5552, '$5,552');
+    REPLACE INTO UsdaMaxIncome VALUES (4, 6698, '$6,698');
+    REPLACE INTO UsdaMaxIncome VALUES (5, 7844, '$7,844');
+    REPLACE INTO UsdaMaxIncome VALUES (6, 8989, '$8,989');
+    REPLACE INTO UsdaMaxIncome VALUES (7, 10135, '$10,135');
+    REPLACE INTO UsdaMaxIncome VALUES (8, 11281, '$11,281');
+    REPLACE INTO UsdaMaxIncome VALUES (9, 12427, '$12,427');
+    REPLACE INTO UsdaMaxIncome VALUES (10, 13573, '$13,573');
+    REPLACE INTO UsdaMaxIncome VALUES (11, 14719, '$14,719');
+    REPLACE INTO UsdaMaxIncome VALUES (12, 15865, '$15,865');
+    REPLACE INTO UsdaMaxIncome VALUES (13, 17011, '$17,011');
+    REPLACE INTO UsdaMaxIncome VALUES (14, 18157, '$18,157');
 *** Reports changes
 **** DELETE FROM Report;
 **** Add the entirety of reports.sql: `.read reports.sql`

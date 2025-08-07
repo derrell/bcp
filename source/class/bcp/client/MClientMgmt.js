@@ -704,9 +704,10 @@ qx.Mixin.define("bcp.client.MClientMgmt",
             value      : clientInfo.language_abbreviation || "en",
             options :
             [
-              { label : "English",     value : "en" },
-              { label : "Portuguese",  value : "pt" },
-              { label : "Spanish",     value : "es" }
+              { label : "English",        value : "en" },
+              { label : "Haitian Creole", value : "fr_HT" },
+              { label : "Portuguese",     value : "pt" },
+              { label : "Spanish",        value : "es" }
             ],
             properties :
             {

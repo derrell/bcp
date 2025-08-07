@@ -1,0 +1,111 @@
+#: bcp/client/MUsdaSignature.js
+msgid "Paper Signature"
+msgstr "Papye Siyati"
+
+#: bcp/client/MUsdaSignature.js
+msgid "January"
+msgstr "Janvye"
+
+#: bcp/client/MUsdaSignature.js
+msgid "February"
+msgstr "Fevriye"
+
+#: bcp/client/MUsdaSignature.js
+msgid "March"
+msgstr "Mas"
+
+#: bcp/client/MUsdaSignature.js
+msgid "April"
+msgstr "Avril"
+
+#: bcp/client/MUsdaSignature.js
+msgid "May"
+msgstr "Me"
+
+#: bcp/client/MUsdaSignature.js
+msgid "June"
+msgstr "Jen"
+
+#: bcp/client/MUsdaSignature.js
+msgid "July"
+msgstr "Jiyè"
+
+#: bcp/client/MUsdaSignature.js
+msgid "August"
+msgstr "Out"
+
+#: bcp/client/MUsdaSignature.js
+msgid "September"
+msgstr "Septanm"
+
+#: bcp/client/MUsdaSignature.js
+msgid "October"
+msgstr "Oktòb"
+
+#: bcp/client/MUsdaSignature.js
+msgid "November"
+msgstr "Novanm"
+
+#: bcp/client/MUsdaSignature.js
+msgid "December"
+msgstr "Desanm"
+
+#: bcp/client/MUsdaSignature.js
+msgid "Family Name"
+msgstr "Siyati"
+
+#: bcp/client/MUsdaSignature.js
+msgid "Total Family Size"
+msgstr "Konbyen moun fanmi an genyen"
+
+#: bcp/client/MUsdaSignature.js
+msgid "Seniors"
+msgstr "granmoun"
+
+#: bcp/client/MUsdaSignature.js
+msgid "Adults"
+msgstr "granmoun/ moun aje"
+
+#: bcp/client/MUsdaSignature.js
+msgid "Children"
+msgstr "Timoun"
+
+#: bcp/client/MUsdaSignature.js
+msgid "By signing in the gray box, below, I declare that as of today, %1, this information is correct, and that my family's combined monthly income is at or below %2."
+msgstr "lé Mwen siyen nan ti bwat gri anba a, mwen declare ke, apati jodia, %1, enfomasyon mwen yo egzat, epi revni mansyel total fanmi mwen egal a ou byen pi ba %2."
+
+#: bcp/client/MUsdaSignature.js
+msgid "Save"
+msgstr "Sove"
+
+#: bcp/client/MUsdaSignature.js
+msgid "Cancel"
+msgstr "Anile"
+
+#: bcp/client/MUsdaSignature.js
+msgid "Not Eligible"
+msgstr "Pa elijib"
+
+#: bcp/client/MUsdaSignature.js
+msgid "Clear"
+msgstr "Klè"
+
+#: bcp/client/MUsdaSignature.js
+msgid "Thank you. Please hand the tablet back to your greeter."
+msgstr "Mèsi. Tanpri retounen tablèt la bay volontè a."
+
+#: bcp/client/MUsdaSignature.js
+msgid "You cancelled the signature operation."
+msgstr "Ou anile operasyon siyati a."
+
+#: bcp/client/MUsdaSignature.js
+msgid "You indicated you are not eligible for USDA assistance."
+msgstr "Ou te endike ou pa kalifye pou asistans USDA."
+
+#: bcp/client/MUsdaSignature.js
+msgid "You requested to sign on paper."
+msgstr "Ou te mande siyen sou papye."
+
+#: bcp/client/MUsdaSignature.js
+msgid "Please hand the tablet back to your greeter."
+msgstr "Tanpri retounen tablèt la bay volontè a."
