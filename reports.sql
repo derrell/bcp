@@ -2365,3 +2365,71 @@ REPLACE INTO Report
       ORDER BY family_name, age;
   '
 );
+
+REPLACE INTO Report
+(
+  name,
+  description,
+  landscape,
+  input_fields,
+  subtitle_field,
+  separate_by,
+  pre_query,
+  query
+)
+ VALUES
+(
+  'Toothbrush distribution children counts',
+  'Broken out age groups of children, for toothbrush distribution',
+  1,
+  '',
+  '',
+  '',
+  '
+   INSERT INTO StoredProc_UpdateAge
+       (birthday, asOf, family_name, member_name)
+     SELECT
+         date_of_birth,
+         (SELECT MAX(start_date) FROM DistributionPeriod),
+         family_name,
+         member_name
+       FROM FamilyMember;
+  ',
+  '
+   SELECT
+      f.appt_day as "Day",
+      f.appt_time AS "Time",
+      ci.id AS "Client ID",
+      c.family_name AS "Family name",
+      c.count_senior + c.count_adult + c.count_child AS "Family size",
+      (SELECT COUNT(*)
+         FROM FamilyMember fm
+         WHERE fm.family_name = c.family_name
+           AND age >= 0 AND age <= 1)
+         AS "Children age 0-1",
+      (SELECT COUNT(*)
+         FROM FamilyMember fm
+         WHERE fm.family_name = c.family_name
+           AND age >= 2 AND age <= 6)
+         AS "Children age 2-6",
+      (SELECT COUNT(*)
+         FROM FamilyMember fm
+         WHERE fm.family_name = c.family_name
+           AND age >= 7 AND age <= 10)
+         AS "Children age 7-10",
+      (SELECT COUNT(*)
+         FROM FamilyMember fm
+         WHERE fm.family_name = c.family_name
+           AND age >= 11)
+         AS "Children age 11+ and adults"
+     FROM Client c
+     LEFT JOIN ClientId ci
+       ON ci.family_name = c.family_name
+     LEFT JOIN Fulfillment f
+       ON f.family_name = c.family_name
+     WHERE
+       f.distribution =
+         (SELECT MAX(start_date) FROM DistributionPeriod)
+     ORDER BY f.appt_day, f.appt_time;
+   '
+);
