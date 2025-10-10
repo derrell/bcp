@@ -2430,6 +2430,6 @@ REPLACE INTO Report
      WHERE
        f.distribution =
          (SELECT MAX(start_date) FROM DistributionPeriod)
-     ORDER BY f.appt_day, f.appt_time;
+     ORDER BY f.appt_day, f.appt_time, c.family_name;
    '
 );
