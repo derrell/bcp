@@ -2410,18 +2410,18 @@ REPLACE INTO Report
       (SELECT COUNT(*)
          FROM FamilyMember fm
          WHERE fm.family_name = c.family_name
-           AND age >= 2 AND age <= 6)
-         AS "Children age 2-6",
+           AND age >= 2 AND age <= 8)
+         AS "Children age 2-8",
       (SELECT COUNT(*)
          FROM FamilyMember fm
          WHERE fm.family_name = c.family_name
-           AND age >= 7 AND age <= 10)
-         AS "Children age 7-10",
+           AND age >= 9 AND age <= 14)
+         AS "Children age 9-14",
       (SELECT COUNT(*)
          FROM FamilyMember fm
          WHERE fm.family_name = c.family_name
-           AND age >= 11)
-         AS "Children age 11+ and adults"
+           AND age >= 15)
+         AS "Children age 15+ and adults"
      FROM Client c
      LEFT JOIN ClientId ci
        ON ci.family_name = c.family_name
