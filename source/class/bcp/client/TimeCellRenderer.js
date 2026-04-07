@@ -30,6 +30,10 @@ qx.Class.define("bcp.client.TimeCellRenderer",
         return "";
       }
 
+      // FIXME: noon displays as "am"
+      // FIXME: midnight displays as 0am instead of 12am
+      // FIXME: Note <= 12 returns cellInfo.value, not time.join(":")
+
       // Times before noon remain as is, with an "am" suffix
       if (time[0] <= 12)
       {
