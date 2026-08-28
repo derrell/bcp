@@ -93,6 +93,7 @@ qx.Mixin.define("bcp.client.MClientMgmt",
           "Email",
           "Ethnicity",
           "Language",
+          "Diapers",
           "Verified",
           "Notes",
           "Perishables",
@@ -109,6 +110,7 @@ qx.Mixin.define("bcp.client.MClientMgmt",
           "email",
           "ethnicity",
           "language_abbreviation",
+          "diapers_needed",
           "verified",
           "notes_default",
           "perishables_default",
@@ -152,6 +154,7 @@ qx.Mixin.define("bcp.client.MClientMgmt",
       behavior.setWidth(tm.getColumnIndexById("email"), 100);
       behavior.setWidth(tm.getColumnIndexById("ethnicity"), 80);
       behavior.setWidth(tm.getColumnIndexById("language_abbreviation"), 60);
+      behavior.setWidth(tm.getColumnIndexById("diapers_needed"), 60);
       behavior.setWidth(tm.getColumnIndexById("verified"), 60);
       behavior.setWidth(tm.getColumnIndexById("notes_default"), 200);
       behavior.setWidth(tm.getColumnIndexById("perishables_default"), 200);
@@ -247,6 +250,14 @@ qx.Mixin.define("bcp.client.MClientMgmt",
                      ? 1
                      : 0));
         });
+
+      // The 'diapers_needed' column shows a checkmark when diapers are needed
+      cellRenderer = new qx.ui.table.cellrenderer.Boolean();
+      cellRenderer.set(
+        {
+          iconTrue  : "qxl.dialog.icon.ok"
+        });
+      tcm.setDataCellRenderer(tm.getColumnIndexById("diapers_needed"), cellRenderer);
 
       // The 'verified' column shows a checkmark when client is verified
       cellRenderer = new qx.ui.table.cellrenderer.Boolean();
@@ -508,7 +519,19 @@ qx.Mixin.define("bcp.client.MClientMgmt",
      */
     _mungeClient(client)
     {
+      // Convert diapers_needed from numeric 0/1 to boolean false/true
+      // (except use null instead of false so no icon is displayed)
+      if (client.diapers_needed === 1)
+      {
+        client.diapers_needed = true;
+      }
+      else if (client.diapers_needed === 0)
+      {
+        client.diapers_needed = null;
+      }
+
       // Convert verified from numeric 0/1 to boolean false/true
+      // (except use null instead of false so no icon is displayed)
       if (client.verified === 1)
       {
         client.verified = true;
@@ -648,7 +671,7 @@ qx.Mixin.define("bcp.client.MClientMgmt",
             value      : clientInfo.address_default || "",
             userdata   :
             {
-              rowspan    : 2
+              rowspan    : 1
             },
             properties :
             {
@@ -786,6 +809,16 @@ qx.Mixin.define("bcp.client.MClientMgmt",
               tabIndex   : null
             }
           },
+          diapers_needed :
+          {
+            type       : "Checkbox",
+            label      : "Diapers needed",
+            value      : clientInfo.diapers_needed || false,
+            properties :
+            {
+              tabIndex   : null
+            }
+          },
           requireNewUsdaSignature :
           {
             type       : "Checkbox",
@@ -906,7 +939,7 @@ qx.Mixin.define("bcp.client.MClientMgmt",
             {
               row      : 0,
               column   : 4,
-              rowspan  : 20
+              rowspan  : 18
             }
           },
 
@@ -1710,6 +1743,13 @@ qx.Mixin.define("bcp.client.MClientMgmt",
                 {
                   qxl.dialog.Dialog.error(result);
                   return;
+                }
+
+                // We want nothing displayed for diapers_needed==false.
+                // Change to null.
+                if (! formValues.diapers_needed)
+                {
+                  formValues.diapers_needed = null;
                 }
 
                 // We want nothing displayed for verified==false.

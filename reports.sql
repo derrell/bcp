@@ -1645,6 +1645,10 @@ REPLACE INTO Report
          WHEN "no" THEN "No"
          ELSE ""
        END AS "USDA Eligible",
+       CASE c.diapers_needed
+         WHEN 1 THEN "👶  🩲"
+         ELSE ""
+       END AS "Diapers needed",
        COALESCE(c.pet_types, "") AS Pets,
        COALESCE(c.phone, "") AS Phone,
        COALESCE(c.notes_default, "") AS Notes

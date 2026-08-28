@@ -37,6 +37,7 @@ CREATE TABLE Client
   address_default           VARCHAR, -- default address for delivery
   appt_day_default          INTEGER, -- 1-relative to distro start
   appt_time_default         VARCHAR, -- default appt time HH:MM,
+  diapers_needed            BOOLEAN DEFAULT FALSE,
   verified                  BOOLEAN DEFAULT FALSE,
   archived                  BOOLEAN DEFAULT FALSE,
   notes_default             VARCHAR NOT NULL DEFAULT '',
@@ -61,6 +62,7 @@ CREATE TABLE Client
 -- ALTER TABLE Client ADD COLUMN usda_prior_family_size INTEGER DEFAULT 0;
 -- ALTER TABLE Client ADD COLUMN usda_prior_max_income INTEGER DEFAULT 0;
 -- ALTER TABLE Client ADD COLUMN usda_require_new_signature BOOLEAN DEFAULT FALSE;
+-- ALTER TABLE Client ADD COLUMN diapers_needed BOOLEAN DEFAULT FALSE;
 
 
 --
