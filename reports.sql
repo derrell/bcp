@@ -75,6 +75,8 @@ REPLACE INTO Report
           AS "Family name",
        (c.count_senior + c.count_adult + c.count_child) ||
          CASE
+           WHEN c.count_senior + c.count_adult + c.count_child >= 7
+             THEN " (XLarge)"
            WHEN c.count_senior + c.count_adult + c.count_child >= 4
              THEN " (Large)"
            WHEN c.count_senior + c.count_adult + c.count_child = 1
@@ -181,6 +183,8 @@ REPLACE INTO Report
          ") at " || f.appt_time AS _separatorWithTime,
        (c.count_senior + c.count_adult + c.count_child) ||
          CASE
+           WHEN c.count_senior + c.count_adult + c.count_child >= 7
+             THEN " (XLarge)"
            WHEN c.count_senior + c.count_adult + c.count_child >= 4
              THEN " (Large)"
            WHEN c.count_senior + c.count_adult + c.count_child = 1
@@ -284,6 +288,8 @@ REPLACE INTO Report
        CASE c.verified WHEN 1 THEN "&check;" ELSE "" END AS ID,
        (c.count_senior + c.count_adult + c.count_child) ||
          CASE
+           WHEN c.count_senior + c.count_adult + c.count_child >= 7
+             THEN " (XLarge)"
            WHEN c.count_senior + c.count_adult + c.count_child >= 4
              THEN " (Large)"
            WHEN c.count_senior + c.count_adult + c.count_child = 1
@@ -391,6 +397,8 @@ REPLACE INTO Report
           AS "Family name",
        (c.count_senior + c.count_adult + c.count_child) ||
          CASE
+           WHEN c.count_senior + c.count_adult + c.count_child >= 7
+             THEN " (XLarge)"
            WHEN c.count_senior + c.count_adult + c.count_child >= 4
              THEN " (Large)"
            WHEN c.count_senior + c.count_adult + c.count_child = 1
@@ -591,6 +599,8 @@ REPLACE INTO Report
        CASE c.verified WHEN 1 THEN "&check;" ELSE "" END AS V,
        (c.count_senior + c.count_adult + c.count_child) ||
          CASE
+           WHEN c.count_senior + c.count_adult + c.count_child >= 7
+             THEN " (XLarge)"
            WHEN c.count_senior + c.count_adult + c.count_child >= 4
              THEN " (Large)"
            WHEN c.count_senior + c.count_adult + c.count_child = 1
@@ -1344,7 +1354,7 @@ REPLACE INTO Report
  VALUES
 (
   'Distribution meals required, by size',
-  'Number of meals for solo (1), small (2-3) and large (4+) families',
+  'Number of meals for solo (1), small (2-3), large (4-6), xlarge (7+) families',
   0,
   '{
      "$distribution" :
@@ -1364,11 +1374,19 @@ REPLACE INTO Report
   ',
   '
     SELECT day, size, SUM(count) AS count FROM
-      (SELECT appt_day AS day, "c-Large" AS size, COUNT(*) AS count
+      (SELECT appt_day AS day, "d-XLarge" AS size, COUNT(*) AS count
          FROM Fulfillment f, Client c
          WHERE f.distribution = $distribution
            AND c.family_name = f.family_name
-           AND (c.count_senior + c.count_adult + c.count_child >= 4)
+           AND (c.count_senior + c.count_adult + c.count_child >= 7)
+         GROUP BY appt_day
+       UNION ALL
+       SELECT appt_day AS day, "c-Large" AS size, COUNT(*) AS count
+         FROM Fulfillment f, Client c
+         WHERE f.distribution = $distribution
+           AND c.family_name = f.family_name
+           AND (     c.count_senior + c.count_adult + c.count_child >= 4
+                AND c.count_senior + c.count_adult + c.count_child <= 6)
          GROUP BY appt_day
        UNION ALL
        SELECT appt_day AS day, "b-Small" AS size, COUNT(*) AS count
@@ -1609,6 +1627,8 @@ REPLACE INTO Report
        "Day " || c.appt_day_default || " at " || c.appt_time_default AS _separatorWithTime,
        (c.count_senior + c.count_adult + c.count_child) ||
          CASE
+           WHEN c.count_senior + c.count_adult + c.count_child >= 7
+             THEN " (XLarge)"
            WHEN c.count_senior + c.count_adult + c.count_child >= 4
              THEN " (Large)"
            WHEN c.count_senior + c.count_adult + c.count_child = 1
@@ -1680,6 +1700,8 @@ REPLACE INTO Report
        c.appt_time_default AS Time,
        (c.count_senior + c.count_adult + c.count_child) ||
          CASE
+           WHEN c.count_senior + c.count_adult + c.count_child >= 7
+             THEN " (XLarge)"
            WHEN c.count_senior + c.count_adult + c.count_child >= 4
              THEN " (Large)"
            WHEN c.count_senior + c.count_adult + c.count_child = 1
