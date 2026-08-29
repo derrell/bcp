@@ -1651,7 +1651,13 @@ REPLACE INTO Report
        END AS "Diapers needed",
        COALESCE(c.pet_types, "") AS Pets,
        COALESCE(c.phone, "") AS Phone,
-       COALESCE(c.notes_default, "") AS Notes
+       COALESCE(c.notes_default, "") AS Notes,
+       (SELECT distribution
+          FROM Fulfillment f
+          WHERE f.family_name = c.family_name
+            AND f.fulfilled
+          GROUP BY f.family_name
+          HAVING MAX(f.distribution)) AS "Last&nbsp;fulfilled"
      FROM Client c
      LEFT JOIN ClientId ci
        ON ci.family_name = c.family_name
