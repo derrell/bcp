@@ -2571,3 +2571,71 @@ REPLACE INTO Report
      ORDER BY f.appt_day, f.appt_time, c.family_name;
    '
 );
+
+REPLACE INTO Report
+(
+  name,
+  description,
+  landscape,
+  input_fields,
+  subtitle_field,
+  separate_by,
+  pre_query,
+  query
+)
+ VALUES
+(
+  'School-age distribution children counts',
+  'Broken out distribution age groups by school age',
+  1,
+  '',
+  '',
+  '',
+  '
+   INSERT INTO StoredProc_UpdateAge
+       (birthday, asOf, family_name, member_name)
+     SELECT
+         date_of_birth,
+         (SELECT MAX(start_date) FROM DistributionPeriod),
+         family_name,
+         member_name
+       FROM FamilyMember;
+  ',
+  '
+   SELECT
+      f.appt_day as "Day",
+      f.appt_time AS "Time",
+      ci.id AS "Client ID",
+      c.family_name AS "Family name",
+      c.count_senior + c.count_adult + c.count_child AS "Family size",
+      (SELECT COUNT(*)
+         FROM FamilyMember fm
+         WHERE fm.family_name = c.family_name
+           AND age >= 0 AND age <= 4)
+         AS "Children age 0-4",
+      (SELECT COUNT(*)
+         FROM FamilyMember fm
+         WHERE fm.family_name = c.family_name
+           AND age >= 5 AND age <= 1)
+         AS "Children age 5-11",
+      (SELECT COUNT(*)
+         FROM FamilyMember fm
+         WHERE fm.family_name = c.family_name
+           AND age >= 12 AND age <= 17)
+         AS "Children age 12-17",
+      (SELECT COUNT(*)
+         FROM FamilyMember fm
+         WHERE fm.family_name = c.family_name
+           AND age >= 18)
+         AS "Adults"
+     FROM Client c
+     LEFT JOIN ClientId ci
+       ON ci.family_name = c.family_name
+     LEFT JOIN Fulfillment f
+       ON f.family_name = c.family_name
+     WHERE
+       f.distribution =
+         (SELECT MAX(start_date) FROM DistributionPeriod)
+     ORDER BY f.appt_day, f.appt_time, c.family_name;
+   '
+);
