@@ -92,7 +92,7 @@ qx.Mixin.define("bcp.client.MClientMgmt",
           "Phone",
           "Email",
           "Ethnicity",
-          "Language",
+          "Lang",
           "Diapers",
           "Verified",
           "Notes",
@@ -153,14 +153,14 @@ qx.Mixin.define("bcp.client.MClientMgmt",
       behavior.setWidth(tm.getColumnIndexById("phone"), 100);
       behavior.setWidth(tm.getColumnIndexById("email"), 100);
       behavior.setWidth(tm.getColumnIndexById("ethnicity"), 80);
-      behavior.setWidth(tm.getColumnIndexById("language_abbreviation"), 60);
-      behavior.setWidth(tm.getColumnIndexById("diapers_needed"), 60);
+      behavior.setWidth(tm.getColumnIndexById("language_abbreviation"), 40);
+      behavior.setWidth(tm.getColumnIndexById("diapers_needed"), 50);
       behavior.setWidth(tm.getColumnIndexById("verified"), 60);
       behavior.setWidth(tm.getColumnIndexById("notes_default"), 200);
-      behavior.setWidth(tm.getColumnIndexById("perishables_default"), 200);
+      behavior.setWidth(tm.getColumnIndexById("perishables_default"), 185);
       behavior.setWidth(tm.getColumnIndexById("income_source"), 100);
 //      behavior.setWidth(tm.getColumnIndexById("income_amount"), 100);
-      behavior.setWidth(tm.getColumnIndexById("pet_types"), 100);
+      behavior.setWidth(tm.getColumnIndexById("pet_types"), 90);
       behavior.setWidth(tm.getColumnIndexById("address_default"), 100);
       behavior.setWidth(tm.getColumnIndexById("appt_day_default"), 60);
       behavior.setWidth(tm.getColumnIndexById("appt_time_default"), 80);

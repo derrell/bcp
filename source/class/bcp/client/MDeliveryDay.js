@@ -391,6 +391,15 @@ qx.Mixin.define("bcp.client.MDeliveryDay",
         });
       treeItem.addWidget(o);
 
+      o = new qx.ui.basic.Label(
+        data.diapers_needed ? "👶🩲" : "");
+      o.set(
+        {
+          width  : 40,
+          alignY : "middle"
+        });
+      treeItem.addWidget(o);
+
       o = new qx.ui.form.TextArea(data.notes ? `Notes: ${data.notes}` : "");
       o.set(
         {
