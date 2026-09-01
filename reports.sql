@@ -1454,6 +1454,7 @@ REPLACE INTO Report
   input_fields,
   subtitle_field,
   separate_by,
+  report_data,
   pre_query,
   query
 )
@@ -1471,6 +1472,111 @@ REPLACE INTO Report
    }',
   '$distribution',
   'day',
+  '
+    {
+      day   : null,
+      week  : null,
+      total : null,
+
+      _addTotal : function(reportWin, colSpan, type, number, count)
+      {
+            reportWin.document.write(
+              [
+                `<tr>`,
+                "<td ",
+                `  colspan="${colSpan - 1}"`,
+                "  class=''sep''>",
+                "<span style=''font-weight: bold;''>",
+                `${type} ${number} total:`,
+                "</span>",
+                "</td>",
+                "<td class=''sep''>",
+                "<span style=''font-weight: bold;''>",
+                `${count}`,
+                "</span>",
+                "</td>",
+                "</tr>"
+              ].join(" "));
+      },
+
+      _addBlankLine : function(reportWin, colSpan)
+      {
+        reportWin.document.write(
+          [
+            `<tr>`,
+            "<td ",
+            `  colspan="${colSpan}"`,
+            "  class=''sep''>",
+            "&nbsp;",
+            "</td>",
+            "</tr>"
+          ].join(" "));
+      },
+
+      fInit : function()
+      {
+        this.day  = { prior : null, count : 0, rowsSinceDayTotal : 0 };
+        this.week = { prior : null, count : 0, totals : { 2 : 0, 4 : 0} };
+      },
+
+      fBeforeRow : function(reportInfo, report, reportWin, row)
+      {
+        if (this.day.prior != row["day"])
+        {
+          if (this.day.prior !== null)
+          {
+            this._addTotal(reportWin, Object.keys(report[0]).length, "Day", this.day.prior, this.day.count);
+            this.day.count = 0;
+          }
+
+          this.day.prior = row["day"];
+        }
+
+        let week = this.day.prior <= 4 ? 2 : 4;
+        if (this.week.prior != week)
+        {
+          if (this.week.prior === null)
+          {
+            this._addBlankLine(reportWin, Object.keys(report[0]).length);
+          }
+
+          this.week.prior = week;
+          this.day.rowsSinceDayTotal = 0;
+        }
+        else
+        {
+          ++this.day.rowsSinceDayTotal;
+        }
+
+        this.day.count += row["count"];
+        this.week.totals[week] += row["count"];
+      },
+
+      fAfterRow : function(reportInfo, report, reportWin, row)
+      {
+      },
+
+      fPostReport : function(reportInfo, report, reportWin)
+      {
+        let columnCount = Object.keys(report[0]).length;
+
+        if (this.day.rowsSinceDayTotal > 0)
+        {
+          this._addTotal(reportWin, columnCount, "Day", this.day.prior, this.day.count);
+        }
+
+        for (let i = 0; i < 2; i++)
+        {
+          this._addBlankLine(reportWin, columnCount);
+        }
+
+        for (const [ week, count ] of Object.entries(this.week.totals))
+        {
+          this._addTotal(reportWin, columnCount, "Week", week, count);
+        }
+      }
+    }
+  ',
   '
    INSERT INTO StoredProc_UpdateAge
        (birthday, asOf, family_name, member_name)

@@ -11,6 +11,10 @@
  * Authors:
  *   * Derrell Lipman (derrell)
  */
+
+// see example testReportData at the end of this file
+let testReportData = null;
+
 qx.Mixin.define("bcp.client.MReports",
 {
   members :
@@ -175,6 +179,7 @@ qx.Mixin.define("bcp.client.MReports",
       let             extraFormData;
       let             reports;
       let             reportInfo;
+      let             reportData;
       let             eData = e.getData();
 
       // If the selection is being cleared, we have nothing to do.
@@ -189,6 +194,15 @@ qx.Mixin.define("bcp.client.MReports",
 
       // Retrieve the report selected in the reports list
       reportInfo = eData[0].getUserData("reportInfo");
+
+      // Get any custom report data and functions. Allow testing a new
+      // set of report data by hard-coding it in this file, in the
+      // variable name testReportData.
+      reportData = typeof testReportData == "string" ? testReportData : reportInfo.report_data;
+      if (reportData)
+      {
+        reportData = eval("reportData = " + reportData);
+      }
 
       formData =
         {
@@ -431,6 +445,12 @@ qx.Mixin.define("bcp.client.MReports",
                       });
                     this._reportWin.document.write("</tr></thead>");
 
+                    // If this report has a custom initialization function, call it now
+                    if (reportData && reportData.fInit)
+                    {
+                      reportData.fInit(reportInfo, report, this._reportWin);
+                    }
+
                     // Write the body
                     this._reportWin.document.write("<tbody>");
                     report.forEach(
@@ -455,6 +475,12 @@ qx.Mixin.define("bcp.client.MReports",
                             // ... then restart line numbers
                             lineNumber = 0;
                           }
+                        }
+
+                        // If this report has a custom before-row function, call it now
+                        if (reportData && reportData.fBeforeRow)
+                        {
+                          reportData.fBeforeRow(reportInfo, report, this._reportWin, row);
                         }
 
                         // See if we need a separator here
@@ -590,7 +616,19 @@ qx.Mixin.define("bcp.client.MReports",
 
                         // That's the end of this row
                         this._reportWin.document.write("</tr>");
+
+                        // If this report has a custom after-row function, call it now
+                        if (reportData && reportData.fAfterRow)
+                        {
+                          reportData.fAfterRow(reportInfo, report, this._reportWin, row);
+                        }
                       });
+
+                    // If this report has a custom post-report function, call it now
+                    if (reportData && reportData.fPostReport)
+                    {
+                      reportData.fPostReport(reportInfo, report, this._reportWin);
+                    }
 
                     this._reportWin.document.write("</tbody>");
                   }
@@ -671,3 +709,114 @@ qx.Mixin.define("bcp.client.MReports",
     }
   }
 });
+
+// TEMPORARY for testing db-supplied report functions!!!
+/*
+// Test report data for "Distribution meals required, by size"
+testReportData =
+    [
+      '    {',
+      '      day   : null,',
+      '      week  : null,',
+      '      total : null,',
+      '',
+      '      _addTotal : function(reportWin, colSpan, type, number, count)',
+      '      {',
+      '            reportWin.document.write(',
+      '              [',
+      '                `<tr>`,',
+      '                "<td ",',
+      '                `  colspan="${colSpan - 1}"`,',
+      '                "  class=\'sep\'>",',
+      '                "<span style=\'font-weight: bold;\'>",',
+      '                `${type} ${number} total:`,',
+      '                "</span>",',
+      '                "</td>",',
+      '                "<td class=\'sep\'>",',
+      '                "<span style=\'font-weight: bold;\'>",',
+      '                `${count}`,',
+      '                "</span>",',
+      '                "</td>",',
+      '                "</tr>"',
+      '              ].join(" "));',
+      '      },',
+      '',
+      '      _addBlankLine : function(reportWin, colSpan)',
+      '      {',
+      '        reportWin.document.write(',
+      '          [',
+      '            `<tr>`,',
+      '            "<td ",',
+      '            `  colspan="${colSpan}"`,',
+      '            "  class=\'sep\'>",',
+      '            "&nbsp;",',
+      '            "</td>",',
+      '            "</tr>"',
+      '          ].join(" "));',
+      '      },',
+      '',
+      '      fInit : function()',
+      '      {',
+      '        this.day  = { prior : null, count : 0, rowsSinceDayTotal : 0 };',
+      '        this.week = { prior : null, count : 0, totals : { 2 : 0, 4 : 0} };',
+      '      },',
+      '',
+      '      fBeforeRow : function(reportInfo, report, reportWin, row)',
+      '      {',
+      '        if (this.day.prior != row["day"])',
+      '        {',
+      '          if (this.day.prior !== null)',
+      '          {',
+      '            this._addTotal(reportWin, Object.keys(report[0]).length, "Day", this.day.prior, this.day.count);',
+      '            this.day.count = 0;',
+      '          }',
+      '',
+      '          this.day.prior = row["day"];',
+      '        }',
+      '',
+      '        let week = this.day.prior <= 4 ? 2 : 4;',
+      '        if (this.week.prior != week)',
+      '        {',
+      '          if (this.week.prior === null)',
+      '          {',
+      '            this._addBlankLine(reportWin, Object.keys(report[0]).length);',
+      '          }',
+      '',
+      '          this.week.prior = week;',
+      '          this.day.rowsSinceDayTotal = 0;',
+      '        }',
+      '        else',
+      '        {',
+      '          ++this.day.rowsSinceDayTotal;',
+      '        }',
+      '',
+      '        this.day.count += row["count"];',
+      '        this.week.totals[week] += row["count"];',
+      '      },',
+      '',
+      '      fAfterRow : function(reportInfo, report, reportWin, row)',
+      '      {',
+      '      },      ',
+      '',
+      '      fPostReport : function(reportInfo, report, reportWin)',
+      '      {',
+      '        let columnCount = Object.keys(report[0]).length;',
+      '',
+      '        if (this.day.rowsSinceDayTotal > 0)',
+      '        {',
+      '          this._addTotal(reportWin, columnCount, "Day", this.day.prior, this.day.count);',
+      '        }',
+      '',
+      '        for (let i = 0; i < 2; i++)',
+      '        {',
+      '          this._addBlankLine(reportWin, columnCount);',
+      '        }',
+      '',
+      '        for (const [ week, count ] of Object.entries(this.week.totals))',
+      '        {',
+      '          this._addTotal(reportWin, columnCount, "Week", week, count);',
+      '        }',
+      '      }',
+      '    }'
+    ].join("\n");
+*/
