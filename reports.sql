@@ -2055,13 +2055,17 @@ REPLACE INTO Report
   ',
   '
    SELECT
-       member_name AS Name,
-       family_name AS Family,
-       age AS Age,
-       date_of_birth AS Birthday,
-       gender AS Gender,
-       CASE is_veteran WHEN 0 THEN "N" ELSE "Y" END AS Veteran
-     FROM FamilyMember
+       f.member_name AS Name,
+       f.family_name AS Family,
+       f.age AS Age,
+       f.date_of_birth AS Birthday,
+       f.gender AS Gender,
+       CASE is_veteran WHEN 0 THEN "N" ELSE "Y" END AS Veteran,
+       c.appt_day_default AS `Default day`,
+       c.appt_time_default AS `Default time`
+     FROM FamilyMember f
+     LEFT JOIN Client c
+       ON c.family_name = f.family_name
      ORDER BY date_of_birth DESC;
   '
 );
