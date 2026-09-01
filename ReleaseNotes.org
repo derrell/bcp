@@ -14,6 +14,7 @@
 ** COMMENT Database changes
 *** Schema changes
     ALTER TABLE Client ADD COLUMN diapers_needed BOOLEAN DEFAULT FALSE;
+    ALTER TABLE Report ADD COLUMN report_data VARCHAR;
 *** Reports changes
 **** DELETE FROM Report;
 **** Add the entirety of reports.sql: `.read reports.sql`
