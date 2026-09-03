@@ -4,11 +4,13 @@ LIVE_DIR = ~/bcp
 test4000 :
 	npx qx deploy --out=deploy --clean
 	scp package.json package-lock.json ${SERVER}:${TEST4000_DIR}/
+	scp reports.sql ${SERVER}:${TEST4000_DIR}/
 	rsync -av deploy/ ${SERVER}:${TEST4000_DIR}/
 
 live :
 	npx qx deploy --out=deploy --clean
 	scp package.json package-lock.json ${SERVER}:${LIVE_DIR}/
+	scp reports.sql ${SERVER}:${TEST4000_DIR}/
 	rsync -av deploy/ ${SERVER}:${LIVE_DIR}/
 
 backup :
