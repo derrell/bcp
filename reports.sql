@@ -2061,11 +2061,65 @@ REPLACE INTO Report
        f.date_of_birth AS Birthday,
        f.gender AS Gender,
        CASE is_veteran WHEN 0 THEN "N" ELSE "Y" END AS Veteran,
-       c.appt_day_default AS `Default day`,
+       CASE length(c.appt_time_default)
+         WHEN 0 THEN ""
+         ELSE c.appt_day_default
+       END AS `Default day`,
        c.appt_time_default AS `Default time`
      FROM FamilyMember f
      LEFT JOIN Client c
        ON c.family_name = f.family_name
+     ORDER BY date_of_birth DESC;
+  '
+);
+
+REPLACE INTO Report
+(
+  name,
+  description,
+  landscape,
+  input_fields,
+  subtitle_field,
+  separate_by,
+  number_style,
+  number_remaining,
+  pre_query,
+  query
+)
+ VALUES
+(
+  'Family members with appointments, by age',
+  'Family members with appointments, sorted by age ',
+  0,
+  '',
+  '',
+  '',
+  '',
+  '',
+  '
+   INSERT INTO StoredProc_UpdateAge
+       (birthday, asOf, family_name, member_name)
+     SELECT
+         date_of_birth, datetime(), family_name, member_name
+       FROM FamilyMember;
+  ',
+  '
+   SELECT
+       f.member_name AS Name,
+       f.family_name AS Family,
+       f.age AS Age,
+       f.date_of_birth AS Birthday,
+       f.gender AS Gender,
+       CASE is_veteran WHEN 0 THEN "N" ELSE "Y" END AS Veteran,
+       CASE length(c.appt_time_default)
+         WHEN 0 THEN ""
+         ELSE c.appt_day_default
+       END AS `Default day`,
+       c.appt_time_default AS `Default time`
+     FROM FamilyMember f
+     LEFT JOIN Client c
+       ON c.family_name = f.family_name
+     WHERE length(c.appt_time_default) <> 0
      ORDER BY date_of_birth DESC;
   '
 );
