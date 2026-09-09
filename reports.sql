@@ -1554,7 +1554,7 @@ REPLACE INTO Report
 
       fInit : function()
       {
-        this.day  = { prior : null, count : 0, rowsSinceDayTotal : 0 };
+        this.day  = { prior : null, count : 0 };
         this.week = { prior : null,
                       count : 0,
                       totals : { 2 : 0, 4 : 0},
@@ -1588,17 +1588,11 @@ REPLACE INTO Report
           }
 
           this.week.prior = week;
-          this.day.rowsSinceDayTotal = 0;
-        }
-        else
-        {
-          ++this.day.rowsSinceDayTotal;
         }
 
         this.day.count += row["count"];
         this.week.totals[week] += row["count"];
         this.week.bySize[week][row["size"]] += row["count"];
-
       },
 
       fAfterRow : function(reportInfo, report, reportWin, row)
@@ -1609,11 +1603,8 @@ REPLACE INTO Report
       {
         let columnCount = Object.keys(report[0]).length;
 
-        if (this.day.rowsSinceDayTotal > 0)
-        {
-          this._addTotal(reportWin, columnCount,
-                         `Day ${this.day.prior}:`, this.day.count);
-        }
+        this._addTotal(reportWin, columnCount,
+                       `Day ${this.day.prior}:`, this.day.count);
 
         for (let i = 0; i < 2; i++)
         {
