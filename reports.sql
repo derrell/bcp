@@ -1474,29 +1474,68 @@ REPLACE INTO Report
   'day',
   '
     {
-      day   : null,
-      week  : null,
-      total : null,
+      day          : null,
+      week         : null,
 
-      _addTotal : function(reportWin, colSpan, type, number, count)
+      _addTotal : function(reportWin, colSpan, message, count, pixelIndent)
       {
-            reportWin.document.write(
-              [
-                `<tr>`,
-                "<td ",
-                `  colspan="${colSpan - 1}"`,
-                "  class=''sep''>",
-                "<span style=''font-weight: bold;''>",
-                `${type} ${number} total:`,
-                "</span>",
-                "</td>",
-                "<td class=''sep''>",
-                "<span style=''font-weight: bold;''>",
-                `${count}`,
-                "</span>",
-                "</td>",
-                "</tr>"
-              ].join(" "));
+        let style = "font-weight: bold;";
+
+        if (typeof pixelIndent == "number")
+        {
+          style += `padding-left: ${pixelIndent};`;
+        }
+
+        reportWin.document.write(
+          [
+            `<tr>`,
+            "<td ",
+            `  colspan="${colSpan - 1}"`,
+            "  class=''sep''>",
+            `<span style=''${style}''>`,
+            `${message}`,
+            "</span>",
+            "</td>",
+            "<td class=''sep'' style=''text-align: right;''>",
+            "<span style=''font-weight: bold;''>",
+            `${count}`,
+            "</span>",
+            "</td>",
+            "</tr>"
+          ].join(" "));
+      },
+
+      _addMessage : function(reportWin, colSpan, message, bBold, bUnderline, pixelIndent)
+      {
+        let style = "";
+
+        if (bBold)
+        {
+          style += "font-weight: bold;";
+        }
+
+        if (bUnderline)
+        {
+          style += "text-decoration-line: underline;";
+        }
+
+        if (typeof pixelIndent == "number")
+        {
+          style += `padding-left: ${pixelIndent};`;
+        }
+
+        reportWin.document.write(
+          [
+            `<tr>`,
+            "<td ",
+            `  colspan="${colSpan}"`,
+            "  class=''sep''>",
+            `<span style=''${style}''>`,
+            message,
+            "<span>",
+            "</td>",
+            "</tr>"
+          ].join(" "));
       },
 
       _addBlankLine : function(reportWin, colSpan)
@@ -1516,23 +1555,31 @@ REPLACE INTO Report
       fInit : function()
       {
         this.day  = { prior : null, count : 0, rowsSinceDayTotal : 0 };
-        this.week = { prior : null, count : 0, totals : { 2 : 0, 4 : 0} };
+        this.week = { prior : null,
+                      count : 0,
+                      totals : { 2 : 0, 4 : 0},
+                      bySize : { 2 : { "a-Single" : 0, "b-Small" : 0, "c-Large" : 0, "d-XLarge" : 0},
+                                 4 : { "a-Single" : 0, "b-Small" : 0, "c-Large" : 0, "d-XLarge" : 0}
+                               }
+                    };
       },
 
       fBeforeRow : function(reportInfo, report, reportWin, row)
       {
+        let week = row["day"] <= 4 ? 2 : 4;
+
         if (this.day.prior != row["day"])
         {
           if (this.day.prior !== null)
           {
-            this._addTotal(reportWin, Object.keys(report[0]).length, "Day", this.day.prior, this.day.count);
+            this._addTotal(reportWin, Object.keys(report[0]).length,
+                           `Day ${this.day.prior}:`, this.day.count);
             this.day.count = 0;
           }
 
           this.day.prior = row["day"];
         }
 
-        let week = this.day.prior <= 4 ? 2 : 4;
         if (this.week.prior != week)
         {
           if (this.week.prior === null)
@@ -1550,6 +1597,8 @@ REPLACE INTO Report
 
         this.day.count += row["count"];
         this.week.totals[week] += row["count"];
+        this.week.bySize[week][row["size"]] += row["count"];
+
       },
 
       fAfterRow : function(reportInfo, report, reportWin, row)
@@ -1562,7 +1611,8 @@ REPLACE INTO Report
 
         if (this.day.rowsSinceDayTotal > 0)
         {
-          this._addTotal(reportWin, columnCount, "Day", this.day.prior, this.day.count);
+          this._addTotal(reportWin, columnCount,
+                         `Day ${this.day.prior}:`, this.day.count);
         }
 
         for (let i = 0; i < 2; i++)
@@ -1570,10 +1620,23 @@ REPLACE INTO Report
           this._addBlankLine(reportWin, columnCount);
         }
 
-        for (const [ week, count ] of Object.entries(this.week.totals))
+        this._addMessage(reportWin, columnCount, "Weekly Totals", true, true);
+        this._addBlankLine(reportWin, columnCount);
+
+        for (let week = 2; week <= 4; week += 2)
         {
-          this._addTotal(reportWin, columnCount, "Week", week, count);
+          this._addMessage(reportWin, columnCount, `Week ${week}`, true, true, 20);
+          for (const [ size, count ] of Object.entries(this.week.bySize[week]))
+          {
+            this._addTotal(reportWin, columnCount,
+                           size.substr(2), count, 40);
+          }
+          this._addTotal(reportWin, columnCount,
+                         "Total", this.week.totals[week], 60);
+
+          this._addBlankLine(reportWin, columnCount);
         }
+
       }
     }
   ',
