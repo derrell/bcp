@@ -2,17 +2,12 @@
 * High-level list of changes
 ** Bug fixes
 ** Feature changes
-*** Added new family size (XLarge) to all relevant reports
-*** Added "diapers_needed" in Client table, GUI, "Default appointments: all, by day & time" report
-*** Added new diapers needed report
-*** Added "Last fulfilled" column to "Default appointments, all by day & time" report
-*** Added new "School-age distribution children counts" report
-*** Added custom function capability for reports, allowing subtotals, etc.
-*** Total by day, week in 'Distribution meals required, by size' report
-*** Add default appointment day/time to 'Family Member by age' report
-*** Add new 'Family members with appointments, by age' report
+*** Added new report "Default appointments: all, by client ID"
 * Upgrade procedures
 ** Shut down and back up production
+*** (as root) svc -d /etc/service/bcp
+*** ps ax | grep bcp
+**** kill node process
 ** Iterations
 *** #1: copy db from production to bcp-test
 *** #2: perform following ops on bcp-test

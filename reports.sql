@@ -2000,6 +2000,67 @@ REPLACE INTO Report
   description,
   landscape,
   input_fields,
+  subtitle_field,
+  separate_by,
+  number_style,
+  number_remaining,
+  pre_query,
+  query
+)
+ VALUES
+(
+  'Default appointments: all, by client ID',
+  'All default appointments, sorted in order of client ID',
+  1,
+  '',
+  '',
+  '',
+  '',
+  '',
+  '
+   INSERT INTO StoredProc_UpdateAge
+       (birthday, asOf, family_name, member_name)
+     SELECT
+         date_of_birth,
+         (SELECT MAX(start_date) FROM DistributionPeriod),
+         family_name,
+         member_name
+       FROM FamilyMember;
+  ',
+  '
+   SELECT
+       "#" || ci.id AS "Client ID",
+       c.family_name as "Family name",
+       c.appt_day_default as Day,
+       c.appt_time_default AS Time,
+       (c.count_senior + c.count_adult + c.count_child) ||
+         CASE
+           WHEN c.count_senior + c.count_adult + c.count_child >= 7
+             THEN " (XLarge)"
+           WHEN c.count_senior + c.count_adult + c.count_child >= 4
+             THEN " (Large)"
+           WHEN c.count_senior + c.count_adult + c.count_child = 1
+             THEN " (Single)"
+           ELSE " (Small)"
+         END AS "Family size",
+       COALESCE(c.pet_types, "") AS Pets,
+       COALESCE(c.phone, "") AS Phone,
+       COALESCE(c.notes_default, "") AS Notes
+     FROM Client c
+     LEFT JOIN ClientId ci
+       ON ci.family_name = c.family_name
+     WHERE appt_time_default IS NOT NULL
+        AND length(appt_time_default) > 0
+     ORDER BY ci.id;
+  '
+);
+
+REPLACE INTO Report
+(
+  name,
+  description,
+  landscape,
+  input_fields,
   separate_by,
   query
 )
