@@ -10,7 +10,7 @@ test4000 :
 live :
 	npx qx deploy --out=deploy --clean
 	scp package.json package-lock.json ${SERVER}:${LIVE_DIR}/
-	scp reports.sql ${SERVER}:${TEST4000_DIR}/
+	scp reports.sql ${SERVER}:${LIVE_DIR}/
 	rsync -av deploy/ ${SERVER}:${LIVE_DIR}/
 
 backup :
