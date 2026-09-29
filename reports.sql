@@ -2825,7 +2825,6 @@ REPLACE INTO Report
       f.appt_time AS "Time",
       ci.id AS "Client ID",
       c.family_name AS "Family name",
-      c.count_senior + c.count_adult + c.count_child AS "Family size",
       (SELECT COUNT(*)
          FROM FamilyMember fm
          WHERE fm.family_name = c.family_name
@@ -2834,26 +2833,24 @@ REPLACE INTO Report
       (SELECT COUNT(*)
          FROM FamilyMember fm
          WHERE fm.family_name = c.family_name
-           AND age >= 5 AND age <= 1)
+           AND age >= 5 AND age <= 11)
          AS "Children age 5-11",
       (SELECT COUNT(*)
          FROM FamilyMember fm
          WHERE fm.family_name = c.family_name
            AND age >= 12 AND age <= 17)
-         AS "Children age 12-17",
-      (SELECT COUNT(*)
-         FROM FamilyMember fm
-         WHERE fm.family_name = c.family_name
-           AND age >= 18)
-         AS "Adults"
+         AS "Children age 12-17"
      FROM Client c
      LEFT JOIN ClientId ci
        ON ci.family_name = c.family_name
      LEFT JOIN Fulfillment f
        ON f.family_name = c.family_name
      WHERE
-       f.distribution =
-         (SELECT MAX(start_date) FROM DistributionPeriod)
+           f.distribution =
+             (SELECT MAX(start_date) FROM DistributionPeriod)
+       AND (   "Children age 0-4" > 0
+            OR "Children age 5-11" > 0
+            OR "Children age 12-17" > 0)
      ORDER BY f.appt_day, f.appt_time, c.family_name;
    '
 );
