@@ -275,11 +275,11 @@ REPLACE INTO Report
                 FROM DistributionPeriod
                 WHERE start_date = $distribution)
            WHEN 6 THEN
-             (SELECT day_5_date
+             (SELECT day_6_date
                 FROM DistributionPeriod
                 WHERE start_date = $distribution)
            WHEN 7 THEN
-             (SELECT day_6_date
+             (SELECT day_7_date
                 FROM DistributionPeriod
                 WHERE start_date = $distribution)
          END ||
