@@ -1918,12 +1918,29 @@ REPLACE INTO Report
        COALESCE(c.pet_types, "") AS Pets,
        COALESCE(c.phone, "") AS Phone,
        COALESCE(c.notes_default, "") AS Notes,
-       (SELECT distribution
+
+       (SELECT
+          CASE strftime("%m", distribution)
+            WHEN "01" THEN "Jan"
+            WHEN "02" THEN "Feb"
+            WHEN "03" THEN "Mar"
+            WHEN "04" THEN "Apr"
+            WHEN "05" THEN "May"
+            WHEN "06" THEN "Jun"
+            WHEN "07" THEN "Jul"
+            WHEN "08" THEN "Aug"
+            WHEN "09" THEN "Sep"
+            WHEN "10" THEN "Oct"
+            WHEN "11" THEN "Nov"
+            WHEN "12" THEN "Dec"
+          END
           FROM Fulfillment f
           WHERE f.family_name = c.family_name
             AND f.fulfilled
           GROUP BY f.family_name
-          HAVING MAX(f.distribution)) AS "Last&nbsp;fulfilled"
+          HAVING MAX(f.distribution))
+        AS "Last&nbspfulfilled"
+
      FROM Client c
      LEFT JOIN ClientId ci
        ON ci.family_name = c.family_name
