@@ -516,9 +516,17 @@ qx.Mixin.define("bcp.client.MAppointment",
           (entry) =>
           {
             let             listItem;
+            let             nameWithId = entry.family_name;
 
-            listItem = new qx.ui.form.ListItem(entry.family_name);
+            if (entry.id)
+            {
+              nameWithId += ` (${entry.id})`;
+            }
+
+            listItem = new qx.ui.form.ListItem(nameWithId);
+            listItem.setUserData("family_name", entry.family_name);
             this._appointmentLabelToListMap[entry.family_name] = listItem;
+            this._appointmentLabelToListMap[nameWithId] = listItem;
             this._appointmentClients.add(listItem);
           });
     },
@@ -526,6 +534,7 @@ qx.Mixin.define("bcp.client.MAppointment",
     _onAppointmentListChangeSelection : function(e)
     {
       let             familyName;
+      let             familyNameWithId;
       const           eData = e.getData();
 
       // If the selection is being cleared, we have nothing to do.
@@ -535,13 +544,14 @@ qx.Mixin.define("bcp.client.MAppointment",
       }
 
       // Retrieve the family name selected in the client list
-      familyName = eData[0].getLabel();
+      familyName = eData[0].getUserData("family_name");
+      familyNameWithId = eData[0].getLabel();
 
       // Fill in the appointment form and process its result
-      this._handleAppointmentForm(familyName);
+      this._handleAppointmentForm(familyName, familyNameWithId);
     },
 
-    _handleAppointmentForm : function(familyName, distributionStart)
+    _handleAppointmentForm : function(familyName, familyNameWithId, distributionStart)
     {
       let             formData;
       let             client;
@@ -784,7 +794,7 @@ qx.Mixin.define("bcp.client.MAppointment",
 
             this._appointmentForm.set(
               {
-                message          : this.bold(familyName || ""),
+                message          : this.bold(familyNameWithId || ""),
                 labelColumnWidth : 180,
                 formData         : formData
               });

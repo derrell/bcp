@@ -89,6 +89,7 @@ qx.Mixin.define("bcp.client.MClientMgmt",
       tm.setColumns(
         [
           "Family",
+          "ID",
           "Phone",
           "Email",
           "Ethnicity",
@@ -98,7 +99,6 @@ qx.Mixin.define("bcp.client.MClientMgmt",
           "Notes",
           "Perishables",
           "Income source",
-//          "Income amount",
           "Pet types",
           "Address",
           "Appt day",
@@ -106,6 +106,7 @@ qx.Mixin.define("bcp.client.MClientMgmt",
         ],
         [
           "family_name",
+          "id",
           "phone",
           "email",
           "ethnicity",
@@ -115,7 +116,6 @@ qx.Mixin.define("bcp.client.MClientMgmt",
           "notes_default",
           "perishables_default",
           "income_source",
-//          "income_amount",
           "pet_types",
           "address_default",
           "appt_day_default",
@@ -149,6 +149,7 @@ qx.Mixin.define("bcp.client.MClientMgmt",
 
       // Specify column widths
       behavior = tcm.getBehavior();
+      behavior.setWidth(tm.getColumnIndexById("id"), 50);
       behavior.setWidth(tm.getColumnIndexById("family_name"), 180);
       behavior.setWidth(tm.getColumnIndexById("phone"), 100);
       behavior.setWidth(tm.getColumnIndexById("email"), 100);
@@ -519,6 +520,16 @@ qx.Mixin.define("bcp.client.MClientMgmt",
      */
     _mungeClient(client)
     {
+      // Display the client ID as text, with preceding '#'
+      if (client.id)
+      {
+        client.id = '#' + client.id;
+      }
+      else
+      {
+        client.id = "";
+      }
+
       // Convert diapers_needed from numeric 0/1 to boolean false/true
       // (except use null instead of false so no icon is displayed)
       if (client.diapers_needed === 1)

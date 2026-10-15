@@ -419,7 +419,8 @@ qx.Class.define("bcp.server.Rpc",
             [
               "SELECT",
               [
-                "family_name",
+                "c.family_name AS family_name",
+                "cid.id AS id",
                 "phone",
                 "email",
                 "ethnicity",
@@ -444,8 +445,10 @@ qx.Class.define("bcp.server.Rpc",
                 "appt_day_default",
                 "appt_time_default"
               ].join(", "),
-              "FROM Client",
-              "ORDER BY family_name"
+              "FROM Client c",
+              "LEFT JOIN ClientId cid",
+              "  ON cid.family_name = c.family_name",
+              "ORDER BY c.family_name"
             ].join(" "));
           })
         .then(
