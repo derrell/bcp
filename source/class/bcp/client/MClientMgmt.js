@@ -98,7 +98,7 @@ qx.Mixin.define("bcp.client.MClientMgmt",
           "Verified",
           "Notes",
           "Perishables",
-          "Income source",
+          "Reminders",
           "Pet types",
           "Address",
           "Appt day",
@@ -115,7 +115,7 @@ qx.Mixin.define("bcp.client.MClientMgmt",
           "verified",
           "notes_default",
           "perishables_default",
-          "income_source",
+          "reminder_notes",
           "pet_types",
           "address_default",
           "appt_day_default",
@@ -151,16 +151,15 @@ qx.Mixin.define("bcp.client.MClientMgmt",
       behavior = tcm.getBehavior();
       behavior.setWidth(tm.getColumnIndexById("id"), 50);
       behavior.setWidth(tm.getColumnIndexById("family_name"), 180);
-      behavior.setWidth(tm.getColumnIndexById("phone"), 100);
-      behavior.setWidth(tm.getColumnIndexById("email"), 100);
+      behavior.setWidth(tm.getColumnIndexById("phone"), 90);
+      behavior.setWidth(tm.getColumnIndexById("email"), 90);
       behavior.setWidth(tm.getColumnIndexById("ethnicity"), 80);
       behavior.setWidth(tm.getColumnIndexById("language_abbreviation"), 40);
       behavior.setWidth(tm.getColumnIndexById("diapers_needed"), 50);
       behavior.setWidth(tm.getColumnIndexById("verified"), 60);
-      behavior.setWidth(tm.getColumnIndexById("notes_default"), 200);
-      behavior.setWidth(tm.getColumnIndexById("perishables_default"), 185);
-      behavior.setWidth(tm.getColumnIndexById("income_source"), 100);
-//      behavior.setWidth(tm.getColumnIndexById("income_amount"), 100);
+      behavior.setWidth(tm.getColumnIndexById("notes_default"), 180);
+      behavior.setWidth(tm.getColumnIndexById("perishables_default"), 165);
+      behavior.setWidth(tm.getColumnIndexById("reminder_notes"), 110);
       behavior.setWidth(tm.getColumnIndexById("pet_types"), 90);
       behavior.setWidth(tm.getColumnIndexById("address_default"), 100);
       behavior.setWidth(tm.getColumnIndexById("appt_day_default"), 60);
@@ -748,28 +747,6 @@ qx.Mixin.define("bcp.client.MClientMgmt",
               tabIndex   : 6
             }
           },
-          income_source :
-          {
-            type       : "TextField",
-            label      : "Income source",
-            value      : clientInfo.income_source || "",
-            properties :
-            {
-              tabIndex   : 7
-            }
-          },
-/*
-          income_amount :
-          {
-            type       : "TextField",
-            label      : "Income amount",
-            value      : (clientInfo.income_amount || "").toString(),
-            properties :
-            {
-              tabIndex   : 8
-            }
-          },
-*/
           pet_types :
           {
             type       : "TextField",
@@ -777,7 +754,7 @@ qx.Mixin.define("bcp.client.MClientMgmt",
             value      : clientInfo.pet_types || "",
             properties :
             {
-              tabIndex   : 9
+              tabIndex   : 7
             }
           },
           notes_default :
@@ -792,7 +769,7 @@ qx.Mixin.define("bcp.client.MClientMgmt",
             },
             properties :
             {
-              tabIndex   : 10
+              tabIndex   : 8
             }
           },
           perishables_default :
@@ -807,7 +784,17 @@ qx.Mixin.define("bcp.client.MClientMgmt",
             },
             properties :
             {
-              tabIndex   : 11
+              tabIndex   : 9
+            }
+          },
+          reminder_notes :
+          {
+            type       : "TextField",
+            label      : "Reminders",
+            value      : clientInfo.reminder_notes || "",
+            properties :
+            {
+              tabIndex   : 10
             }
           },
           verified :

@@ -306,7 +306,8 @@ REPLACE INTO Report
          WHEN "no" THEN "No"
          ELSE ""
        END AS "USDA Eligible",
-       COALESCE(notes, "") AS Notes
+       COALESCE(notes, "") AS Notes,
+       reminder_notes AS Reminders
      FROM Fulfillment f
      LEFT JOIN Client c
        ON c.family_name = f.family_name
@@ -1918,6 +1919,7 @@ REPLACE INTO Report
        COALESCE(c.pet_types, "") AS Pets,
        COALESCE(c.phone, "") AS Phone,
        COALESCE(c.notes_default, "") AS Notes,
+       c.reminder_notes AS Reminders,
 
        (SELECT
           CASE strftime("%m", distribution)
@@ -2003,7 +2005,8 @@ REPLACE INTO Report
          END AS "Family size",
        COALESCE(c.pet_types, "") AS Pets,
        COALESCE(c.phone, "") AS Phone,
-       COALESCE(c.notes_default, "") AS Notes
+       COALESCE(c.notes_default, "") AS Notes,
+       c.reminder_notes AS Reminders
      FROM Client c
      WHERE appt_time_default IS NOT NULL
         AND length(appt_time_default) > 0
@@ -2062,7 +2065,8 @@ REPLACE INTO Report
          END AS "Family size",
        COALESCE(c.pet_types, "") AS Pets,
        COALESCE(c.phone, "") AS Phone,
-       COALESCE(c.notes_default, "") AS Notes
+       COALESCE(c.notes_default, "") AS Notes,
+       c.reminder_notes AS Reminders
      FROM Client c
      LEFT JOIN ClientId ci
        ON ci.family_name = c.family_name

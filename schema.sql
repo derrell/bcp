@@ -42,6 +42,7 @@ CREATE TABLE Client
   archived                  BOOLEAN DEFAULT FALSE,
   notes_default             VARCHAR NOT NULL DEFAULT '',
   perishables_default       VARCHAR NOT NULL DEFAULT '',
+  reminder_notes            VARCHAR NOT NULL DEFAULT '',
   UNIQUE (family_name COLLATE NOCASE)
 );
 
@@ -63,6 +64,7 @@ CREATE TABLE Client
 -- ALTER TABLE Client ADD COLUMN usda_prior_max_income INTEGER DEFAULT 0;
 -- ALTER TABLE Client ADD COLUMN usda_require_new_signature BOOLEAN DEFAULT FALSE;
 -- ALTER TABLE Client ADD COLUMN diapers_needed BOOLEAN DEFAULT FALSE;
+-- ALTER TABLE Client ADD COLUMN reminder_notes VARCHAR NOT NULL DEFAULT '';
 
 
 --

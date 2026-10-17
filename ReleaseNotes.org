@@ -2,7 +2,9 @@
 * High-level list of changes
 ** Bug fixes
 ** Feature changes
-*** Added new report "Default appointments: all, by client ID"
+*** On Default Appointments report, replace full date of last-fulfilled with only its month
+*** Add client ID to Client and Upcoming Appointments tabs
+*** Add new Client field 'reminder_notes'; show it in distribution reports
 * Upgrade procedures
 ** Shut down and back up production
 *** (as root) svc -d /etc/service/bcp
@@ -15,8 +17,7 @@
 ** Merge to main
 ** COMMENT Database changes
 *** Schema changes
-    ALTER TABLE Client ADD COLUMN diapers_needed BOOLEAN DEFAULT FALSE;
-    ALTER TABLE Report ADD COLUMN report_data VARCHAR;
+    ALTER TABLE Client ADD COLUMN reminder_notes VARCHAR NOT NULL DEFAULT '';
 *** Reports changes
 **** DELETE FROM Report;
 **** Add the entirety of reports.sql: `.read reports.sql`
