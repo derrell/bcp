@@ -406,7 +406,6 @@ REPLACE INTO Report
              THEN " (Single)"
            ELSE " (Small)"
          END AS "Family size",
-       COALESCE(pet_types, "") AS Pets,
        COALESCE(phone, "") AS Phone,
        (SELECT
           COALESCE(max_income_text, "See Taryn")
@@ -418,7 +417,8 @@ REPLACE INTO Report
          WHEN "no" THEN "No"
          ELSE ""
        END AS "USDA Eligible",
-       COALESCE(notes, "") AS Notes
+       COALESCE(notes, "") AS Notes,
+       reminder_notes AS Reminders
      FROM Fulfillment f
      LEFT JOIN Client c
        ON c.family_name = f.family_name
